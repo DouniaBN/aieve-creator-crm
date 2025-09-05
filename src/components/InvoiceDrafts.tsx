@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Eye, Send, FileText, Calendar, DollarSign, Building } from 'lucide-react';
+import { Edit, Trash2, Send, FileText, Calendar, DollarSign, Building } from 'lucide-react';
 import { InvoiceData } from './InvoiceGenerator';
 
 interface InvoiceDraftsProps {

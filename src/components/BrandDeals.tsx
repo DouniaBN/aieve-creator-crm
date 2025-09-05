@@ -79,7 +79,7 @@ const BrandDeals = () => {
 
   const handleUpdateStatus = async (dealId: string, newStatus: string) => {
     try {
-      await updateBrandDeal(dealId, { status: newStatus as any });
+      await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'confirmed' | 'completed' | 'cancelled' });
     } catch (error) {
       console.error('Error updating brand deal status:', error);
     }
@@ -287,7 +287,7 @@ const BrandDeals = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                   <select 
                     value={newDeal.status}
-                    onChange={(e) => setNewDeal({ ...newDeal, status: e.target.value as any })}
+                    onChange={(e) => setNewDeal({ ...newDeal, status: e.target.value as 'negotiation' | 'confirmed' | 'completed' | 'cancelled' })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
                   >
                     {Object.entries(statusConfig).map(([key, config]) => (

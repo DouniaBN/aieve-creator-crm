@@ -24,7 +24,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
   const [loading, setLoading] = useState(false);
   
   // Safely convert initialDate to Date object with validation
-  const [date, setDate] = useState(() => {
+  const [date] = useState(() => {
     if (!initialDate) return new Date();
     const d = new Date(initialDate);
     return isNaN(d.getTime()) ? new Date() : d;
@@ -111,10 +111,6 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
       console.error('Full error object:', error);
       
       // More detailed error message
-      let errorMessage = 'Failed to create post. Please try again.';
-      if (error instanceof Error) {
-        errorMessage = `Failed to create post: ${error.message}`;
-      }
       alert('Failed to create post. Please try again.');
     } finally {
       setLoading(false);

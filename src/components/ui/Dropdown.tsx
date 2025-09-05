@@ -71,7 +71,8 @@ const Dropdown = React.forwardRef<HTMLButtonElement, DropdownProps>(
             disabled={disabled}
             className={cn(
               'justify-between min-w-[120px] bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0 shadow-lg shadow-pink-500/25',
-              triggerClassName
+              triggerClassName,
+              className
             )}
             {...props}
           >

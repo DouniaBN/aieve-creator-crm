@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, LayoutDashboard, Calendar, FileText, Settings, User, Bell, Plus, Search, Filter, Download } from 'lucide-react';
+import { Layout, LayoutDashboard, Calendar, FileText, Settings, User } from 'lucide-react';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import NotificationPanel from './components/NotificationPanel';

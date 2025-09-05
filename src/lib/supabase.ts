@@ -57,14 +57,3 @@ export interface ContentPost {
   scheduled_date?: string
   created_at: string
 }
-
-export interface ContentPost {
-  id: string
-  user_id: string
-  project_id?: string
-  title: string
-  platform: 'newsletter' | 'x' | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'linkedin' | 'blog'
-  status: 'draft' | 'scheduled' | 'published'
-  scheduled_date?: string
-  created_at: string
-}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, X, Check, CheckCheck, Trash2, Clock, DollarSign, FileText, AlertCircle, Send } from 'lucide-react';
-import { useAppContext } from '../contexts/AppContext';
+import { Bell, X, CheckCheck, Trash2, Clock, DollarSign, FileText, AlertCircle, Send } from 'lucide-react';
+import { useAppContext, Notification } from '../contexts/AppContext';
 
 const NotificationPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,7 +88,7 @@ const NotificationPanel = () => {
     return date.toLocaleDateString();
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markNotificationAsRead(notification.id);
     }

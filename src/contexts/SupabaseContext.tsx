@@ -92,7 +92,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       setBrandDeals([])
       setContentPosts([])
     }
-  }, [user])
+  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts])
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -147,43 +147,16 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const fetchContentPosts = async () => {
     if (!user) return
     
-    console.log('\n=== FETCHING CONTENT POSTS FROM DATABASE ===');
-    console.log('🔑 Current user ID:', user.id);
-    console.log('⏰ Fetch timestamp:', new Date().toISOString());
-    
     const { data, error } = await supabase
       .from('content_posts')
       .select('*')
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error('❌ Error fetching content posts:', error)
-      console.error('❌ Fetch error details:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
+      console.error('Error fetching content posts:', error)
     } else {
-      console.log('✅ Successfully fetched content posts from database');
-      console.log('📊 Number of posts fetched:', data?.length || 0);
-      console.log('📊 Raw database response:', data);
-      data?.forEach((post, index) => {
-        console.log(`📝 Database Post ${index + 1}:`, {
-          id: post.id,
-          title: post.title,
-          platform: post.platform,
-          status: post.status,
-          scheduled_date: post.scheduled_date,
-          scheduled_date_type: typeof post.scheduled_date,
-          created_at: post.created_at
-        });
-      });
-      console.log('🔄 Setting contentPosts state with fetched data...');
       setContentPosts(data || [])
-      console.log('✅ ContentPosts state updated');
     }
-    console.log('=== END FETCHING CONTENT POSTS ===\n');
   }
 
   // CRUD operations for projects
@@ -322,12 +295,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const createContentPost = async (post: Omit<ContentPost, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return
     
-    // Debug logging
-    console.log('Creating content post with data:', post);
-    console.log('Current user ID:', user.id);
-    
     const postData = { ...post, user_id: user.id };
-    console.log('Final post data being inserted:', postData);
     
     const { error } = await supabase
       .from('content_posts')
@@ -335,15 +303,8 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     if (error) {
       console.error('Error creating content post:', error)
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
       throw error
     } else {
-      console.log('Content post created successfully');
       await fetchContentPosts()
     }
   }

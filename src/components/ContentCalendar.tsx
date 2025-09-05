@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar, momentLocalizer, View } from 'react-big-calendar';
 import moment from 'moment';
-import { Plus, Calendar as CalendarIcon, Instagram, Youtube, Mail, Globe, FileText, ChevronLeft, ChevronRight, Twitter, Linkedin } from 'lucide-react';
+import { Plus, Instagram, Youtube, Mail, Globe, FileText, ChevronLeft, ChevronRight, Linkedin } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { ContentPost } from '../lib/supabase';
-import { useAppContext } from '../contexts/AppContext';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -29,9 +28,8 @@ interface ContentCalendarProps {
 }
 
 const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
-  const { contentPosts, projects, updateContentPost, deleteContentPost } = useSupabase();
-  const { showSuccessMessage } = useAppContext();
-  const [calendarView, setCalendarView] = useState<View>('month');
+  const { contentPosts } = useSupabase();
+  const [calendarView] = useState<View>('month');
   const [calendarDate, setCalendarDate] = useState(new Date());
 
   // Custom date cell component with circular borders
@@ -78,7 +76,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   };
 
   // Simple calendar event component
-  const CalendarEventBlock = ({ event }: { event: any }) => {
+  const CalendarEventBlock = ({ event }: { event: { resource: ContentPost } }) => {
     const post = event.resource as ContentPost;
     const PlatformIcon = platformIcons[post.platform as keyof typeof platformIcons];
     

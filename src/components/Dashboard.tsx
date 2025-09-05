@@ -4,7 +4,7 @@ import { useSupabase } from '../contexts/SupabaseContext';
 import StatusDropdown from './StatusDropdown';
 
 const Dashboard = () => {
-  const { projects, invoices, brandDeals, updateProject } = useSupabase();
+  const { projects, invoices, updateProject } = useSupabase();
 
   const statusConfig = {
     idea: { 
@@ -92,7 +92,7 @@ const Dashboard = () => {
 
   const handleUpdateStatus = async (projectId: string, newStatus: string) => {
     try {
-      await updateProject(projectId, { status: newStatus as any });
+      await updateProject(projectId, { status: newStatus as 'idea' | 'negotiation' | 'in-progress' | 'submitted' | 'paid' });
     } catch (error) {
       console.error('Error updating project status:', error);
     }
@@ -117,7 +117,6 @@ const Dashboard = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
-          const Icon = stat.icon;
           return (
             <div
               key={index}

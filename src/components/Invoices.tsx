@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Download, Send, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, RotateCcw, Trash } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import StatusDropdown from './StatusDropdown';
 import InvoiceGenerator from './InvoiceGenerator';
@@ -8,8 +8,7 @@ import TrashSection from './TrashSection';
 import { InvoiceData } from './InvoiceGenerator';
 
 const Invoices = () => {
-  const { invoices, updateInvoiceStatus, addNotification } = useAppContext();
-  const [showModal, setShowModal] = useState(false);
+  const { invoices, updateInvoiceStatus, addNotification, showSuccessMessage } = useAppContext();
   const [showGenerator, setShowGenerator] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
@@ -320,9 +319,6 @@ const Invoices = () => {
     }
   };
 
-  const sendReminder = (invoice) => {
-    alert(`Reminder sent to ${invoice.client} for invoice ${invoice.invoiceNumber}`);
-  };
 
   const handleCloseGenerator = () => {
     setShowGenerator(false);

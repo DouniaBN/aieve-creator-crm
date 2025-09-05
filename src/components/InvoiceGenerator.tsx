@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Send, Download, Calculator, Globe, User, Building, FileText, Calendar, DollarSign, Eye, Printer, Mail, Link, ArrowLeft } from 'lucide-react';
+import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 
 interface LineItem {
@@ -433,8 +433,8 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {invoiceData.lineItems.map((item, index) => (
-                  <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                {invoiceData.lineItems.map((item) => (
+                  <tr key={item.id} className="bg-white">
                     <td className="px-6 py-4 text-sm text-gray-900">{item.description}</td>
                     <td className="px-6 py-4 text-center text-sm text-gray-900">{item.quantity}</td>
                     <td className="px-6 py-4 text-right text-sm text-gray-900">{selectedCurrency?.symbol}{item.rate.toFixed(2)}</td>
@@ -786,7 +786,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {invoiceData.lineItems.map((item, index) => (
+                  {invoiceData.lineItems.map((item) => (
                     <tr key={item.id}>
                       <td className="px-6 py-4">
                         <div className="space-y-2">

@@ -4,7 +4,7 @@ import ContentCalendar from './ContentCalendar';
 import AddPostModal from './AddPostModal';
 
 const Projects = () => {
-  const { projects, updateProject, createProject, deleteProject, fetchContentPosts } = useSupabase();
+  const { fetchContentPosts } = useSupabase();
   const [showPostModal, setShowPostModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
