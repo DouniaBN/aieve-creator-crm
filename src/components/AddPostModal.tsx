@@ -19,7 +19,7 @@ interface AddPostModalProps {
 }
 
 const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDate, onPostAdded }) => {
-  const { createContentPost } = useSupabase();
+  const { createContentPost, fetchContentPosts } = useSupabase();
   const { showSuccessMessage } = useAppContext();
   const [loading, setLoading] = useState(false);
   
@@ -92,6 +92,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
       
       // Force refresh of content posts to update calendar
       console.log('Post creation completed, refreshing content posts...');
+      await fetchContentPosts();
       
       // Notify parent component
       if (onPostAdded) {

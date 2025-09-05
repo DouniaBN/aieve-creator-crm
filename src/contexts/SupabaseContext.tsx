@@ -79,20 +79,6 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     return () => subscription.unsubscribe()
   }, [])
 
-  // Fetch data when user changes
-  useEffect(() => {
-    if (user) {
-      fetchProjects()
-      fetchInvoices()
-      fetchBrandDeals()
-      fetchContentPosts()
-    } else {
-      setProjects([])
-      setInvoices([])
-      setBrandDeals([])
-      setContentPosts([])
-    }
-  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts])
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -336,6 +322,21 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       await fetchContentPosts()
     }
   }
+
+  // Fetch data when user changes
+  useEffect(() => {
+    if (user) {
+      fetchProjects()
+      fetchInvoices()
+      fetchBrandDeals()
+      fetchContentPosts()
+    } else {
+      setProjects([])
+      setInvoices([])
+      setBrandDeals([])
+      setContentPosts([])
+    }
+  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts])
 
   const value = {
     user,

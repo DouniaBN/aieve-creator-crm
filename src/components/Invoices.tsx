@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash } from 'lucide-react';
-import { useAppContext } from '../contexts/AppContext';
+import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash, Send } from 'lucide-react';
+import { useAppContext, Invoice } from '../contexts/AppContext';
 import StatusDropdown from './StatusDropdown';
 import InvoiceGenerator from './InvoiceGenerator';
 import InvoiceDrafts from './InvoiceDrafts';
@@ -12,11 +12,11 @@ const Invoices = () => {
   const [showGenerator, setShowGenerator] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
-  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [loadingStates, setLoadingStates] = useState({});
-  const [trashedInvoices, setTrashedInvoices] = useState([]);
+  const [loadingStates, setLoadingStates] = useState<Record<number, Record<string, boolean>>>({});
+  const [trashedInvoices, setTrashedInvoices] = useState<Invoice[]>([]);
 
   const statusConfig = {
     draft: { 
@@ -67,7 +67,7 @@ const Invoices = () => {
 
   const overdueCount = invoices.filter(inv => inv.status === 'overdue').length;
 
-  const setLoading = (invoiceId, action, isLoading) => {
+  const setLoading = (invoiceId: number, action: string, isLoading: boolean) => {
     setLoadingStates(prev => ({
       ...prev,
       [`${invoiceId}-${action}`]: isLoading
@@ -78,7 +78,7 @@ const Invoices = () => {
     return loadingStates[`${invoiceId}-${action}`] || false;
   };
 
-  const generatePDF = async (invoice) => {
+  const generatePDF = async (invoice: Invoice) => {
     setLoading(invoice.id, 'download', true);
     
     try {
@@ -106,7 +106,7 @@ const Invoices = () => {
     }
   };
 
-  const generateInvoiceHTML = (invoice) => {
+  const generateInvoiceHTML = (invoice: Invoice) => {
     const currentDate = new Date().toLocaleDateString();
     
     return `
@@ -208,7 +208,7 @@ const Invoices = () => {
     `;
   };
 
-  const handleEditInvoice = (invoice) => {
+  const handleEditInvoice = (invoice: Invoice) => {
     // Check if this is already a full InvoiceData object (from drafts)
     let editData: InvoiceData;
     
@@ -273,7 +273,7 @@ const Invoices = () => {
     setShowTrash(false);
   };
 
-  const handleDeleteInvoice = (invoice) => {
+  const handleDeleteInvoice = (invoice: Invoice) => {
     if (window.confirm(`Are you sure you want to move invoice ${invoice.invoiceNumber} to trash?`)) {
       setTrashedInvoices(prev => [...prev, { ...invoice, deletedAt: new Date().toISOString() }]);
       // In a real app, you would remove from main invoices list
@@ -290,7 +290,7 @@ const Invoices = () => {
     }
   };
 
-  const handleRestoreInvoice = (invoice) => {
+  const handleRestoreInvoice = (invoice: Invoice) => {
     setTrashedInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
     // In a real app, you would add back to main invoices list
     
@@ -305,7 +305,7 @@ const Invoices = () => {
     });
   };
 
-  const handlePermanentDelete = (invoice) => {
+  const handlePermanentDelete = (invoice: Invoice) => {
     if (window.confirm(`Are you sure you want to permanently delete invoice ${invoice.invoiceNumber}? This cannot be undone.`)) {
       setTrashedInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
       showSuccessMessage(`Invoice ${invoice.invoiceNumber} permanently deleted`);
