@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* React Big Calendar Styles */
+.rbc-calendar {
+  font-family: inherit;
+  background-color: white;
+}
+
+.rbc-header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #374151;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rbc-month-view {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.rbc-date-cell {
+  background-color: white;
+  position: relative;
+  min-height: 120px;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rbc-off-range-bg {
+  background: #f9fafb;
+  opacity: 0.5;
+}
+
+.rbc-today {
+  background: white;
+}
+
+/* Show vertical lines between days */
+.rbc-month-row {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rbc-date-cell + .rbc-date-cell {
+  border-left: 1px solid #e2e8f0;
+}
+
+/* Reset ALL event styling to prevent circular badges */
+.rbc-event,
+.rbc-event-custom,
+.rbc-event-content,
+.rbc-event-label {
+  all: unset !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Ensure no circular styling anywhere */
+.rbc-month-view .rbc-event,
+.rbc-month-view .rbc-event-content,
+.rbc-month-view .rbc-event-label {
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Remove any default event hover effects */
+.rbc-event:hover,
+.rbc-event:focus,
+.rbc-event:active {
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.rbc-date-cell:hover {
+  background-color: #fdf2f8;
+  transition: background-color 0.2s ease;
+}
+
+.rbc-slot-selection {
+  background: rgba(139, 92, 246, 0.1);
+  border: 2px solid #8b5cf6;
+}
+
+/* Hide default toolbar */
+.rbc-toolbar {
+  display: none;
+}
