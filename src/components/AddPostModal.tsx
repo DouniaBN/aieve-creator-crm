@@ -34,7 +34,9 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
     title: '',
     platforms: [] as string[],
     status: 'draft' as ContentPost['status'],
-    scheduled_date: initialDate ? date.toISOString().split('T')[0] : ''
+    scheduled_date: initialDate ? date.toISOString().split('T')[0] : '',
+    scheduled_time: '',
+    content: ''
   });
 
   const platformOptions = [
@@ -76,11 +78,20 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
       console.log('Form data:', formData);
       
       for (const platform of formData.platforms) {
+        // Combine date and time if both are provided
+        let scheduledDateTime = undefined;
+        if (formData.scheduled_date) {
+          const dateTimeString = formData.scheduled_time 
+            ? `${formData.scheduled_date}T${formData.scheduled_time}:00`
+            : `${formData.scheduled_date}T12:00:00`;
+          scheduledDateTime = new Date(dateTimeString).toISOString();
+        }
+
         const postData: Omit<ContentPost, 'id' | 'user_id' | 'created_at'> = {
           title: formData.title,
           platform: platform as ContentPost['platform'],
           status: formData.status,
-          scheduled_date: formData.scheduled_date ? new Date(formData.scheduled_date).toISOString() : undefined,
+          scheduled_date: scheduledDateTime,
           project_id: undefined
         };
         console.log('Creating post for platform:', platform, 'with data:', postData);
@@ -105,7 +116,9 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
         title: '',
         platforms: [],
         status: 'draft',
-        scheduled_date: ''
+        scheduled_date: '',
+        scheduled_time: '',
+        content: ''
       });
     } catch (error) {
       console.error('Error creating post:', error);
@@ -203,7 +216,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -213,6 +226,28 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+            <input
+              type="time"
+              value={formData.scheduled_time}
+              onChange={(e) => setFormData(prev => ({ ...prev, scheduled_time: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+              placeholder="Select time"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <textarea
+              value={formData.content}
+              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 min-h-[80px] resize-none"
+              placeholder="Add any notes or content for this post..."
+              rows={3}
+            />
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Instagram, Youtube, Mail, Globe, FileText, Linkedin, ChevronLeft, ChevronRight, X, Clock, Calendar as CalendarIcon, User } from 'lucide-react';
+import { Plus, Instagram, Youtube, Mail, Globe, FileText, Linkedin, ChevronLeft, ChevronRight, X, Clock, Calendar as CalendarIcon, User, Edit2, Save, Trash2 } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { ContentPost } from '../lib/supabase';
 import { Card, CardContent } from './ui/card';
@@ -19,11 +19,13 @@ interface ContentCalendarProps {
 }
 
 const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
-  const { contentPosts, projects } = useSupabase();
+  const { contentPosts, projects, updateContentPost, deleteContentPost, fetchContentPosts } = useSupabase();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedPost, setSelectedPost] = useState<ContentPost | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPost, setEditedPost] = useState<Partial<ContentPost>>({});
 
   // Platform icons mapping
   const platformIcons = {
@@ -48,6 +50,25 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
     linkedin: 'bg-blue-50 text-blue-700 border-blue-200',
     blog: 'bg-purple-50 text-purple-700 border-purple-200'
   };
+
+  // Platform options for editing (matching AddPostModal)
+  const platformOptions = [
+    { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
+    { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
+    { value: 'pinterest', label: 'Pinterest', icon: Globe, color: 'text-red-600' },
+    { value: 'tiktok', label: 'TikTok', icon: FileText, color: 'text-black' },
+    { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
+    { value: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
+    { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
+    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-purple-600' }
+  ];
+
+  // Status options for editing (matching AddPostModal)
+  const statusOptions = [
+    { value: 'draft', label: 'Draft', color: 'text-gray-600' },
+    { value: 'scheduled', label: 'Scheduled', color: 'text-blue-600' },
+    { value: 'published', label: 'Published', color: 'text-green-600' }
+  ];
 
   // Get project name by ID
   const getProjectName = (projectId: string | null) => {
@@ -98,12 +119,84 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   // Modal functions
   const openPostModal = (post: ContentPost) => {
     setSelectedPost(post);
+    // Initialize editedPost with proper structure for edit mode
+    const scheduledDate = post.scheduled_date ? new Date(post.scheduled_date) : null;
+    setEditedPost({
+      ...post,
+      scheduled_date: scheduledDate ? scheduledDate.toISOString().split('T')[0] : '',
+      scheduled_time: scheduledDate ? scheduledDate.toTimeString().slice(0, 5) : ''
+    });
     setShowPostModal(true);
+    setIsEditing(false);
   };
 
   const closePostModal = () => {
     setShowPostModal(false);
     setSelectedPost(null);
+    setIsEditing(false);
+    setEditedPost({});
+  };
+
+  const startEditing = () => {
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditedPost(selectedPost || {});
+  };
+
+  const saveChanges = async () => {
+    if (!selectedPost || !editedPost) return;
+    
+    try {
+      // Combine date and time if both are provided
+      let scheduledDateTime = undefined;
+      if (editedPost.scheduled_date) {
+        const dateTimeString = editedPost.scheduled_time 
+          ? `${editedPost.scheduled_date}T${editedPost.scheduled_time}:00`
+          : `${editedPost.scheduled_date}T12:00:00`;
+        scheduledDateTime = new Date(dateTimeString).toISOString();
+      }
+
+      // Only send valid database fields (content column doesn't exist in database)
+      const updateData = {
+        title: editedPost.title,
+        platform: editedPost.platform,
+        status: editedPost.status,
+        project_id: editedPost.project_id,
+        scheduled_date: scheduledDateTime
+      };
+
+      // Update in database
+      await updateContentPost(selectedPost.id, updateData);
+      
+      // Update local state
+      setSelectedPost({ ...selectedPost, ...updateData });
+      
+      // Refresh the calendar data to ensure UI is updated
+      await fetchContentPosts();
+      
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating post:', error);
+      alert('Failed to update post. Please try again.');
+    }
+  };
+
+  const deletePost = async () => {
+    if (!selectedPost) return;
+    
+    const confirmDelete = window.confirm('Are you sure you want to delete this post? This action cannot be undone.');
+    if (!confirmDelete) return;
+    
+    try {
+      await deleteContentPost(selectedPost.id);
+      closePostModal();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Failed to delete post. Please try again.');
+    }
   };
 
   // Expanded dates functions
@@ -121,23 +214,8 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Add Post and Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold text-gray-900">Content Calendar</h2>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToNextMonth}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-        
+      {/* Header with Add Post */}
+      <div className="flex items-center justify-end">
         <Button
           onClick={onAddPost}
           className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
@@ -150,11 +228,28 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
       {/* Calendar Grid */}
       <Card className="bg-white/60 backdrop-blur-sm border border-gray-200/50 shadow-sm">
         <CardContent className="p-6">
-          {/* Month Header */}
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">
-              {format(currentDate, 'MMMM yyyy')}
-            </h3>
+          {/* Month Header with Navigation */}
+          <div className="flex items-center justify-between mb-6">
+            {/* Today Button */}
+            <Button variant="outline" size="sm" onClick={goToToday}>
+              Today
+            </Button>
+            
+            {/* Month Navigation */}
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={goToPreviousMonth} className="p-2">
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <h3 className="text-xl font-semibold text-gray-900 min-w-[140px] text-center">
+                {format(currentDate, 'MMMM yyyy')}
+              </h3>
+              <Button variant="ghost" size="sm" onClick={goToNextMonth} className="p-2">
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            {/* Empty space for balance */}
+            <div className="w-[60px]"></div>
           </div>
 
           {/* Day Headers */}
@@ -286,100 +381,210 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
       {/* Post Details Modal */}
       {showPostModal && selectedPost && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Post Details</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closePostModal}
-                className="h-8 w-8 p-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {isEditing ? 'Edit Post' : 'Post Details'}
+              </h3>
+              <div className="flex items-center space-x-2">
+                {!isEditing && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditing}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={closePostModal}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-4">
-              {/* Post Title */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Post Title</label>
-                <div className="text-gray-900 font-medium">{selectedPost.title}</div>
-              </div>
-
-              {/* Platform */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Platform</label>
-                <div className="flex items-center space-x-2">
-                  {(() => {
-                    const PlatformIcon = platformIcons[selectedPost.platform as keyof typeof platformIcons];
-                    const platformColor = platformColors[selectedPost.platform as keyof typeof platformColors];
-                    return (
-                      <Badge variant="outline" className={`${platformColor}`}>
-                        <PlatformIcon className="w-4 h-4 mr-2" />
-                        {selectedPost.platform}
-                      </Badge>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Scheduled Date & Time */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Scheduled Date & Time</label>
-                <div className="flex items-center space-x-2 text-gray-900">
-                  <CalendarIcon className="w-4 h-4 text-gray-500" />
-                  <span>
-                    {selectedPost.scheduled_date 
-                      ? format(parseISO(selectedPost.scheduled_date), 'PPP p') 
-                      : 'Not scheduled'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Status</label>
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedPost.status === 'draft' ? 'bg-gray-100 text-gray-700' :
-                    selectedPost.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                    'bg-green-100 text-green-700'
-                  }`}>
-                    {selectedPost.status}
-                  </span>
-                </div>
-              </div>
-
-              {/* Project */}
-              {selectedPost.project_id && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-2">Project</label>
-                  <div className="flex items-center space-x-2 text-purple-600">
-                    <User className="w-4 h-4" />
-                    <span className="font-medium">{getProjectName(selectedPost.project_id)}</span>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {isEditing ? (
+                /* Edit Mode - AddPostModal Style */
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Post Title</label>
+                    <input
+                      type="text"
+                      value={editedPost.title || ''}
+                      onChange={(e) => setEditedPost({ ...editedPost, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                      placeholder="Enter post title"
+                      required
+                    />
                   </div>
-                </div>
-              )}
 
-              {/* Content Preview */}
-              {selectedPost.content && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-2">Content Preview</label>
-                  <div className="bg-gray-50 rounded-md p-3 text-sm text-gray-900 max-h-32 overflow-y-auto">
-                    {selectedPost.content}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                    <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
+                      {platformOptions.map((option) => {
+                        const Icon = option.icon;
+                        const isSelected = editedPost.platform === option.value;
+                        return (
+                          <label
+                            key={option.value}
+                            className={`flex items-center p-3 border rounded-xl cursor-pointer transition-all duration-200 ${
+                              isSelected
+                                ? 'border-purple-500 bg-purple-50'
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              checked={isSelected}
+                              onChange={() => setEditedPost({ ...editedPost, platform: option.value })}
+                              className="sr-only"
+                            />
+                            <Icon className={`w-5 h-5 mr-2 ${option.color}`} />
+                            <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                            {isSelected && (
+                              <div className="ml-auto w-2 h-2 rounded-full bg-purple-500" />
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      value={editedPost.status || selectedPost.status}
+                      onChange={(e) => setEditedPost({ ...editedPost, status: e.target.value as ContentPost['status'] })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                    >
+                      {statusOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                    <div className="relative">
+                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <input
+                        type="date"
+                        value={editedPost.scheduled_date || ''}
+                        onChange={(e) => setEditedPost({ ...editedPost, scheduled_date: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                    <input
+                      type="time"
+                      value={editedPost.scheduled_time || ''}
+                      onChange={(e) => setEditedPost({ ...editedPost, scheduled_time: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                      placeholder="Select time"
+                    />
+                  </div>
+
+                </>
+              ) : (
+                /* View Mode */
+                <>
+                  {/* Post Title */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Post Title</label>
+                    <div className="text-gray-900 font-medium">{selectedPost.title}</div>
+                  </div>
+
+                  {/* Platform */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Platform</label>
+                    <div className="flex items-center space-x-2">
+                      {(() => {
+                        const PlatformIcon = platformIcons[selectedPost.platform as keyof typeof platformIcons];
+                        const platformColor = platformColors[selectedPost.platform as keyof typeof platformColors];
+                        return (
+                          <Badge variant="outline" className={`${platformColor}`}>
+                            <PlatformIcon className="w-4 h-4 mr-2" />
+                            {selectedPost.platform}
+                          </Badge>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Scheduled Date & Time */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Scheduled Date & Time</label>
+                    <div className="flex items-center space-x-2 text-gray-900">
+                      <CalendarIcon className="w-4 h-4 text-gray-500" />
+                      <span>
+                        {selectedPost.scheduled_date 
+                          ? format(parseISO(selectedPost.scheduled_date), 'PPP p') 
+                          : 'Not scheduled'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-2">Status</label>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedPost.status === 'draft' ? 'bg-gray-100 text-gray-700' :
+                        selectedPost.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {selectedPost.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Project */}
+                  {selectedPost.project_id && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 block mb-2">Project</label>
+                      <div className="flex items-center space-x-2 text-purple-600">
+                        <User className="w-4 h-4" />
+                        <span className="font-medium">{getProjectName(selectedPost.project_id)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                </>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
-              <Button variant="outline" onClick={closePostModal}>
-                Close
-              </Button>
+            <div className="flex-shrink-0 flex justify-end space-x-3 p-6 border-t border-gray-200 bg-white rounded-b-lg">
+              {isEditing ? (
+                <>
+                  <Button variant="outline" onClick={cancelEditing}>
+                    Cancel
+                  </Button>
+                  <Button onClick={saveChanges} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={deletePost} className="bg-red-600 hover:bg-red-700 text-white">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Post
+                </Button>
+              )}
             </div>
           </div>
         </div>

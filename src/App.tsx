@@ -38,7 +38,7 @@ function AppContent() {
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'projects', name: 'Projects', icon: Calendar },
+    { id: 'projects', name: 'Calendar', icon: Calendar },
     { id: 'brand-deals', name: 'Brand Deals', icon: Layout },
     { id: 'invoices', name: 'Invoices', icon: FileText },
     { id: 'settings', name: 'Settings', icon: Settings },
