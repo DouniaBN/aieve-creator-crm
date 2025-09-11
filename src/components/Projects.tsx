@@ -19,11 +19,7 @@ const Projects = () => {
   };
 
   const handlePostAdded = () => {
-    console.log('=== POST ADDED CALLBACK TRIGGERED ===');
-    console.log('Refreshing content posts...');
-    fetchContentPosts().then(() => {
-      console.log('Content posts refresh completed');
-    }).catch(error => {
+    fetchContentPosts().catch(error => {
       console.error('Error refreshing content posts:', error);
     });
   };
@@ -31,7 +27,7 @@ const Projects = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Content Calendar</h1>

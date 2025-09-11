@@ -74,8 +74,6 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
     try {
       // Create a post for each selected platform
-      console.log('Creating posts for platforms:', formData.platforms);
-      console.log('Form data:', formData);
       
       for (const platform of formData.platforms) {
         // Combine date and time if both are provided
@@ -94,7 +92,6 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
           scheduled_date: scheduledDateTime,
           project_id: undefined
         };
-        console.log('Creating post for platform:', platform, 'with data:', postData);
         await createContentPost(postData);
       }
       
@@ -102,7 +99,6 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
       showSuccessMessage(`Successfully created ${formData.platforms.length} post${formData.platforms.length > 1 ? 's' : ''} for ${formData.title}`);
       
       // Force refresh of content posts to update calendar
-      console.log('Post creation completed, refreshing content posts...');
       await fetchContentPosts();
       
       // Notify parent component

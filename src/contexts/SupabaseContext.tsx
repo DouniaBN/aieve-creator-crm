@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase, Project, Invoice, BrandDeal, ContentPost } from '../lib/supabase'
 
@@ -85,7 +85,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   }
 
   // Data fetching functions
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     if (!user) return
     
     const { data, error } = await supabase
@@ -98,9 +98,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else {
       setProjects(data || [])
     }
-  }
+  }, [user])
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     if (!user) return
     
     const { data, error } = await supabase
@@ -113,9 +113,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else {
       setInvoices(data || [])
     }
-  }
+  }, [user])
 
-  const fetchBrandDeals = async () => {
+  const fetchBrandDeals = useCallback(async () => {
     if (!user) return
     
     const { data, error } = await supabase
@@ -128,9 +128,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else {
       setBrandDeals(data || [])
     }
-  }
+  }, [user])
 
-  const fetchContentPosts = async () => {
+  const fetchContentPosts = useCallback(async () => {
     if (!user) return
     
     const { data, error } = await supabase
@@ -143,7 +143,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     } else {
       setContentPosts(data || [])
     }
-  }
+  }, [user])
 
   // CRUD operations for projects
   const createProject = async (project: Omit<Project, 'id' | 'user_id' | 'created_at'>) => {

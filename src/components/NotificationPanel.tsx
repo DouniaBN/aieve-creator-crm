@@ -92,8 +92,7 @@ const NotificationPanel = () => {
     if (!notification.read) {
       markNotificationAsRead(notification.id);
     }
-    // In a real app, you would navigate to the related item
-    console.log('Navigate to:', notification.relatedType, notification.relatedId);
+    // TODO: Navigate to related content based on notification type
   };
 
   return (
