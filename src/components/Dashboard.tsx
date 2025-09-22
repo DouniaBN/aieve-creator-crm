@@ -1,13 +1,17 @@
-import React, { useMemo } from 'react';
-import { Calendar, DollarSign, Clock, CheckCircle, AlertCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin, Plus, X } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { Checkbox } from './ui/checkbox';
+import { Input } from './ui/input';
 
 interface DashboardProps {
   onNavigateToCalendar?: () => void;
+  onNavigateToInvoices?: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
-  const { projects, invoices, contentPosts, brandDeals } = useSupabase();
+const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateToInvoices }) => {
+  const { projects, invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask } = useSupabase();
+  const [newTaskText, setNewTaskText] = useState('');
 
   // Memoize date calculations to prevent recreating on every render
   const dateRanges = useMemo(() => {
@@ -75,6 +79,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
         days: Math.floor((new Date().getTime() - new Date(inv.due_date || new Date()).getTime()) / (1000 * 60 * 60 * 24))
       }));
 
+    // Overdue calculations
+    const overdueInvoices = (invoices || []).filter(inv => inv && inv.status === 'overdue');
+    const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+    const overdueCount = overdueInvoices.length;
+
     return {
       activeBrandDealsThisWeek,
       contentPostsThisMonth,
@@ -82,7 +91,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
       totalRevenue,
       pendingAmount,
       pendingCount,
-      overdue
+      overdue,
+      overdueAmount,
+      overdueCount
     };
   }, [brandDeals, contentPosts, invoices, dateRanges]);
 
@@ -104,12 +115,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
       bgColor: 'from-green-50 to-teal-50'
     },
     {
-      title: 'Pending Payments',
-      value: `$${calculations.pendingAmount.toLocaleString()}`,
-      change: `${calculations.pendingCount} invoices`,
+      title: 'Overdue Invoices',
+      value: '3',
+      change: 'need attention',
       icon: Clock,
-      color: 'from-yellow-500 to-orange-500',
-      bgColor: 'from-yellow-50 to-orange-50'
+      color: 'from-red-500 to-red-600',
+      bgColor: 'from-red-50 to-red-100',
+      onClick: onNavigateToInvoices
     },
     {
       title: 'Content Posts',
@@ -148,13 +160,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
     return 'Good evening';
   }, [dateRanges.today]);
 
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newTaskText.trim()) {
+      try {
+        await createTask({ text: newTaskText.trim(), completed: false });
+        setNewTaskText('');
+      } catch (error) {
+        console.error('Failed to create task:', error);
+      }
+    }
+  };
+
+  const handleToggleTask = async (taskId: string, completed: boolean) => {
+    try {
+      await updateTask(taskId, { completed: !completed });
+    } catch (error) {
+      console.error('Failed to update task:', error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    }
+  };
+
 
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-8">
+      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{greeting}, Sarah</h1>
-        <p className="text-gray-600">You have {(projects || []).filter(p => p && p.status === 'in-progress').length} projects in progress and {calculations.overdue.length} overdue payments to follow up on.</p>
+        <p className="text-gray-600">You have {(projects || []).filter(p => p && p.status === 'in-progress').length} projects in progress and {(tasks || []).filter(t => !t.completed).length} pending tasks to complete.</p>
       </div>
 
       {/* Stats Grid */}
@@ -163,13 +203,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
           return (
             <div
               key={index}
-              className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300"
+              className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300 ${
+                stat.onClick ? 'cursor-pointer' : ''
+              }`}
+              onClick={stat.onClick}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-full text-center">
                   <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
                   <p className="text-sm text-gray-600">{stat.title}</p>
-                  <p className="text-xs text-green-600 mt-2">{stat.change}</p>
+                  <p className={`text-xs mt-2 ${
+                    stat.title === 'Overdue Invoices' ? 'text-red-600' : 
+                    stat.title === 'Active Brand Deals' || stat.title === 'Content Posts' ? 'text-gray-400' : 
+                    'text-green-600'
+                  }`}>{stat.change}</p>
                 </div>
               </div>
             </div>
@@ -235,34 +282,62 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar }) => {
           </div>
         </div>
 
-        {/* Overdue Payments */}
+        {/* Tasks */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Overdue Payments</h2>
-            <AlertCircle className="w-5 h-5 text-red-500" />
+            <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
+            <CheckCircle className="w-5 h-5 text-purple-500" />
           </div>
-          <div className="space-y-4">
-            {calculations.overdue.map((payment, index) => (
-              <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-red-50/50 border border-red-200/50">
-                <div>
-                  <h3 className="font-medium text-gray-900">{payment.client}</h3>
-                  <p className="text-sm text-red-600">{payment.days} days overdue</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900">{payment.amount}</p>
-                  <button className="text-xs text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200">
-                    Send Reminder
-                  </button>
-                </div>
+          
+          {/* Add new task form */}
+          <form onSubmit={handleAddTask} className="mb-4">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Add a new task..."
+                value={newTaskText}
+                onChange={(e) => setNewTaskText(e.target.value)}
+                className="flex-1 text-sm"
+                maxLength={50}
+              />
+              <button
+                type="submit"
+                disabled={!newTaskText.trim()}
+                className="flex items-center justify-center w-10 h-10 rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+
+          {/* Tasks list */}
+          <div className="space-y-3">
+            {tasks.map((task) => (
+              <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-200">
+                <Checkbox
+                  checked={task.completed}
+                  onCheckedChange={() => handleToggleTask(task.id, task.completed)}
+                  className="flex-shrink-0"
+                />
+                <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                  {task.text}
+                </span>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 text-gray-400 hover:text-red-600 transition-colors duration-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             ))}
+            {tasks.length === 0 && (
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No tasks yet</p>
+                <p className="text-sm text-gray-500 mt-1">Add a task to get started!</p>
+              </div>
+            )}
           </div>
-          {calculations.overdue.length === 0 && (
-            <div className="text-center py-8">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <p className="text-gray-600">All payments are up to date! 🎉</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

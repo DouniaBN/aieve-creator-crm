@@ -47,7 +47,10 @@ function AppContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard onNavigateToCalendar={() => setActiveTab('projects')} />;
+        return <Dashboard 
+          onNavigateToCalendar={() => setActiveTab('projects')} 
+          onNavigateToInvoices={() => setActiveTab('invoices')}
+        />;
       case 'projects':
         return <Projects />;
       case 'brand-deals':
@@ -57,7 +60,10 @@ function AppContent() {
       case 'settings':
         return <SettingsPage />;
       default:
-        return <Dashboard onNavigateToCalendar={() => setActiveTab('projects')} />;
+        return <Dashboard 
+          onNavigateToCalendar={() => setActiveTab('projects')} 
+          onNavigateToInvoices={() => setActiveTab('invoices')}
+        />;
     }
   };
 
@@ -159,14 +165,14 @@ function AppContent() {
           </button>
         </div>
         
-        <div className="hidden lg:block sticky top-0 z-30 p-4" style={{ backgroundColor: '#FAFAFA' }}>
+        <div className="hidden lg:block sticky top-0 z-30 px-4 py-1" style={{ backgroundColor: '#FAFAFA' }}>
           <div className="flex justify-end">
             <NotificationPanel />
           </div>
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 sm:p-6 lg:p-4">
           {renderContent()}
         </main>
       </div>

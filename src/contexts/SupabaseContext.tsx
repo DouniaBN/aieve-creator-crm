@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase, Project, Invoice, BrandDeal, ContentPost } from '../lib/supabase'
+import { supabase, Project, Invoice, BrandDeal, ContentPost, Task } from '../lib/supabase'
 
 interface SupabaseContextType {
   user: User | null
@@ -13,12 +13,14 @@ interface SupabaseContextType {
   invoices: Invoice[]
   brandDeals: BrandDeal[]
   contentPosts: ContentPost[]
+  tasks: Task[]
   
   // Data operations
   fetchProjects: () => Promise<void>
   fetchInvoices: () => Promise<void>
   fetchBrandDeals: () => Promise<void>
   fetchContentPosts: () => Promise<void>
+  fetchTasks: () => Promise<void>
   
   // CRUD operations
   createProject: (project: Omit<Project, 'id' | 'user_id' | 'created_at'>) => Promise<void>
@@ -36,6 +38,10 @@ interface SupabaseContextType {
   createContentPost: (post: Omit<ContentPost, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateContentPost: (id: string, updates: Partial<ContentPost>) => Promise<void>
   deleteContentPost: (id: string) => Promise<void>
+
+  createTask: (task: Omit<Task, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>
+  deleteTask: (id: string) => Promise<void>
 }
 
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined)
@@ -58,6 +64,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [brandDeals, setBrandDeals] = useState<BrandDeal[]>([])
   const [contentPosts, setContentPosts] = useState<ContentPost[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
 
   useEffect(() => {
     // Get initial session
@@ -142,6 +149,22 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.error('Error fetching content posts:', error)
     } else {
       setContentPosts(data || [])
+    }
+  }, [user])
+
+  const fetchTasks = useCallback(async () => {
+    if (!user) return
+    
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5)
+    
+    if (error) {
+      console.error('Error fetching tasks:', error)
+    } else {
+      setTasks(data || [])
     }
   }, [user])
 
@@ -323,6 +346,50 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }
 
+  // CRUD operations for tasks
+  const createTask = async (task: Omit<Task, 'id' | 'user_id' | 'created_at'>) => {
+    if (!user) return
+    
+    const { error } = await supabase
+      .from('tasks')
+      .insert([{ ...task, user_id: user.id }])
+    
+    if (error) {
+      console.error('Error creating task:', error)
+      throw error
+    } else {
+      await fetchTasks()
+    }
+  }
+
+  const updateTask = async (id: string, updates: Partial<Task>) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update(updates)
+      .eq('id', id)
+    
+    if (error) {
+      console.error('Error updating task:', error)
+      throw error
+    } else {
+      await fetchTasks()
+    }
+  }
+
+  const deleteTask = async (id: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id)
+    
+    if (error) {
+      console.error('Error deleting task:', error)
+      throw error
+    } else {
+      await fetchTasks()
+    }
+  }
+
   // Fetch data when user changes
   useEffect(() => {
     if (user) {
@@ -330,13 +397,15 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       fetchInvoices()
       fetchBrandDeals()
       fetchContentPosts()
+      fetchTasks()
     } else {
       setProjects([])
       setInvoices([])
       setBrandDeals([])
       setContentPosts([])
+      setTasks([])
     }
-  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts])
+  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks])
 
   const value = {
     user,
@@ -347,10 +416,12 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     invoices,
     brandDeals,
     contentPosts,
+    tasks,
     fetchProjects,
     fetchInvoices,
     fetchBrandDeals,
     fetchContentPosts,
+    fetchTasks,
     createProject,
     updateProject,
     deleteProject,
@@ -363,6 +434,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     createContentPost,
     updateContentPost,
     deleteContentPost,
+    createTask,
+    updateTask,
+    deleteTask,
   }
 
   return (

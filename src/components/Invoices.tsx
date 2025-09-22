@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash, Send } from 'lucide-react';
-import { useAppContext, Invoice } from '../contexts/AppContext';
+import { useSupabase } from '../contexts/SupabaseContext';
+import { useAppContext } from '../contexts/AppContext';
+import { Invoice } from '../lib/supabase';
 import StatusDropdown from './StatusDropdown';
 import InvoiceGenerator from './InvoiceGenerator';
 import InvoiceDrafts from './InvoiceDrafts';
@@ -8,11 +10,22 @@ import TrashSection from './TrashSection';
 import { InvoiceData } from './InvoiceGenerator';
 
 const Invoices = () => {
-  const { invoices, updateInvoiceStatus, addNotification, showSuccessMessage } = useAppContext();
+  const { invoices, updateInvoice } = useSupabase();
+  const { addNotification, showSuccessMessage } = useAppContext();
   const [showGenerator, setShowGenerator] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+
+  // Wrapper function to match the expected signature
+  const updateInvoiceStatus = async (id: string, status: Invoice['status']) => {
+    try {
+      await updateInvoice(id, { status });
+      showSuccessMessage('Invoice status updated!');
+    } catch (error) {
+      console.error('Failed to update invoice status:', error);
+    }
+  };
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingStates, setLoadingStates] = useState<Record<number, Record<string, boolean>>>({});
@@ -49,9 +62,13 @@ const Invoices = () => {
     },
   };
 
+  // Debug logging
+  console.log('Invoices page data:', invoices);
+  console.log('Overdue invoices in Invoices page:', invoices.filter(inv => inv.status === 'overdue'));
+
   const filteredInvoices = invoices.filter(invoice => {
     const matchesStatus = filterStatus === 'all' || invoice.status === filterStatus;
-    const matchesSearch = invoice.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.project.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
@@ -328,7 +345,7 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-8">
+      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>

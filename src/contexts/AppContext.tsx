@@ -47,6 +47,7 @@ export interface Invoice {
   project: string;
 }
 
+
 interface AppContextType {
   projects: Project[];
   brandDeals: BrandDeal[];
@@ -246,6 +247,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       project: 'Product Unboxing Series'
     }
   ]);
+
 
   const showSuccessMessage = (message: string) => {
     setSuccessMessage(message);

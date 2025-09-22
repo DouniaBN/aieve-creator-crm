@@ -57,3 +57,11 @@ export interface ContentPost {
   scheduled_date?: string
   created_at: string
 }
+
+export interface Task {
+  id: string
+  user_id: string
+  text: string
+  completed: boolean
+  created_at: string
+}
