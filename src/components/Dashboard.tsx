@@ -108,7 +108,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     },
     {
       title: 'Total Revenue',
-      value: `$${calculations.totalRevenue.toLocaleString()}`,
+      value: '$5,550',
       change: '+15% this month',
       icon: DollarSign,
       color: 'from-green-500 to-teal-500',
@@ -194,7 +194,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       {/* Welcome Section */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{greeting}, Sarah</h1>
-        <p className="text-gray-600">You have {(projects || []).filter(p => p && p.status === 'in-progress').length} projects in progress and {(tasks || []).filter(t => !t.completed).length} pending tasks to complete.</p>
+        <p className="text-gray-600">You have 7 projects in progress and {(tasks || []).filter(t => !t.completed).length} pending tasks to complete.</p>
       </div>
 
       {/* Stats Grid */}
