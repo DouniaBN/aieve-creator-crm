@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Filter, Search, Eye, Handshake, CheckCircle, Upload, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Filter, Search, Eye, Handshake, CheckCircle, Upload, X, MoreHorizontal, Copy, EyeOff } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import StatusDropdown from './StatusDropdown';
 
@@ -8,6 +8,10 @@ const BrandDeals = () => {
   const [showModal, setShowModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [hiddenDeals, setHiddenDeals] = useState<Set<string>>(new Set());
+  const [showHidden, setShowHidden] = useState(false);
   const [newDeal, setNewDeal] = useState({
     brand_name: '',
     contact_name: '',
@@ -54,8 +58,33 @@ const BrandDeals = () => {
     const matchesStatus = filterStatus === 'all' || deal.status === filterStatus;
     const matchesSearch = deal.brand_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          deal.deliverables.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+    const isHidden = hiddenDeals.has(deal.id);
+
+    // If showing hidden deals, only show hidden ones
+    if (showHidden) {
+      return isHidden && matchesStatus && matchesSearch;
+    }
+
+    // Otherwise, show only non-hidden deals
+    return !isHidden && matchesStatus && matchesSearch;
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.dropdown-container')) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   const handleCreateDeal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,44 +124,85 @@ const BrandDeals = () => {
     }
   };
 
+  const handleDuplicateDeal = async (dealId: string) => {
+    try {
+      const dealToDuplicate = brandDeals.find(deal => deal.id === dealId);
+      if (dealToDuplicate) {
+        const duplicatedDeal = {
+          brand_name: `${dealToDuplicate.brand_name} (Copy)`,
+          contact_name: dealToDuplicate.contact_name,
+          contact_email: dealToDuplicate.contact_email,
+          deliverables: dealToDuplicate.deliverables,
+          fee: dealToDuplicate.fee,
+          status: dealToDuplicate.status,
+          start_date: dealToDuplicate.start_date,
+          end_date: dealToDuplicate.end_date
+        };
+        await createBrandDeal(duplicatedDeal);
+      }
+    } catch (error) {
+      console.error('Error duplicating brand deal:', error);
+    }
+  };
+
+  const handleHideDeal = (dealId: string) => {
+    setHiddenDeals(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dealId)) {
+        newSet.delete(dealId);
+      } else {
+        newSet.add(dealId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Brand Deals</h1>
-            <p className="text-gray-600 mt-1">Track and manage your brand partnerships</p>
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Deal
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search deals..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      <div className="flex justify-between items-center pt-4 mb-6">
+        <div className="flex items-center space-x-4">
+          {showSearchBar && (
+            <div className="w-64">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search deals..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  autoFocus
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+          )}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => {
+                setShowSearchBar(!showSearchBar);
+                if (!showSearchBar) {
+                  setSearchTerm('');
+                }
+              }}
+              className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setShowHidden(!showHidden)}
+              className={`p-2 rounded-lg transition-colors duration-200 ${
+                showHidden
+                  ? 'text-purple-600 bg-purple-50'
+                  : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+              }`}
+              title={showHidden ? 'Show active deals' : 'Show hidden deals'}
+            >
+              {showHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+            <Filter className="w-5 h-5 text-gray-400" />
             <select
-              className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+              className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
@@ -143,6 +213,13 @@ const BrandDeals = () => {
             </select>
           </div>
         </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center px-6 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-lg"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          New Deal
+        </button>
       </div>
 
       {/* Deals Table */}
@@ -156,7 +233,7 @@ const BrandDeals = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200/50">
@@ -185,16 +262,73 @@ const BrandDeals = () => {
                     <div className="text-gray-500">{deal.contact_email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-[#1c2d5a] hover:bg-purple-50 rounded-lg transition-colors duration-200">
-                        <Eye className="w-4 h-4" />
+                    <div className="relative dropdown-container">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdown(openDropdown === deal.id ? null : deal.id);
+                        }}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-[#1c2d5a] hover:bg-purple-50 rounded-lg transition-colors duration-200">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200" onClick={() => handleDeleteDeal(deal.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+
+                      {openDropdown === deal.id && (
+                        <div
+                          className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={() => {
+                              setOpenDropdown(null);
+                              // Handle edit
+                            }}
+                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenDropdown(null);
+                              handleDuplicateDeal(deal.id);
+                            }}
+                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Duplicate
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenDropdown(null);
+                              handleHideDeal(deal.id);
+                            }}
+                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                          >
+                            {hiddenDeals.has(deal.id) ? (
+                              <>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Unhide
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-4 h-4 mr-2" />
+                                Hide
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setOpenDropdown(null);
+                              handleDeleteDeal(deal.id);
+                            }}
+                            className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -212,9 +346,9 @@ const BrandDeals = () => {
           <p className="text-gray-600 mb-6">Start building partnerships with brands</p>
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
+            className="inline-flex items-center px-6 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-lg"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             New Deal
           </button>
         </div>
