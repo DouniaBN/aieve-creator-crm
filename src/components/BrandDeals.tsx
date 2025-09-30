@@ -171,6 +171,15 @@ const BrandDeals = () => {
     });
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -247,7 +256,7 @@ const BrandDeals = () => {
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                <th className="px-2 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200/50">
@@ -256,7 +265,7 @@ const BrandDeals = () => {
                 <tr key={deal.id} className="hover:bg-gray-50/50 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">{deal.brand_name}</div>
-                    <div className="text-sm text-gray-500">{deal.start_date} - {deal.end_date}</div>
+                    <div className="text-xs text-gray-500">{formatDate(deal.start_date)} to {formatDate(deal.end_date)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {deal.deliverables}
@@ -275,7 +284,7 @@ const BrandDeals = () => {
                     <div>{deal.contact_name}</div>
                     <div className="text-gray-500">{deal.contact_email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-2 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="relative dropdown-container">
                       <button
                         onClick={(e) => {
