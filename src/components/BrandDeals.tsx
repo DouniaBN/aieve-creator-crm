@@ -18,36 +18,50 @@ const BrandDeals = () => {
     contact_email: '',
     deliverables: '',
     fee: 0,
-    status: 'negotiation' as const,
+    status: 'proposal_sent' as const,
     start_date: '',
     end_date: ''
   });
 
   const statusConfig = {
-    negotiation: { 
-      label: 'Negotiation', 
-      icon: Handshake,
+    negotiation: {
+      label: 'Negotiation',
       color: 'bg-orange-100 text-orange-800',
       hoverColor: 'hover:bg-orange-200',
       selectedColor: 'bg-orange-200 border-orange-300'
     },
-    confirmed: { 
-      label: 'Confirmed', 
-      icon: CheckCircle,
+    proposal_sent: {
+      label: 'Proposal Sent',
       color: 'bg-blue-100 text-blue-800',
       hoverColor: 'hover:bg-blue-200',
       selectedColor: 'bg-blue-200 border-blue-300'
     },
-    completed: { 
-      label: 'Completed', 
-      icon: Upload,
+    posted: {
+      label: 'Posted',
       color: 'bg-green-100 text-green-800',
       hoverColor: 'hover:bg-green-200',
       selectedColor: 'bg-green-200 border-green-300'
     },
-    cancelled: { 
-      label: 'Cancelled', 
-      icon: X,
+    awaiting_payment: {
+      label: 'Awaiting Payment',
+      color: 'bg-yellow-100 text-yellow-800',
+      hoverColor: 'hover:bg-yellow-200',
+      selectedColor: 'bg-yellow-200 border-yellow-300'
+    },
+    revisions_needed: {
+      label: 'Revisions Needed',
+      color: 'bg-orange-100 text-orange-800',
+      hoverColor: 'hover:bg-orange-200',
+      selectedColor: 'bg-orange-200 border-orange-300'
+    },
+    approved: {
+      label: 'Approved',
+      color: 'bg-green-100 text-green-800',
+      hoverColor: 'hover:bg-green-200',
+      selectedColor: 'bg-green-200 border-green-300'
+    },
+    cancelled: {
+      label: 'Cancelled',
       color: 'bg-red-100 text-red-800',
       hoverColor: 'hover:bg-red-200',
       selectedColor: 'bg-red-200 border-red-300'
@@ -97,7 +111,7 @@ const BrandDeals = () => {
         contact_email: '',
         deliverables: '',
         fee: 0,
-        status: 'negotiation',
+        status: 'proposal_sent',
         start_date: '',
         end_date: ''
       });
@@ -108,7 +122,7 @@ const BrandDeals = () => {
 
   const handleUpdateStatus = async (dealId: string, newStatus: string) => {
     try {
-      await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'confirmed' | 'completed' | 'cancelled' });
+      await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'cancelled' });
     } catch (error) {
       console.error('Error updating brand deal status:', error);
     }
@@ -185,7 +199,7 @@ const BrandDeals = () => {
                   setSearchTerm('');
                 }
               }}
-              className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+              className="p-2 text-[#1c2d5a] hover:text-[#d2d2f7] rounded-lg transition-colors duration-200"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -194,13 +208,13 @@ const BrandDeals = () => {
               className={`p-2 rounded-lg transition-colors duration-200 ${
                 showHidden
                   ? 'text-purple-600 bg-purple-50'
-                  : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'
+                  : 'text-[#1c2d5a] hover:text-[#d2d2f7]'
               }`}
               title={showHidden ? 'Show active deals' : 'Show hidden deals'}
             >
               {showHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
-            <Filter className="w-5 h-5 text-gray-400" />
+            <Filter className="w-5 h-5 text-[#1c2d5a]" />
             <select
               className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
               value={filterStatus}
@@ -419,9 +433,9 @@ const BrandDeals = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select 
+                  <select
                     value={newDeal.status}
-                    onChange={(e) => setNewDeal({ ...newDeal, status: e.target.value as 'negotiation' | 'confirmed' | 'completed' | 'cancelled' })}
+                    onChange={(e) => setNewDeal({ ...newDeal, status: e.target.value as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'cancelled' })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
                   >
                     {Object.entries(statusConfig).map(([key, config]) => (
