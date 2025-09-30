@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { X, Calendar, Globe, Mail, FileText, Instagram, Youtube, Linkedin } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Globe, Mail, FileText, Instagram, Youtube, Linkedin } from 'lucide-react';
+import { format } from 'date-fns';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';
 import { ContentPost } from '../lib/supabase';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Button } from './ui/button';
+import { cn } from '../lib/utils';
 
 // Custom X Icon component
 const XIcon = () => (
@@ -66,17 +71,17 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
   });
 
   const platformOptions = [
-    { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
-    { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
-    { value: 'facebook', label: 'Facebook', icon: FacebookIcon, color: 'text-gray-700' },
     { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
-    { value: 'pinterest', label: 'Pinterest', icon: PinterestIcon, color: 'text-red-600' },
+    { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
     { value: 'tiktok', label: 'TikTok', icon: TikTokIcon, color: 'text-black' },
+    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-[#1c2d5a]' },
+    { value: 'facebook', label: 'Facebook', icon: FacebookIcon, color: 'text-gray-700' },
+    { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
+    { value: 'pinterest', label: 'Pinterest', icon: PinterestIcon, color: 'text-red-600' },
     { value: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
     { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
     { value: 'threads', label: 'Threads', icon: ThreadsIcon, color: 'text-gray-800' },
-    { value: 'reddit', label: 'Reddit', icon: RedditIcon, color: 'text-gray-700' },
-    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-[#1c2d5a]' }
+    { value: 'reddit', label: 'Reddit', icon: RedditIcon, color: 'text-gray-700' }
   ];
 
   const statusOptions = [
@@ -198,7 +203,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Platforms (Select multiple)</label>
-            <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               {platformOptions.map((option) => {
                 const Icon = option.icon;
                 const isSelected = formData.platforms.includes(option.value);
@@ -245,15 +250,39 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="date"
-                value={formData.scheduled_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_date: e.target.value }))}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-              />
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200",
+                    !formData.scheduled_date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.scheduled_date ? (
+                    format(new Date(formData.scheduled_date), "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.scheduled_date ? new Date(formData.scheduled_date) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      setFormData(prev => ({
+                        ...prev,
+                        scheduled_date: format(date, 'yyyy-MM-dd')
+                      }));
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>
