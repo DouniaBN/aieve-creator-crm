@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
+import logoImage from '../assets/nobglogo.png'
 
 interface AuthProps {
   onAuthSuccess: () => void
@@ -53,9 +54,13 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-200/50">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            AIEVE Creator CRM
-          </h1>
+          <div className="flex justify-center mb-4">
+            <img 
+              src={logoImage} 
+              alt="AIEVE Logo" 
+              className="h-16 w-auto"
+            />
+          </div>
           <p className="text-gray-600 mt-2">
             {isLogin ? 'Welcome back!' : 'Create your account'}
           </p>
@@ -161,7 +166,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 setPassword('')
                 setConfirmPassword('')
               }}
-              className="text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200"
+              className="text-[#1c2d5a] hover:text-purple-700 font-medium transition-colors duration-200"
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>

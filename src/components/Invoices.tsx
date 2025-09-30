@@ -521,7 +521,7 @@ const Invoices = () => {
                           </button>
                           <button
                             onClick={() => handleEditInvoice(invoice)}
-                            className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                            className="p-2 text-gray-400 hover:text-[#1c2d5a] hover:bg-purple-50 rounded-lg transition-colors duration-200"
                             title="Edit Invoice"
                             disabled={isLoading(invoice.id, 'edit')}
                           >

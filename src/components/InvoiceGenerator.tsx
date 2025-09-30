@@ -353,7 +353,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               <p className="whitespace-pre-line">{invoiceData.creatorAddress}</p>
               {invoiceData.creatorWebsite && <p>{invoiceData.creatorWebsite}</p>}
               <div className="flex space-x-4 mt-2">
-                {invoiceData.creatorInstagram && <span className="text-purple-600">{invoiceData.creatorInstagram}</span>}
+                {invoiceData.creatorInstagram && <span className="text-[#1c2d5a]">{invoiceData.creatorInstagram}</span>}
                 {invoiceData.creatorYoutube && <span className="text-red-600">{invoiceData.creatorYoutube}</span>}
               </div>
             </div>
@@ -469,7 +469,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               <div className="border-t border-gray-300 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-bold text-gray-900">Total:</span>
-                  <span className="text-2xl font-bold text-purple-600">{selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-[#1c2d5a]">{selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -563,7 +563,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
               <div className="flex items-center mb-4">
-                <FileText className="w-5 h-5 text-purple-600 mr-2" />
+                <FileText className="w-5 h-5 text-[#1c2d5a] mr-2" />
                 <h3 className="font-semibold text-gray-900">Invoice Details</h3>
               </div>
               <div className="space-y-4">
@@ -994,7 +994,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                 <div className="border-t border-gray-300 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Total</span>
-                    <span className="text-2xl font-bold text-purple-600">
+                    <span className="text-2xl font-bold text-[#1c2d5a]">
                       {selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}
                     </span>
                   </div>

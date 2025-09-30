@@ -50,7 +50,7 @@ const NotificationPanel = () => {
         return <Trash2 className="w-4 h-4 text-orange-600" />;
       case 'project_updated':
       case 'brand_deal_updated':
-        return <Send className="w-4 h-4 text-purple-600" />;
+        return <Send className="w-4 h-4 text-[#1c2d5a]" />;
       default:
         return <Bell className="w-4 h-4 text-gray-600" />;
     }
@@ -209,7 +209,7 @@ const NotificationPanel = () => {
           {/* Footer */}
           {notifications.length > 0 && (
             <div className="p-3 border-t border-gray-200/50 bg-gray-50/50 text-center">
-              <button className="text-xs text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200">
+              <button className="text-xs text-[#1c2d5a] hover:text-purple-700 font-medium transition-colors duration-200">
                 View all activity
               </button>
             </div>

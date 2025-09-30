@@ -10,6 +10,7 @@ import BrandDeals from './components/BrandDeals';
 import Invoices from './components/Invoices';
 import SettingsPage from './components/SettingsPage';
 import SuccessMessage from './components/SuccessMessage';
+import logoImage from './assets/nobglogo.png';
 
 function AppContent() {
   const { user, loading, signOut } = useSupabase();
@@ -22,8 +23,12 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 animate-pulse">
-            SC
+          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <img 
+              src={logoImage} 
+              alt="AIEVE Logo" 
+              className="h-16 w-auto"
+            />
           </div>
           <p className="text-gray-600">Loading...</p>
         </div>
@@ -81,15 +86,19 @@ function AppContent() {
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-lg shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-200/50">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              AIEVE
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">Creator CRM</p>
+          <div className="p-6 pb-4">
+            <img 
+              src={logoImage} 
+              alt="AIEVE Logo" 
+              className="h-10 w-auto"
+            />
           </div>
+          
+          {/* Divider */}
+          <div className="border-b border-gray-200/50 mx-6"></div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4">
+          <nav className="flex-1 p-6 pt-6">
             <ul className="space-y-2">
               {navigation.filter(item => item.id !== 'settings').map((item) => {
                 const Icon = item.icon;
@@ -102,7 +111,9 @@ function AppContent() {
                       }}
                       className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                         activeTab === item.id
-                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
+                          ? item.id === 'dashboard'
+                            ? 'bg-[#E83F87] text-gray-200 shadow-lg shadow-pink-300/25'
+                            : 'bg-[#C3C7F3] text-white shadow-lg shadow-indigo-300/25'
                           : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                       }`}
                     >
@@ -131,7 +142,7 @@ function AppContent() {
               }}
               className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                 activeTab === 'settings'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
+                  ? 'bg-[#C3C7F3] text-white shadow-lg shadow-indigo-300/25'
                   : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
               }`}
             >
@@ -142,7 +153,7 @@ function AppContent() {
 
           {/* User Profile */}
           <div className="p-4 border-t border-gray-200/50">
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50">
+            <div className="flex items-center space-x-3 p-3 rounded-xl bg-indigo-50">
               <User className="w-10 h-10 text-gray-400" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">Sarah Chen</p>

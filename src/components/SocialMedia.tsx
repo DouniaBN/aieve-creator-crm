@@ -21,7 +21,7 @@ const SocialMedia = () => {
       title: 'Posts This Month',
       value: '50',
       icon: MessageCircle,
-      color: 'text-purple-600'
+      color: 'text-[#1c2d5a]'
     },
     {
       title: 'Scheduled',
@@ -126,7 +126,7 @@ const SocialMedia = () => {
                   <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
                   <p className="text-sm text-gray-600">{stat.title}</p>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.color === 'text-blue-600' ? 'bg-blue-100' : stat.color === 'text-green-600' ? 'bg-green-100' : stat.color === 'text-purple-600' ? 'bg-purple-100' : 'bg-orange-100'}`}>
+                <div className={`p-3 rounded-xl ${stat.color === 'text-blue-600' ? 'bg-blue-100' : stat.color === 'text-green-600' ? 'bg-green-100' : stat.color === 'text-[#1c2d5a]' ? 'bg-purple-100' : 'bg-orange-100'}`}>
                   <Icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
               </div>

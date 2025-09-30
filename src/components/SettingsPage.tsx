@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { User, DollarSign, Palette, Bell, Shield, Save } from 'lucide-react';
+import logoImage from '../assets/nobglogo.png';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -30,8 +31,12 @@ const SettingsPage = () => {
   const renderProfileTab = () => (
     <div className="space-y-6">
       <div className="flex items-center space-x-6">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-          SC
+        <div className="w-24 h-24 rounded-full bg-white border-4 border-gray-200 flex items-center justify-center overflow-hidden">
+          <img 
+            src={logoImage} 
+            alt="AIEVE Logo" 
+            className="h-16 w-auto"
+          />
         </div>
         <div>
           <button className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors duration-200 mr-3">

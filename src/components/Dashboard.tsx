@@ -140,12 +140,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     </svg>
   );
 
+  // Pinterest Icon component using Font Awesome
+  const PinterestIcon = () => (
+    <i className="fab fa-pinterest"></i>
+  );
+
+  // TikTok Icon component using Font Awesome
+  const TikTokIcon = () => (
+    <i className="fab fa-tiktok"></i>
+  );
+
   // Platform icons mapping
   const platformIcons = {
     newsletter: Mail,
     x: XIcon,
-    pinterest: Globe,
-    tiktok: FileText,
+    pinterest: PinterestIcon,
+    tiktok: TikTokIcon,
     instagram: Instagram,
     youtube: Youtube,
     linkedin: Linkedin,
@@ -231,7 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
             <h2 className="text-xl font-semibold text-gray-900">Today's Posts</h2>
             <button 
               onClick={onNavigateToCalendar}
-              className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors duration-200"
+              className="text-[#1c2d5a] hover:text-[#1a2954] text-sm font-medium transition-colors duration-200"
             >
               View Calendar
             </button>
@@ -245,8 +255,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                 return (
                   <div key={post.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-200">
                     <div className="flex items-center space-x-4">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-100">
-                        <PlatformIcon className="w-4 h-4 text-purple-600" />
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100">
+                        <PlatformIcon className="w-4 h-4 text-[#1c2d5a]" />
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900">{post.title}</h3>
@@ -286,7 +296,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
-            <CheckCircle className="w-5 h-5 text-purple-500" />
+            <CheckCircle className="w-5 h-5 text-[#1c2d5a]" />
           </div>
           
           {/* Add new task form */}
@@ -303,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
               <button
                 type="submit"
                 disabled={!newTaskText.trim()}
-                className="flex items-center justify-center w-10 h-10 rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="flex items-center justify-center w-10 h-10 rounded-md bg-[#1c2d5a] text-white hover:bg-[#1a2954] disabled:cursor-not-allowed transition-colors duration-200"
               >
                 <Plus className="w-4 h-4" />
               </button>

@@ -14,8 +14,18 @@ const XIcon = () => (
   </svg>
 );
 
+// Pinterest Icon component using Font Awesome
+const PinterestIcon = () => (
+  <i className="fab fa-pinterest"></i>
+);
+
+// TikTok Icon component using Font Awesome
+const TikTokIcon = () => (
+  <i className="fab fa-tiktok"></i>
+);
+
 interface ContentCalendarProps {
-  onAddPost: () => void;
+  onAddPost: (date?: Date) => void;
 }
 
 const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
@@ -31,8 +41,8 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   const platformIcons = {
     newsletter: Mail,
     x: XIcon,
-    pinterest: Globe,
-    tiktok: FileText,
+    pinterest: PinterestIcon,
+    tiktok: TikTokIcon,
     instagram: Instagram,
     youtube: Youtube,
     linkedin: Linkedin,
@@ -55,17 +65,20 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   const platformOptions = [
     { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
     { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
-    { value: 'pinterest', label: 'Pinterest', icon: Globe, color: 'text-red-600' },
-    { value: 'tiktok', label: 'TikTok', icon: FileText, color: 'text-black' },
+    { value: 'pinterest', label: 'Pinterest', icon: PinterestIcon, color: 'text-red-600' },
+    { value: 'tiktok', label: 'TikTok', icon: TikTokIcon, color: 'text-black' },
     { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { value: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
     { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
-    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-purple-600' }
+    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-[#1c2d5a]' }
   ];
 
   // Status options for editing (matching AddPostModal)
   const statusOptions = [
+    { value: 'idea', label: 'Idea', color: 'text-purple-600' },
     { value: 'draft', label: 'Draft', color: 'text-gray-600' },
+    { value: 'filmed', label: 'Filmed', color: 'text-orange-600' },
+    { value: 'edited', label: 'Edited', color: 'text-yellow-600' },
     { value: 'scheduled', label: 'Scheduled', color: 'text-blue-600' },
     { value: 'published', label: 'Published', color: 'text-green-600' }
   ];
@@ -214,17 +227,6 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header with Add Post */}
-      <div className="flex items-center justify-end">
-        <Button
-          onClick={onAddPost}
-          className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Post
-        </Button>
-      </div>
-
       {/* Calendar Grid */}
       <Card className="bg-white/60 backdrop-blur-sm border border-gray-200/50 shadow-sm">
         <CardContent className="p-6">
@@ -234,7 +236,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
             <Button variant="outline" size="sm" onClick={goToToday}>
               Today
             </Button>
-            
+
             {/* Month Navigation */}
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" onClick={goToPreviousMonth} className="p-2">
@@ -247,9 +249,15 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                 <ChevronRight className="w-5 h-5" />
               </Button>
             </div>
-            
-            {/* Empty space for balance */}
-            <div className="w-[60px]"></div>
+
+            {/* Add Post Button */}
+            <Button
+              onClick={onAddPost}
+              className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Post
+            </Button>
           </div>
 
           {/* Day Headers */}
@@ -274,9 +282,10 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
               return (
                 <div
                   key={day.toISOString()}
-                  className={`${isExpanded ? 'min-h-[200px]' : 'min-h-[140px]'} p-2 bg-white border-r border-b border-gray-100 last:border-r-0 ${
+                  className={`${isExpanded ? 'min-h-[200px]' : 'min-h-[140px]'} p-2 bg-white border-r border-b border-gray-100 last:border-r-0 cursor-pointer ${
                     !isCurrentMonth ? 'bg-gray-50 opacity-60' : ''
                   } ${isToday ? 'bg-blue-50' : ''} hover:bg-gray-50 transition-all duration-200`}
+                  onClick={() => onAddPost(day)}
                 >
                   {/* Date Number */}
                   <div className={`text-sm font-medium mb-2 ${
@@ -314,7 +323,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                             {post.title}
                           </div>
                           {post.project_id && (
-                            <div className="text-purple-600 font-medium truncate mt-1">
+                            <div className="text-[#1c2d5a] font-medium truncate mt-1">
                               {getProjectName(post.project_id)}
                             </div>
                           )}
@@ -543,7 +552,10 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4 text-gray-500" />
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedPost.status === 'idea' ? 'bg-purple-100 text-purple-700' :
                         selectedPost.status === 'draft' ? 'bg-gray-100 text-gray-700' :
+                        selectedPost.status === 'filmed' ? 'bg-orange-100 text-orange-700' :
+                        selectedPost.status === 'edited' ? 'bg-yellow-100 text-yellow-700' :
                         selectedPost.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
                         'bg-green-100 text-green-700'
                       }`}>
@@ -556,7 +568,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                   {selectedPost.project_id && (
                     <div>
                       <label className="text-sm font-medium text-gray-700 block mb-2">Project</label>
-                      <div className="flex items-center space-x-2 text-purple-600">
+                      <div className="flex items-center space-x-2 text-[#1c2d5a]">
                         <User className="w-4 h-4" />
                         <span className="font-medium">{getProjectName(selectedPost.project_id)}</span>
                       </div>

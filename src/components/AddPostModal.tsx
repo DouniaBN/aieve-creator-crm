@@ -11,6 +11,16 @@ const XIcon = () => (
   </svg>
 );
 
+// Pinterest Icon component using Font Awesome
+const PinterestIcon = () => (
+  <i className="fab fa-pinterest mr-1"></i>
+);
+
+// TikTok Icon component using Font Awesome
+const TikTokIcon = () => (
+  <i className="fab fa-tiktok mr-1"></i>
+);
+
 interface AddPostModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,16 +52,19 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
   const platformOptions = [
     { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
     { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
-    { value: 'pinterest', label: 'Pinterest', icon: Globe, color: 'text-red-600' },
-    { value: 'tiktok', label: 'TikTok', icon: FileText, color: 'text-black' },
+    { value: 'pinterest', label: 'Pinterest', icon: PinterestIcon, color: 'text-red-600' },
+    { value: 'tiktok', label: 'TikTok', icon: TikTokIcon, color: 'text-black' },
     { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { value: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
     { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
-    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-purple-600' }
+    { value: 'blog', label: 'Blog', icon: FileText, color: 'text-[#1c2d5a]' }
   ];
 
   const statusOptions = [
+    { value: 'idea', label: 'Idea', color: 'text-purple-600' },
     { value: 'draft', label: 'Draft', color: 'text-gray-600' },
+    { value: 'filmed', label: 'Filmed', color: 'text-orange-600' },
+    { value: 'edited', label: 'Edited', color: 'text-yellow-600' },
     { value: 'scheduled', label: 'Scheduled', color: 'text-blue-600' },
     { value: 'published', label: 'Published', color: 'text-green-600' }
   ];

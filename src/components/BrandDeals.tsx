@@ -186,10 +186,10 @@ const BrandDeals = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200">
+                      <button className="p-2 text-gray-400 hover:text-[#1c2d5a] hover:bg-purple-50 rounded-lg transition-colors duration-200">
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200">
+                      <button className="p-2 text-gray-400 hover:text-[#1c2d5a] hover:bg-purple-50 rounded-lg transition-colors duration-200">
                         <Edit className="w-4 h-4" />
                       </button>
                       <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200" onClick={() => handleDeleteDeal(deal.id)}>
