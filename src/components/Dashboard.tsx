@@ -150,15 +150,34 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     <i className="fab fa-tiktok"></i>
   );
 
+  // Facebook Icon component using Font Awesome
+  const FacebookIcon = () => (
+    <i className="fab fa-facebook text-blue-600"></i>
+  );
+
+
+  // Reddit Icon component using Font Awesome
+  const RedditIcon = () => (
+    <i className="fab fa-reddit text-red-600"></i>
+  );
+
+  // Threads Icon component using @ symbol
+  const ThreadsIcon = () => (
+    <span className="font-bold text-black">@</span>
+  );
+
   // Platform icons mapping
   const platformIcons = {
     newsletter: Mail,
     x: XIcon,
+    facebook: FacebookIcon,
+    instagram: Instagram,
     pinterest: PinterestIcon,
     tiktok: TikTokIcon,
-    instagram: Instagram,
     youtube: Youtube,
     linkedin: Linkedin,
+    threads: ThreadsIcon,
+    reddit: RedditIcon,
     blog: FileText
   };
 

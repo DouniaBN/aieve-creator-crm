@@ -24,6 +24,22 @@ const TikTokIcon = () => (
   <i className="fab fa-tiktok"></i>
 );
 
+// Facebook Icon component using Font Awesome
+const FacebookIcon = () => (
+  <i className="fab fa-facebook text-blue-600"></i>
+);
+
+
+// Reddit Icon component using Font Awesome
+const RedditIcon = () => (
+  <i className="fab fa-reddit text-red-600"></i>
+);
+
+// Threads Icon component using @ symbol
+const ThreadsIcon = () => (
+  <span className="font-bold text-black">@</span>
+);
+
 interface ContentCalendarProps {
   onAddPost: (date?: Date) => void;
 }
@@ -41,11 +57,14 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   const platformIcons = {
     newsletter: Mail,
     x: XIcon,
+    facebook: FacebookIcon,
+    instagram: Instagram,
     pinterest: PinterestIcon,
     tiktok: TikTokIcon,
-    instagram: Instagram,
     youtube: Youtube,
     linkedin: Linkedin,
+    threads: ThreadsIcon,
+    reddit: RedditIcon,
     blog: FileText
   };
 
@@ -53,11 +72,14 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   const platformColors = {
     newsletter: 'bg-blue-50 text-blue-700 border-blue-200',
     x: 'bg-gray-50 text-gray-700 border-gray-200',
+    facebook: 'bg-blue-50 text-blue-700 border-blue-200',
+    instagram: 'bg-pink-50 text-pink-700 border-pink-200',
     pinterest: 'bg-red-50 text-red-700 border-red-200',
     tiktok: 'bg-gray-900 text-white border-gray-800',
-    instagram: 'bg-pink-50 text-pink-700 border-pink-200',
     youtube: 'bg-red-50 text-red-700 border-red-200',
     linkedin: 'bg-blue-50 text-blue-700 border-blue-200',
+    threads: 'bg-gray-50 text-gray-700 border-gray-200',
+    reddit: 'bg-orange-50 text-orange-700 border-orange-200',
     blog: 'bg-purple-50 text-purple-700 border-purple-200'
   };
 
@@ -65,11 +87,14 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
   const platformOptions = [
     { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
     { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
+    { value: 'facebook', label: 'Facebook', icon: FacebookIcon, color: 'text-gray-700' },
+    { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { value: 'pinterest', label: 'Pinterest', icon: PinterestIcon, color: 'text-red-600' },
     { value: 'tiktok', label: 'TikTok', icon: TikTokIcon, color: 'text-black' },
-    { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { value: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
     { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
+    { value: 'threads', label: 'Threads', icon: ThreadsIcon, color: 'text-gray-800' },
+    { value: 'reddit', label: 'Reddit', icon: RedditIcon, color: 'text-gray-700' },
     { value: 'blog', label: 'Blog', icon: FileText, color: 'text-[#1c2d5a]' }
   ];
 

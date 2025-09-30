@@ -13,12 +13,28 @@ const XIcon = () => (
 
 // Pinterest Icon component using Font Awesome
 const PinterestIcon = () => (
-  <i className="fab fa-pinterest mr-1"></i>
+  <i className="fab fa-pinterest mr-1 text-red-600"></i>
 );
 
 // TikTok Icon component using Font Awesome
 const TikTokIcon = () => (
   <i className="fab fa-tiktok mr-1"></i>
+);
+
+// Facebook Icon component using Font Awesome
+const FacebookIcon = () => (
+  <i className="fab fa-facebook mr-1 text-blue-600"></i>
+);
+
+
+// Reddit Icon component using Font Awesome
+const RedditIcon = () => (
+  <i className="fab fa-reddit mr-1 text-red-600"></i>
+);
+
+// Threads Icon component using @ symbol
+const ThreadsIcon = () => (
+  <span className="mr-1 font-bold text-black">@</span>
 );
 
 interface AddPostModalProps {
@@ -52,11 +68,14 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
   const platformOptions = [
     { value: 'newsletter', label: 'Newsletter', icon: Mail, color: 'text-blue-600' },
     { value: 'x', label: 'X (Twitter)', icon: XIcon, color: 'text-gray-800' },
+    { value: 'facebook', label: 'Facebook', icon: FacebookIcon, color: 'text-gray-700' },
+    { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { value: 'pinterest', label: 'Pinterest', icon: PinterestIcon, color: 'text-red-600' },
     { value: 'tiktok', label: 'TikTok', icon: TikTokIcon, color: 'text-black' },
-    { value: 'instagram', label: 'Instagram', icon: Instagram, color: 'text-pink-600' },
     { value: 'youtube', label: 'YouTube', icon: Youtube, color: 'text-red-600' },
     { value: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
+    { value: 'threads', label: 'Threads', icon: ThreadsIcon, color: 'text-gray-800' },
+    { value: 'reddit', label: 'Reddit', icon: RedditIcon, color: 'text-gray-700' },
     { value: 'blog', label: 'Blog', icon: FileText, color: 'text-[#1c2d5a]' }
   ];
 
