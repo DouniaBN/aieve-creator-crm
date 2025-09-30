@@ -97,7 +97,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         onClick={handleToggle}
         className={`
           inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
-          border transition-all duration-200 min-w-[120px] justify-between
+          border transition-all duration-200 min-w-[150px] justify-between
           ${currentConfig?.color || 'bg-gray-100 text-gray-800'}
           ${currentConfig?.hoverColor || 'hover:bg-gray-200'}
           border-transparent hover:border-gray-300
@@ -105,9 +105,9 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           relative z-10
         `}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-center flex-1">
           {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
-          <span>{currentConfig?.label || currentStatus}</span>
+          <span className="text-center">{currentConfig?.label || currentStatus}</span>
         </div>
         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>

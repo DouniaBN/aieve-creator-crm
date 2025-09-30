@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Filter, Search, Eye, Handshake, CheckCircle, Upload, X, MoreHorizontal, Copy, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import StatusDropdown from './StatusDropdown';
 
 const BrandDeals = () => {
   const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal } = useSupabase();
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -59,6 +61,12 @@ const BrandDeals = () => {
       color: 'bg-green-100 text-green-800',
       hoverColor: 'hover:bg-green-200',
       selectedColor: 'bg-green-200 border-green-300'
+    },
+    completed: {
+      label: 'Completed',
+      color: 'bg-emerald-100 text-emerald-800',
+      hoverColor: 'hover:bg-emerald-200',
+      selectedColor: 'bg-emerald-200 border-emerald-300'
     },
     cancelled: {
       label: 'Cancelled',
@@ -122,7 +130,7 @@ const BrandDeals = () => {
 
   const handleUpdateStatus = async (dealId: string, newStatus: string) => {
     try {
-      await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'cancelled' });
+      await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'completed' | 'cancelled' });
     } catch (error) {
       console.error('Error updating brand deal status:', error);
     }
@@ -180,6 +188,33 @@ const BrandDeals = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const handleRowClick = (deal: any) => {
+    setEditingDeal({ ...deal });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateDeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDeal) return;
+
+    try {
+      await updateBrandDeal(editingDeal.id, {
+        brand_name: editingDeal.brand_name,
+        contact_name: editingDeal.contact_name,
+        contact_email: editingDeal.contact_email,
+        deliverables: editingDeal.deliverables,
+        fee: editingDeal.fee,
+        status: editingDeal.status,
+        start_date: editingDeal.start_date,
+        end_date: editingDeal.end_date
+      });
+      setShowEditModal(false);
+      setEditingDeal(null);
+    } catch (error) {
+      console.error('Error updating brand deal:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -225,7 +260,7 @@ const BrandDeals = () => {
             </button>
             <Filter className="w-5 h-5 text-[#1c2d5a]" />
             <select
-              className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
+              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
@@ -238,128 +273,149 @@ const BrandDeals = () => {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center px-6 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-lg"
+          className="flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-base mr-4"
         >
-          <Plus className="w-5 h-5 mr-2" />
+          <Plus className="w-4 h-4 mr-2" />
           New Deal
         </button>
       </div>
 
-      {/* Deals Table */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
-        <div className="overflow-x-auto overflow-y-visible">
-          <table className="w-full">
-            <thead className="bg-gray-50/80">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deliverables</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-2 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200/50">
-              {filteredDeals.map((deal) => {
-                return (
-                <tr key={deal.id} className="hover:bg-gray-50/50 transition-colors duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{deal.brand_name}</div>
-                    <div className="text-xs text-gray-500">{formatDate(deal.start_date)} to {formatDate(deal.end_date)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {deal.deliverables}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    ${deal.fee.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusDropdown
-                      currentStatus={deal.status}
-                      statusConfig={statusConfig}
-                      onStatusChange={(newStatus) => handleUpdateStatus(deal.id, newStatus)}
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>{deal.contact_name}</div>
-                    <div className="text-gray-500">{deal.contact_email}</div>
-                  </td>
-                  <td className="px-2 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="relative dropdown-container">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDropdown(openDropdown === deal.id ? null : deal.id);
-                        }}
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-
-                      {openDropdown === deal.id && (
-                        <div
-                          className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={() => {
-                              setOpenDropdown(null);
-                              // Handle edit
-                            }}
-                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setOpenDropdown(null);
-                              handleDuplicateDeal(deal.id);
-                            }}
-                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                          >
-                            <Copy className="w-4 h-4 mr-2" />
-                            Duplicate
-                          </button>
-                          <button
-                            onClick={() => {
-                              setOpenDropdown(null);
-                              handleHideDeal(deal.id);
-                            }}
-                            className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                          >
-                            {hiddenDeals.has(deal.id) ? (
-                              <>
-                                <Eye className="w-4 h-4 mr-2" />
-                                Unhide
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="w-4 h-4 mr-2" />
-                                Hide
-                              </>
-                            )}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setOpenDropdown(null);
-                              handleDeleteDeal(deal.id);
-                            }}
-                            className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Column Headers */}
+      <div className="grid grid-cols-12 gap-4 px-6 py-3 mb-1">
+        <div className="col-span-2">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</div>
         </div>
+        <div className="col-span-3">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Deliverables</div>
+        </div>
+        <div className="col-span-1">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</div>
+        </div>
+        <div className="col-span-3">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</div>
+        </div>
+        <div className="col-span-2">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</div>
+        </div>
+        <div className="col-span-1">
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider"></div>
+        </div>
+      </div>
+
+      {/* Individual Deal Cards */}
+      <div className="space-y-4">
+        {filteredDeals.map((deal) => (
+          <div
+            key={deal.id}
+            className="bg-white rounded-xl shadow-sm border border-gray-200/50 hover:shadow-md transition-all duration-200 cursor-pointer"
+            onClick={() => handleRowClick(deal)}
+          >
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
+              {/* Brand */}
+              <div className="col-span-2">
+                <div className="font-medium text-gray-900">{deal.brand_name}</div>
+                <div className="text-xs text-gray-500">{formatDate(deal.start_date)} to {formatDate(deal.end_date)}</div>
+              </div>
+
+              {/* Deliverables */}
+              <div className="col-span-3">
+                <div className="text-sm text-gray-900">{deal.deliverables}</div>
+              </div>
+
+              {/* Fee */}
+              <div className="col-span-1">
+                <div className="text-lg font-semibold text-gray-900">${deal.fee.toLocaleString()}</div>
+              </div>
+
+              {/* Status */}
+              <div className="col-span-3" onClick={(e) => e.stopPropagation()}>
+                <StatusDropdown
+                  currentStatus={deal.status}
+                  statusConfig={statusConfig}
+                  onStatusChange={(newStatus) => handleUpdateStatus(deal.id, newStatus)}
+                />
+              </div>
+
+              {/* Contact */}
+              <div className="col-span-2">
+                <div className="text-sm text-gray-900">{deal.contact_name}</div>
+                <div className="text-xs text-gray-500">{deal.contact_email}</div>
+              </div>
+
+              {/* Actions */}
+              <div className="col-span-1 flex justify-end">
+                <div className="relative dropdown-container" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDropdown(openDropdown === deal.id ? null : deal.id);
+                    }}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
+
+                  {openDropdown === deal.id && (
+                    <div
+                      className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          handleRowClick(deal);
+                        }}
+                        className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          handleDuplicateDeal(deal.id);
+                        }}
+                        className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Duplicate
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          handleHideDeal(deal.id);
+                        }}
+                        className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        {hiddenDeals.has(deal.id) ? (
+                          <>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Unhide
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="w-4 h-4 mr-2" />
+                            Hide
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          handleDeleteDeal(deal.id);
+                        }}
+                        className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {filteredDeals.length === 0 && (
@@ -444,7 +500,7 @@ const BrandDeals = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                   <select
                     value={newDeal.status}
-                    onChange={(e) => setNewDeal({ ...newDeal, status: e.target.value as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'cancelled' })}
+                    onChange={(e) => setNewDeal({ ...newDeal, status: e.target.value as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'completed' | 'cancelled' })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
                   >
                     {Object.entries(statusConfig).map(([key, config]) => (
@@ -483,6 +539,122 @@ const BrandDeals = () => {
                 </button>
                 <button type="submit" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200">
                   Add Deal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingDeal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-semibold mb-4">Edit Brand Deal</h2>
+            <form onSubmit={handleUpdateDeal} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brand Name</label>
+                  <input
+                    type="text"
+                    value={editingDeal.brand_name}
+                    onChange={(e) => setEditingDeal({ ...editingDeal, brand_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                    placeholder="Enter brand name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
+                  <input
+                    type="text"
+                    value={editingDeal.contact_name}
+                    onChange={(e) => setEditingDeal({ ...editingDeal, contact_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                    placeholder="Contact name"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={editingDeal.contact_email}
+                  onChange={(e) => setEditingDeal({ ...editingDeal, contact_email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  placeholder="contact@brand.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Deliverables</label>
+                <input
+                  type="text"
+                  value={editingDeal.deliverables}
+                  onChange={(e) => setEditingDeal({ ...editingDeal, deliverables: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  placeholder="e.g., 2 Instagram Posts, 1 Story"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fee</label>
+                  <input
+                    type="number"
+                    value={editingDeal.fee}
+                    onChange={(e) => setEditingDeal({ ...editingDeal, fee: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={editingDeal.status}
+                    onChange={(e) => setEditingDeal({ ...editingDeal, status: e.target.value as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'completed' | 'cancelled' })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  >
+                    {Object.entries(statusConfig).map(([key, config]) => (
+                      <option key={key} value={key}>{config.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    value={editingDeal.start_date}
+                    onChange={(e) => setEditingDeal({ ...editingDeal, start_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                  <input
+                    type="date"
+                    value={editingDeal.end_date}
+                    onChange={(e) => setEditingDeal({ ...editingDeal, end_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingDeal(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200">
+                  Update Deal
                 </button>
               </div>
             </form>
