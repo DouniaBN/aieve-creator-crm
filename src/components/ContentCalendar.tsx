@@ -5,6 +5,13 @@ import { ContentPost } from '../lib/supabase';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { cn } from '../lib/utils';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 
 // Custom X Icon component
@@ -162,7 +169,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
     setEditedPost({
       ...post,
       scheduled_date: scheduledDate ? scheduledDate.toISOString().split('T')[0] : '',
-      scheduled_time: scheduledDate ? scheduledDate.toTimeString().slice(0, 5) : ''
+      scheduled_time: scheduledDate ? dayjs(scheduledDate) : null
     });
     setShowPostModal(true);
     setIsEditing(false);
@@ -191,8 +198,8 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
       // Combine date and time if both are provided
       let scheduledDateTime = undefined;
       if (editedPost.scheduled_date) {
-        const dateTimeString = editedPost.scheduled_time 
-          ? `${editedPost.scheduled_date}T${editedPost.scheduled_time}:00`
+        const dateTimeString = editedPost.scheduled_time
+          ? `${editedPost.scheduled_date}T${editedPost.scheduled_time.format('HH:mm')}:00`
           : `${editedPost.scheduled_date}T12:00:00`;
         scheduledDateTime = new Date(dateTimeString).toISOString();
       }
@@ -256,33 +263,37 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
       <Card className="bg-white/60 backdrop-blur-sm border border-gray-200/50 shadow-sm">
         <CardContent className="p-6">
           {/* Month Header with Navigation */}
-          <div className="flex items-center justify-between mb-6">
-            {/* Today Button */}
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
+          <div className="mb-6">
+            {/* Top Row - Month Navigation and Add Post Section */}
+            <div className="flex justify-between items-center mb-4">
+              {/* Month Navigation - Left Aligned */}
+              <div className="flex items-center space-x-4">
+                <Button variant="ghost" size="sm" onClick={goToPreviousMonth} className="p-2">
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <h3 className="text-3xl font-bold text-gray-900">
+                  {format(currentDate, 'MMMM yyyy')}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={goToNextMonth} className="p-2">
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
 
-            {/* Month Navigation */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={goToPreviousMonth} className="p-2">
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <h3 className="text-xl font-semibold text-gray-900 min-w-[140px] text-center">
-                {format(currentDate, 'MMMM yyyy')}
-              </h3>
-              <Button variant="ghost" size="sm" onClick={goToNextMonth} className="p-2">
-                <ChevronRight className="w-5 h-5" />
-              </Button>
+              {/* Right Side - Subtitle and Add Post Button */}
+              <div className="flex flex-col items-end space-y-2">
+                <p className="text-sm text-gray-500">Plan your content across all platforms</p>
+                <Button
+                  onClick={onAddPost}
+                  className="flex items-center px-4 py-2 text-white rounded-xl transition-all duration-200 shadow-lg"
+                  style={{ backgroundColor: '#E83F87' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#D23075'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#E83F87'}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Post
+                </Button>
+              </div>
             </div>
-
-            {/* Add Post Button */}
-            <Button
-              onClick={onAddPost}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Post
-            </Button>
           </div>
 
           {/* Day Headers */}
@@ -462,7 +473,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Platform</label>
-                    <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                       {platformOptions.map((option) => {
                         const Icon = option.icon;
                         const isSelected = editedPost.platform === option.value;
@@ -509,26 +520,68 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                    <div className="relative">
-                      <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="date"
-                        value={editedPost.scheduled_date || ''}
-                        onChange={(e) => setEditedPost({ ...editedPost, scheduled_date: e.target.value })}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                      />
-                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200",
+                            !editedPost.scheduled_date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {editedPost.scheduled_date ? (
+                            format(new Date(editedPost.scheduled_date), "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={editedPost.scheduled_date ? new Date(editedPost.scheduled_date) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setEditedPost(prev => ({
+                                ...prev,
+                                scheduled_date: format(date, 'yyyy-MM-dd')
+                              }));
+                            }
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                    <input
-                      type="time"
-                      value={editedPost.scheduled_time || ''}
-                      onChange={(e) => setEditedPost({ ...editedPost, scheduled_time: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                      placeholder="Select time"
-                    />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <TimePicker
+                        label="Select time"
+                        value={editedPost.scheduled_time}
+                        onChange={(newValue) => setEditedPost(prev => ({ ...prev, scheduled_time: newValue }))}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            variant: 'outlined',
+                            sx: {
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#9333ea',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#9333ea',
+                                  borderWidth: 2,
+                                },
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
                   </div>
 
                 </>

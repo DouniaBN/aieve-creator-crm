@@ -8,6 +8,10 @@ import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 // Custom X Icon component
 const XIcon = () => (
@@ -66,7 +70,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
     platforms: [] as string[],
     status: 'draft' as ContentPost['status'],
     scheduled_date: initialDate ? date.toISOString().split('T')[0] : '',
-    scheduled_time: '',
+    scheduled_time: null as Dayjs | null,
     content: ''
   });
 
@@ -116,8 +120,8 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
         // Combine date and time if both are provided
         let scheduledDateTime = undefined;
         if (formData.scheduled_date) {
-          const dateTimeString = formData.scheduled_time 
-            ? `${formData.scheduled_date}T${formData.scheduled_time}:00`
+          const dateTimeString = formData.scheduled_time
+            ? `${formData.scheduled_date}T${formData.scheduled_time.format('HH:mm')}:00`
             : `${formData.scheduled_date}T12:00:00`;
           scheduledDateTime = new Date(dateTimeString).toISOString();
         }
@@ -150,7 +154,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
         platforms: [],
         status: 'draft',
         scheduled_date: '',
-        scheduled_time: '',
+        scheduled_time: null,
         content: ''
       });
     } catch (error) {
@@ -202,7 +206,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Platforms (Select multiple)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Platforms (can select multiple)</label>
             <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               {platformOptions.map((option) => {
                 const Icon = option.icon;
@@ -287,13 +291,31 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
-            <input
-              type="time"
-              value={formData.scheduled_time}
-              onChange={(e) => setFormData(prev => ({ ...prev, scheduled_time: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-              placeholder="Select time"
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <TimePicker
+                label="Select time"
+                value={formData.scheduled_time}
+                onChange={(newValue) => setFormData(prev => ({ ...prev, scheduled_time: newValue }))}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: 'outlined',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '12px',
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#9333ea',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#9333ea',
+                          borderWidth: 2,
+                        },
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
           </div>
 
           <div>
@@ -302,7 +324,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 min-h-[80px] resize-none"
-              placeholder="Add any notes or content for this post..."
+              placeholder="Add any notes for this post..."
               rows={3}
             />
           </div>

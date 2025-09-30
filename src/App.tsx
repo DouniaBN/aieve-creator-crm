@@ -111,9 +111,7 @@ function AppContent() {
                       }}
                       className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                         activeTab === item.id
-                          ? item.id === 'dashboard'
-                            ? 'bg-[#E83F87] text-gray-200 shadow-lg shadow-pink-300/25'
-                            : 'bg-[#C3C7F3] text-white shadow-lg shadow-indigo-300/25'
+                          ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
                           : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                       }`}
                     >
@@ -142,24 +140,13 @@ function AppContent() {
               }}
               className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                 activeTab === 'settings'
-                  ? 'bg-[#C3C7F3] text-white shadow-lg shadow-indigo-300/25'
+                  ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
                   : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
               }`}
             >
               <Settings className="w-5 h-5 mr-3" />
               Settings
             </button>
-          </div>
-
-          {/* User Profile */}
-          <div className="p-4 border-t border-gray-200/50">
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-indigo-50">
-              <User className="w-10 h-10 text-gray-400" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">Sarah Chen</p>
-                <p className="text-xs text-gray-500">sarah@example.com</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -175,12 +162,14 @@ function AppContent() {
             <Layout className="w-6 h-6" />
           </button>
         </div>
-        
-        <div className="hidden lg:block sticky top-0 z-30 px-4 py-1" style={{ backgroundColor: '#FAFAFA' }}>
-          <div className="flex justify-end">
-            <NotificationPanel />
+
+        {activeTab !== 'projects' && (
+          <div className="hidden lg:block sticky top-0 z-30 px-4 py-1" style={{ backgroundColor: '#FAFAFA' }}>
+            <div className="flex justify-end">
+              <NotificationPanel />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Page Content */}
         <main className="p-4 sm:p-6 lg:p-4">
