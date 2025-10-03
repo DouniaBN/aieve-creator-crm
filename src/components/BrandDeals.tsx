@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff, MessageSquare, Send, DollarSign, Edit3, CheckCircle, Sparkles, XCircle } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import StatusDropdown from './StatusDropdown';
 
@@ -20,59 +20,60 @@ const BrandDeals = () => {
     contact_email: '',
     deliverables: '',
     fee: 0,
-    status: 'proposal_sent' as const,
+    status: 'in_discussion' as const,
     start_date: '',
     end_date: ''
   });
 
   const statusConfig = {
-    negotiation: {
-      label: 'Negotiation',
-      color: 'bg-orange-100 text-orange-800',
-      hoverColor: 'hover:bg-orange-200',
-      selectedColor: 'bg-orange-200 border-orange-300'
-    },
-    proposal_sent: {
-      label: 'Proposal Sent',
-      color: 'bg-blue-100 text-blue-800',
-      hoverColor: 'hover:bg-blue-200',
-      selectedColor: 'bg-blue-200 border-blue-300'
+    in_discussion: {
+      label: 'In Discussion',
+      icon: MessageSquare,
+      color: 'bg-[#C4B5FD] text-[#5B21B6]',
+      hoverColor: 'hover:bg-[#B19AFF]',
+      selectedColor: 'bg-[#B19AFF] border-[#5B21B6]'
     },
     posted: {
       label: 'Posted',
-      color: 'bg-green-100 text-green-800',
-      hoverColor: 'hover:bg-green-200',
-      selectedColor: 'bg-green-200 border-green-300'
+      icon: Send,
+      color: 'bg-[#FBCFE8] text-[#E83F87]',
+      hoverColor: 'hover:bg-[#F8BBE1]',
+      selectedColor: 'bg-[#F8BBE1] border-[#E83F87]'
     },
     awaiting_payment: {
       label: 'Awaiting Payment',
-      color: 'bg-yellow-100 text-yellow-800',
-      hoverColor: 'hover:bg-yellow-200',
-      selectedColor: 'bg-yellow-200 border-yellow-300'
+      icon: DollarSign,
+      color: 'bg-[#FDE68A] text-[#92400E]',
+      hoverColor: 'hover:bg-[#FCD34D]',
+      selectedColor: 'bg-[#FCD34D] border-[#92400E]'
     },
     revisions_needed: {
       label: 'Revisions Needed',
-      color: 'bg-orange-100 text-orange-800',
-      hoverColor: 'hover:bg-orange-200',
-      selectedColor: 'bg-orange-200 border-orange-300'
+      icon: Edit3,
+      color: 'bg-[#FDBA74] text-[#9A3412]',
+      hoverColor: 'hover:bg-[#FCA55F]',
+      selectedColor: 'bg-[#FCA55F] border-[#9A3412]'
     },
     approved: {
       label: 'Approved',
-      color: 'bg-green-100 text-green-800',
-      hoverColor: 'hover:bg-green-200',
-      selectedColor: 'bg-green-200 border-green-300'
+      icon: CheckCircle,
+      color: 'bg-[#86EFAC] text-[#166534]',
+      hoverColor: 'hover:bg-[#6BE29A]',
+      selectedColor: 'bg-[#6BE29A] border-[#166534]'
     },
     completed: {
       label: 'Completed',
-      color: 'bg-emerald-100 text-emerald-800',
-      hoverColor: 'hover:bg-emerald-200',
-      selectedColor: 'bg-emerald-200 border-emerald-300'
+      icon: Sparkles,
+      color: 'bg-[#6EE7B7] text-[#065F46]',
+      hoverColor: 'hover:bg-[#5BD8A6]',
+      selectedColor: 'bg-[#5BD8A6] border-[#065F46]'
     },
     cancelled: {
       label: 'Cancelled',
-      color: 'bg-red-100 text-red-800',
-      hoverColor: 'hover:bg-red-200',
-      selectedColor: 'bg-red-200 border-red-300'
+      icon: XCircle,
+      color: 'bg-[#FCA5A5] text-[#991B1B]',
+      hoverColor: 'hover:bg-[#F87171]',
+      selectedColor: 'bg-[#F87171] border-[#991B1B]'
     }
   };
 
@@ -292,7 +293,7 @@ const BrandDeals = () => {
           <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</div>
         </div>
         <div className="col-span-3">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</div>
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</div>
         </div>
         <div className="col-span-2">
           <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</div>
@@ -313,22 +314,22 @@ const BrandDeals = () => {
             <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
               {/* Brand */}
               <div className="col-span-2">
-                <div className="font-medium text-gray-900">{deal.brand_name}</div>
+                <div className="font-medium text-[#1c2d5a]">{deal.brand_name}</div>
                 <div className="text-xs text-gray-500">{formatDate(deal.start_date)} to {formatDate(deal.end_date)}</div>
               </div>
 
               {/* Deliverables */}
               <div className="col-span-3">
-                <div className="text-sm text-gray-900">{deal.deliverables}</div>
+                <div className="text-sm text-[#1c2d5a]">{deal.deliverables}</div>
               </div>
 
               {/* Fee */}
               <div className="col-span-1">
-                <div className="text-lg font-semibold text-gray-900">${deal.fee.toLocaleString()}</div>
+                <div className="text-lg font-semibold text-[#1c2d5a]">${deal.fee.toLocaleString()}</div>
               </div>
 
               {/* Status */}
-              <div className="col-span-3" onClick={(e) => e.stopPropagation()}>
+              <div className="col-span-3 flex justify-center" onClick={(e) => e.stopPropagation()}>
                 <StatusDropdown
                   currentStatus={deal.status}
                   statusConfig={statusConfig}
@@ -338,7 +339,7 @@ const BrandDeals = () => {
 
               {/* Contact */}
               <div className="col-span-2">
-                <div className="text-sm text-gray-900">{deal.contact_name}</div>
+                <div className="text-sm text-[#1c2d5a]">{deal.contact_name}</div>
                 <div className="text-xs text-gray-500">{deal.contact_email}</div>
               </div>
 

@@ -96,34 +96,35 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         ref={triggerRef}
         onClick={handleToggle}
         className={`
-          inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
-          border transition-all duration-200 min-w-[150px] justify-between
+          inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold
+          transition-all duration-300 min-w-[140px] justify-between shadow-sm
+          border-2 border-transparent
           ${currentConfig?.color || 'bg-gray-100 text-gray-800'}
           ${currentConfig?.hoverColor || 'hover:bg-gray-200'}
-          border-transparent hover:border-gray-300
-          focus:outline-none focus:ring-2 focus:ring-purple-500/20
+          hover:shadow-md hover:scale-[1.02]
+          focus:outline-none focus:ring-4 focus:ring-white/50
           relative z-10
         `}
       >
-        <div className="flex items-center gap-2 justify-center flex-1">
+        <div className="flex items-center gap-2">
           {CurrentIcon && <CurrentIcon className="w-4 h-4" />}
-          <span className="text-center">{currentConfig?.label || currentStatus}</span>
+          <span className="font-medium">{currentConfig?.label || currentStatus}</span>
         </div>
-        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <div
           className={`
-            absolute min-w-[200px] bg-white rounded-xl shadow-2xl 
-            border border-gray-200/50 backdrop-blur-sm overflow-hidden
-            transform transition-all duration-200 origin-top z-50
-            ${dropdownPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'}
+            absolute min-w-[200px] bg-white rounded-xl shadow-lg
+            overflow-hidden
+            transform transition-all duration-300 origin-top z-50
+            ${dropdownPosition === 'top' ? 'bottom-full mb-3' : 'top-full mt-3'}
             ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
           `}
-          style={{ 
-            maxHeight: '300px',
+          style={{
+            maxHeight: '400px',
             overflowY: 'auto'
           }}
         >
@@ -131,29 +132,39 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             {Object.entries(statusConfig).map(([key, config]) => {
               const Icon = config.icon;
               const isSelected = key === currentStatus;
-              
+
               return (
                 <button
                   key={key}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     onStatusChange(key);
                     setIsOpen(false);
                   }}
                   className={`
-                    w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium
-                    transition-all duration-200 text-left
-                    ${isSelected 
-                      ? `${config.selectedColor || config.color} border-l-4 border-l-current` 
-                      : `hover:${config.color} ${config.hoverColor || 'hover:bg-gray-50'}`
+                    w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium
+                    transition-all duration-300 text-left group
+                    ${isSelected
+                      ? `${config.color}`
+                      : `hover:${config.color} hover:bg-gray-100`
                     }
                   `}
                 >
-                  {Icon && (
-                    <Icon className={`w-4 h-4 ${isSelected ? 'opacity-100' : 'opacity-70'}`} />
-                  )}
-                  <span className="flex-1">{config.label}</span>
+                  <div className={`
+                    p-2 rounded-xl transition-all duration-300
+                    ${isSelected
+                      ? 'bg-white/30 shadow-sm'
+                      : 'bg-white/60 group-hover:bg-white/40'
+                    }
+                  `}>
+                    {Icon && (
+                      <Icon className={`w-4 h-4 ${isSelected ? 'opacity-100' : 'opacity-80'}`} />
+                    )}
+                  </div>
+                  <span className="flex-1 font-semibold">{config.label}</span>
                   {isSelected && (
-                    <div className="w-2 h-2 rounded-full bg-current opacity-80" />
+                    <div className="w-3 h-3 rounded-full bg-white/60 shadow-sm animate-pulse" />
                   )}
                 </button>
               );
