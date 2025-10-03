@@ -189,6 +189,40 @@ const BrandDeals = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const getDaysUntilDue = (endDate: string) => {
+    if (!endDate) return { days: 0, text: '', color: 'text-gray-500' };
+
+    const today = new Date();
+    const dueDate = new Date(endDate);
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let text = '';
+    let color = 'text-gray-500';
+
+    if (diffDays < 0) {
+      text = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? '' : 's'}`;
+      color = 'text-red-800';
+    } else if (diffDays === 0) {
+      text = 'Due today';
+      color = 'text-red-600';
+    } else if (diffDays === 1) {
+      text = 'Due in 1 day';
+      color = 'text-red-600';
+    } else if (diffDays === 2) {
+      text = 'Due in 2 days';
+      color = 'text-red-600';
+    } else if (diffDays <= 6) {
+      text = `Due in ${diffDays} days`;
+      color = 'text-amber-600';
+    } else {
+      text = `Due in ${diffDays} days`;
+      color = 'text-gray-500';
+    }
+
+    return { days: diffDays, text, color };
+  };
+
   const handleRowClick = (deal: any) => {
     setEditingDeal({ ...deal });
     setShowEditModal(true);
@@ -296,7 +330,7 @@ const BrandDeals = () => {
           <div className="text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</div>
         </div>
         <div className="col-span-2">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</div>
+          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Contact</div>
         </div>
         <div className="col-span-1">
           <div className="text-xs font-medium text-gray-500 uppercase tracking-wider"></div>
@@ -314,8 +348,15 @@ const BrandDeals = () => {
             <div className="grid grid-cols-12 gap-4 px-6 py-4 items-center">
               {/* Brand */}
               <div className="col-span-2">
-                <div className="font-medium text-[#1c2d5a]">{deal.brand_name}</div>
-                <div className="text-xs text-gray-500">{formatDate(deal.start_date)} to {formatDate(deal.end_date)}</div>
+                <div className="font-semibold text-lg text-[#1c2d5a]">{deal.brand_name}</div>
+                {deal.status !== 'completed' && deal.status !== 'posted' && deal.status !== 'cancelled' && (
+                  <div
+                    className={`text-xs font-medium ${getDaysUntilDue(deal.end_date).color}`}
+                    title={`Start: ${formatDate(deal.start_date)} | End: ${formatDate(deal.end_date)}`}
+                  >
+                    {getDaysUntilDue(deal.end_date).text}
+                  </div>
+                )}
               </div>
 
               {/* Deliverables */}
@@ -338,7 +379,7 @@ const BrandDeals = () => {
               </div>
 
               {/* Contact */}
-              <div className="col-span-2">
+              <div className="col-span-2 text-center">
                 <div className="text-sm text-[#1c2d5a]">{deal.contact_name}</div>
                 <div className="text-xs text-gray-500">{deal.contact_email}</div>
               </div>

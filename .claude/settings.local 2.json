@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "Bash(npm run preview:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(npx shadcn-ui:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
