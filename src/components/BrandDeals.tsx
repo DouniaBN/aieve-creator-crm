@@ -57,9 +57,9 @@ const BrandDeals = () => {
     approved: {
       label: 'Approved',
       icon: CheckCircle,
-      color: 'bg-[#86EFAC] text-[#166534]',
-      hoverColor: 'hover:bg-[#6BE29A]',
-      selectedColor: 'bg-[#6BE29A] border-[#166534]'
+      color: 'bg-[#DBEAFE] text-[#1E40AF]',
+      hoverColor: 'hover:bg-[#BFDBFE]',
+      selectedColor: 'bg-[#BFDBFE] border-[#1E40AF]'
     },
     completed: {
       label: 'Completed',
@@ -91,6 +91,22 @@ const BrandDeals = () => {
     // Otherwise, show only non-hidden deals
     return !isHidden && matchesStatus && matchesSearch;
   });
+
+  // Calculate quick stats
+  const totalDealsValue = brandDeals.reduce((sum, deal) => sum + (deal.fee || 0), 0);
+
+  const completedThisMonth = brandDeals.filter(deal => {
+    if (deal.status !== 'completed') return false;
+
+    const dealEndDate = new Date(deal.end_date);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    return dealEndDate >= startOfMonth && dealEndDate <= endOfMonth;
+  }).reduce((sum, deal) => sum + (deal.fee || 0), 0);
+
+  const activeDealsCount = brandDeals.length;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -295,7 +311,7 @@ const BrandDeals = () => {
             </button>
             <Filter className="w-5 h-5 text-[#1c2d5a]" />
             <select
-              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
+              className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 bg-white/60 backdrop-blur-sm"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
@@ -308,11 +324,44 @@ const BrandDeals = () => {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-base mr-4"
+          className="flex items-center px-5 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-base mr-4"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-5 h-5 mr-2" />
           New Deal
         </button>
+      </div>
+
+      {/* Quick Stats Section */}
+      <div className="mb-2 grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-[#FF6FAE]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500">Total Deals Value</p>
+              <p className="text-2xl font-bold text-[#1c2d5a]">${totalDealsValue.toLocaleString()}</p>
+            </div>
+            <DollarSign className="w-8 h-8 text-[#FF6FAE] opacity-20" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-[#6EE7B7]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500">Completed This Month</p>
+              <p className="text-2xl font-bold text-[#1c2d5a]">${completedThisMonth.toLocaleString()}</p>
+            </div>
+            <CheckCircle className="w-8 h-8 text-[#6EE7B7] opacity-20" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-[#cfcffa]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-500">Active Deals</p>
+              <p className="text-2xl font-bold text-[#1c2d5a]">{activeDealsCount}</p>
+            </div>
+            <MessageSquare className="w-8 h-8 text-[#cfcffa] opacity-20" />
+          </div>
+        </div>
       </div>
 
       {/* Column Headers */}
