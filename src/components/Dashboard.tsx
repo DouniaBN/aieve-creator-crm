@@ -121,9 +121,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       value: '3',
       change: 'need attention',
       icon: AlertCircle,
-      borderColor: 'border-l-rose-300',
+      borderColor: 'border-l-[#fc5353]',
       iconBg: 'bg-rose-50',
-      iconColor: 'text-rose-400',
+      iconColor: 'text-[#fc5353]',
       onClick: onNavigateToInvoices
     },
     {
@@ -235,7 +235,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           const getChangeColor = () => {
-            if (stat.title === 'Overdue Invoices') return 'text-rose-400';
+            if (stat.title === 'Overdue Invoices') return 'text-[#fc5353]';
             if (stat.change.includes('+') || stat.change.includes('15%')) return 'text-green-600';
             return 'text-gray-400';
           };
@@ -264,70 +264,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Today's Posts */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-[#1c2d5a]">Today's Posts</h2>
-            <button 
-              onClick={onNavigateToCalendar}
-              className="text-[#1c2d5a] hover:text-[#1a2954] text-sm font-medium transition-colors duration-200"
-            >
-              View Calendar
-            </button>
-          </div>
-          <div className="space-y-4">
-            {calculations.todaysPosts.length > 0 ? (
-              calculations.todaysPosts.map((post) => {
-                const PlatformIcon = platformIcons[post.platform as keyof typeof platformIcons];
-                const scheduledTime = post.scheduled_date ? new Date(post.scheduled_date) : null;
-                
-                return (
-                  <div key={post.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-200">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100">
-                        <PlatformIcon className="w-4 h-4 text-[#1c2d5a]" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-[#1c2d5a]">{post.title}</h3>
-                        <p className="text-sm text-gray-600 capitalize">{post.platform}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="mb-1">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          post.status === 'scheduled' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : post.status === 'published'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {post.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {scheduledTime ? scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No time set'}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8">
-                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600">No posts scheduled for today</p>
-                <p className="text-sm text-gray-500 mt-1">Check your content calendar to plan ahead!</p>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Tasks */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-[#1c2d5a]">Tasks</h2>
             <CheckCircle className="w-5 h-5 text-[#E83F87]" />
           </div>
-          
+
           {/* Add new task form */}
           <form onSubmit={handleAddTask} className="mb-4">
             <div className="flex gap-2">
@@ -375,6 +318,63 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                 <CheckCircle className="w-12 h-12 text-[#E83F87] mx-auto mb-3" />
                 <p className="text-gray-600">No tasks yet</p>
                 <p className="text-sm text-gray-500 mt-1">Add a task to get started!</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Today's Posts */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200/50">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-[#1c2d5a]">Today's Posts</h2>
+            <button
+              onClick={onNavigateToCalendar}
+              className="text-[#1c2d5a] hover:text-[#1a2954] text-sm font-medium transition-colors duration-200"
+            >
+              View Calendar
+            </button>
+          </div>
+          <div className="space-y-4">
+            {calculations.todaysPosts.length > 0 ? (
+              calculations.todaysPosts.map((post) => {
+                const PlatformIcon = platformIcons[post.platform as keyof typeof platformIcons];
+                const scheduledTime = post.scheduled_date ? new Date(post.scheduled_date) : null;
+
+                return (
+                  <div key={post.id} className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 hover:bg-gray-100/50 transition-colors duration-200">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100">
+                        <PlatformIcon className="w-4 h-4 text-[#1c2d5a]" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-[#1c2d5a]">{post.title}</h3>
+                        <p className="text-sm text-gray-600 capitalize">{post.platform}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="mb-1">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          post.status === 'scheduled'
+                            ? 'bg-blue-100 text-blue-800'
+                            : post.status === 'published'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {post.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {scheduledTime ? scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No time set'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600">No posts scheduled for today</p>
+                <p className="text-sm text-gray-500 mt-1">Check your content calendar to plan ahead!</p>
               </div>
             )}
           </div>
