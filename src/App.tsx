@@ -164,7 +164,7 @@ function AppContent() {
         </div>
 
         {activeTab !== 'projects' && activeTab !== 'brand-deals' && (
-          <div className="hidden lg:block sticky top-0 z-30 px-4 py-1" style={{ backgroundColor: '#FAFAFA' }}>
+          <div className="hidden lg:block sticky top-0 z-30 px-4 py-2" style={{ backgroundColor: '#FAFAFA' }}>
             <div className="flex justify-end">
               <NotificationPanel />
             </div>

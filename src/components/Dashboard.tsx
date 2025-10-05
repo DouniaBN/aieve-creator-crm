@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin, Plus, X, Users, AlertCircle, Clapperboard } from 'lucide-react';
+import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin, Plus, X, Users, AlertCircle, Clapperboard, Moon, Sun, Sunrise } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
@@ -185,12 +185,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     blog: FileText
   };
 
-  // Get time-based greeting (memoized)
-  const greeting = useMemo(() => {
+  // Get time-based greeting and icon (memoized)
+  const greetingData = useMemo(() => {
     const hour = dateRanges.today.getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return { text: 'Good morning', icon: Sunrise };
+    if (hour < 18) return { text: 'Good afternoon', icon: Sun };
+    return { text: 'Good evening', icon: Moon };
   }, [dateRanges.today]);
 
   const handleAddTask = async (e: React.FormEvent) => {
@@ -223,10 +223,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
-        <h1 className="text-2xl font-bold text-[#1c2d5a] mb-2">{greeting}, Sarah</h1>
+        <div className="flex items-center gap-1.5 mb-2">
+          <h1 className="text-2xl font-bold text-[#1c2d5a]">{greetingData.text}, Sarah</h1>
+          <greetingData.icon className="w-5 h-5 text-[#1c2d5a]" />
+        </div>
         <p className="text-gray-600">You have 7 projects in progress and {(tasks || []).filter(t => !t.completed).length} pending tasks to complete.</p>
       </div>
 
@@ -334,7 +337,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
               View Calendar
             </button>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {calculations.todaysPosts.length > 0 ? (
               calculations.todaysPosts.map((post) => {
                 const PlatformIcon = platformIcons[post.platform as keyof typeof platformIcons];
