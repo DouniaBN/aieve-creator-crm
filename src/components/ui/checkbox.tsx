@@ -8,10 +8,11 @@ export interface CheckboxProps {
   disabled?: boolean
   className?: string
   id?: string
+  checkedColor?: string
 }
 
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, checked, onCheckedChange, disabled, id, ...props }, ref) => {
+  ({ className, checked, onCheckedChange, disabled, id, checkedColor, ...props }, ref) => {
     return (
       <div className="relative inline-flex items-center">
         <input
@@ -26,17 +27,18 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <div
           className={cn(
-            "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer transition-colors",
-            checked 
-              ? "bg-primary border-primary" 
-              : "bg-background hover:bg-gray-50",
+            "peer h-4 w-4 shrink-0 rounded-sm border ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer transition-colors",
+            checked
+              ? checkedColor ? `border-[${checkedColor}]` : "bg-primary border-primary"
+              : "bg-background hover:bg-gray-50 border-primary",
             disabled && "cursor-not-allowed opacity-50",
             className
           )}
+          style={checked && checkedColor ? { backgroundColor: checkedColor, borderColor: checkedColor } : undefined}
           onClick={() => !disabled && onCheckedChange?.(!checked)}
         >
           {checked && (
-            <Check className="h-3 w-3 text-primary-foreground" />
+            <Check className="h-3 w-3 text-white" />
           )}
         </div>
       </div>

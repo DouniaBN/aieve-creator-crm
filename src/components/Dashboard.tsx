@@ -222,7 +222,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{greeting}, Sarah</h1>
+        <h1 className="text-2xl font-bold text-[#1c2d5a] mb-2">{greeting}, Sarah</h1>
         <p className="text-gray-600">You have 7 projects in progress and {(tasks || []).filter(t => !t.completed).length} pending tasks to complete.</p>
       </div>
 
@@ -239,7 +239,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="w-full text-center">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                  <h3 className="text-2xl font-bold text-[#1c2d5a] mb-1">{stat.value}</h3>
                   <p className="text-sm text-gray-600">{stat.title}</p>
                   <p className={`text-xs mt-2 ${
                     stat.title === 'Overdue Invoices' ? 'text-red-600' : 
@@ -257,7 +257,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
         {/* Today's Posts */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Today's Posts</h2>
+            <h2 className="text-xl font-semibold text-[#1c2d5a]">Today's Posts</h2>
             <button 
               onClick={onNavigateToCalendar}
               className="text-[#1c2d5a] hover:text-[#1a2954] text-sm font-medium transition-colors duration-200"
@@ -278,7 +278,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                         <PlatformIcon className="w-4 h-4 text-[#1c2d5a]" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">{post.title}</h3>
+                        <h3 className="font-medium text-[#1c2d5a]">{post.title}</h3>
                         <p className="text-sm text-gray-600 capitalize">{post.platform}</p>
                       </div>
                     </div>
@@ -314,8 +314,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
         {/* Tasks */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
-            <CheckCircle className="w-5 h-5 text-[#1c2d5a]" />
+            <h2 className="text-xl font-semibold text-[#1c2d5a]">Tasks</h2>
+            <CheckCircle className="w-5 h-5 text-[#E83F87]" />
           </div>
           
           {/* Add new task form */}
@@ -332,7 +332,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
               <button
                 type="submit"
                 disabled={!newTaskText.trim()}
-                className="flex items-center justify-center w-10 h-10 rounded-md bg-[#1c2d5a] text-white hover:bg-[#1a2954] disabled:cursor-not-allowed transition-colors duration-200"
+                className="flex items-center justify-center w-10 h-10 rounded-md bg-[#E83F87] text-white hover:bg-[#D23075] disabled:cursor-not-allowed transition-colors duration-200"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -346,9 +346,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                 <Checkbox
                   checked={task.completed}
                   onCheckedChange={() => handleToggleTask(task.id, task.completed)}
+                  checkedColor="#E83F87"
                   className="flex-shrink-0"
                 />
-                <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : 'text-[#1c2d5a]'}`}>
                   {task.text}
                 </span>
                 <button
@@ -361,7 +362,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
             ))}
             {tasks.length === 0 && (
               <div className="text-center py-8">
-                <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <CheckCircle className="w-12 h-12 text-[#E83F87] mx-auto mb-3" />
                 <p className="text-gray-600">No tasks yet</p>
                 <p className="text-sm text-gray-500 mt-1">Add a task to get started!</p>
               </div>

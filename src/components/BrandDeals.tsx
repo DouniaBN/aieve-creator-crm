@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff, MessageSquare, Send, DollarSign, Edit3, CheckCircle, Sparkles, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff, MessageSquare, Send, DollarSign, Edit3, CheckCircle, Sparkles, XCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import StatusDropdown from './StatusDropdown';
+import { format } from 'date-fns';
+import { Calendar } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Button } from './ui/button';
+import { cn } from '../lib/utils';
 
 const BrandDeals = () => {
   const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal } = useSupabase();
@@ -24,6 +29,29 @@ const BrandDeals = () => {
     start_date: '',
     end_date: ''
   });
+
+  const [feeInput, setFeeInput] = useState('');
+  const [editFeeInput, setEditFeeInput] = useState('');
+
+  // Currency formatting functions
+  const formatCurrency = (value: string) => {
+    // Remove all non-numeric characters except decimal point
+    const numericValue = value.replace(/[^\d.]/g, '');
+
+    // Split by decimal point
+    const parts = numericValue.split('.');
+
+    // Format the integer part with commas
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    // Return formatted value (with decimal if it exists)
+    return parts.length > 1 ? `${integerPart}.${parts[1].slice(0, 2)}` : integerPart;
+  };
+
+  const parseCurrencyToNumber = (value: string) => {
+    const numericValue = value.replace(/[^\d.]/g, '');
+    return parseFloat(numericValue) || 0;
+  };
 
   const statusConfig = {
     in_discussion: {
@@ -136,10 +164,11 @@ const BrandDeals = () => {
         contact_email: '',
         deliverables: '',
         fee: 0,
-        status: 'proposal_sent',
+        status: 'in_discussion',
         start_date: '',
         end_date: ''
       });
+      setFeeInput('');
     } catch (error) {
       console.error('Error creating brand deal:', error);
     }
@@ -241,6 +270,9 @@ const BrandDeals = () => {
 
   const handleRowClick = (deal: any) => {
     setEditingDeal({ ...deal });
+    // Format the fee for display in the edit input
+    const formattedFee = deal.fee ? formatCurrency(deal.fee.toString()) : '';
+    setEditFeeInput(formattedFee);
     setShowEditModal(true);
   };
 
@@ -261,6 +293,7 @@ const BrandDeals = () => {
       });
       setShowEditModal(false);
       setEditingDeal(null);
+      setEditFeeInput('');
     } catch (error) {
       console.error('Error updating brand deal:', error);
     }
@@ -512,13 +545,15 @@ const BrandDeals = () => {
       {filteredDeals.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🤝</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No brand deals found</h3>
-          <p className="text-gray-600 mb-6">Start building partnerships with brands</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {showHidden ? 'No hidden brand deals found' : 'No brand deals found'}
+          </h3>
+          {!showHidden && <p className="text-gray-600 mb-6">Start building partnerships with brands</p>}
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center px-6 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-lg"
+            className="inline-flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-base"
           >
-            <Plus className="w-5 h-5 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             New Deal
           </button>
         </div>
@@ -577,15 +612,23 @@ const BrandDeals = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Fee</label>
-                  <input
-                    type="number"
-                    value={newDeal.fee}
-                    onChange={(e) => setNewDeal({ ...newDeal, fee: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 text-base">$</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={feeInput}
+                      onChange={(e) => {
+                        const formatted = formatCurrency(e.target.value);
+                        setFeeInput(formatted);
+                        setNewDeal({ ...newDeal, fee: parseCurrencyToNumber(formatted) });
+                      }}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                      placeholder="Enter amount"
+                      inputMode="numeric"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -603,27 +646,78 @@ const BrandDeals = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                  <input
-                    type="date"
-                    value={newDeal.start_date}
-                    onChange={(e) => setNewDeal({ ...newDeal, start_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200",
+                          !newDeal.start_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newDeal.start_date ? (
+                          format(new Date(newDeal.start_date), "PPP")
+                        ) : (
+                          <span>Pick start date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newDeal.start_date ? new Date(newDeal.start_date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setNewDeal({ ...newDeal, start_date: format(date, 'yyyy-MM-dd') });
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                  <input
-                    type="date"
-                    value={newDeal.end_date}
-                    onChange={(e) => setNewDeal({ ...newDeal, end_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200",
+                          !newDeal.end_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {newDeal.end_date ? (
+                          format(new Date(newDeal.end_date), "PPP")
+                        ) : (
+                          <span>Pick end date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={newDeal.end_date ? new Date(newDeal.end_date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setNewDeal({ ...newDeal, end_date: format(date, 'yyyy-MM-dd') });
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setFeeInput('');
+                  }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
                 >
                   Cancel
@@ -690,15 +784,23 @@ const BrandDeals = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Fee</label>
-                  <input
-                    type="number"
-                    value={editingDeal.fee}
-                    onChange={(e) => setEditingDeal({ ...editingDeal, fee: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 text-base">$</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={editFeeInput}
+                      onChange={(e) => {
+                        const formatted = formatCurrency(e.target.value);
+                        setEditFeeInput(formatted);
+                        setEditingDeal({ ...editingDeal, fee: parseCurrencyToNumber(formatted) });
+                      }}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                      placeholder="Enter amount"
+                      inputMode="numeric"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -716,21 +818,69 @@ const BrandDeals = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                  <input
-                    type="date"
-                    value={editingDeal.start_date}
-                    onChange={(e) => setEditingDeal({ ...editingDeal, start_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200",
+                          !editingDeal.start_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editingDeal.start_date ? (
+                          format(new Date(editingDeal.start_date), "PPP")
+                        ) : (
+                          <span>Pick start date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editingDeal.start_date ? new Date(editingDeal.start_date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setEditingDeal({ ...editingDeal, start_date: format(date, 'yyyy-MM-dd') });
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                  <input
-                    type="date"
-                    value={editingDeal.end_date}
-                    onChange={(e) => setEditingDeal({ ...editingDeal, end_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200",
+                          !editingDeal.end_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editingDeal.end_date ? (
+                          format(new Date(editingDeal.end_date), "PPP")
+                        ) : (
+                          <span>Pick end date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editingDeal.end_date ? new Date(editingDeal.end_date) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setEditingDeal({ ...editingDeal, end_date: format(date, 'yyyy-MM-dd') });
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -739,6 +889,7 @@ const BrandDeals = () => {
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingDeal(null);
+                    setEditFeeInput('');
                   }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
                 >
