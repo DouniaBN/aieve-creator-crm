@@ -121,9 +121,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       value: '3',
       change: 'need attention',
       icon: AlertCircle,
-      borderColor: 'border-l-red-300',
-      iconBg: 'bg-red-50',
-      iconColor: 'text-red-400',
+      borderColor: 'border-l-rose-300',
+      iconBg: 'bg-rose-50',
+      iconColor: 'text-rose-400',
       onClick: onNavigateToInvoices
     },
     {
@@ -235,7 +235,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           const getChangeColor = () => {
-            if (stat.title === 'Overdue Invoices') return 'text-red-400';
+            if (stat.title === 'Overdue Invoices') return 'text-rose-400';
             if (stat.change.includes('+') || stat.change.includes('15%')) return 'text-green-600';
             return 'text-gray-400';
           };
@@ -252,7 +252,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                 <div className="flex-1">
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">{stat.title}</p>
                   <p className="text-4xl font-bold text-[#1c2d5a] mb-1">{stat.value}</p>
-                  <p className={`text-xs ${getChangeColor()}`}>{stat.change}</p>
+                  <p className={`text-[10px] ${getChangeColor()}`}>{stat.change}</p>
                 </div>
                 <div className={`rounded-lg p-1.5 ${stat.iconBg}`}>
                   <Icon className={`w-4 h-4 ${stat.iconColor}`} />
