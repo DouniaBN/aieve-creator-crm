@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin, Plus, X } from 'lucide-react';
+import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin, Plus, X, Users, AlertCircle, Clapperboard } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
@@ -102,34 +102,38 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       title: 'Active Brand Deals',
       value: calculations.activeBrandDealsThisWeek.toString(),
       change: 'this week',
-      icon: Handshake,
-      color: 'from-purple-500 to-pink-500',
-      bgColor: 'from-purple-50 to-pink-50'
+      icon: Users,
+      borderColor: 'border-l-pink-500',
+      iconBg: 'bg-pink-100',
+      iconColor: 'text-pink-600'
     },
     {
       title: 'Total Revenue',
       value: '$5,550',
       change: '+15% this month',
       icon: DollarSign,
-      color: 'from-green-500 to-teal-500',
-      bgColor: 'from-green-50 to-teal-50'
+      borderColor: 'border-l-emerald-300',
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-500'
     },
     {
       title: 'Overdue Invoices',
       value: '3',
       change: 'need attention',
-      icon: Clock,
-      color: 'from-red-500 to-red-600',
-      bgColor: 'from-red-50 to-red-100',
+      icon: AlertCircle,
+      borderColor: 'border-l-red-300',
+      iconBg: 'bg-red-50',
+      iconColor: 'text-red-400',
       onClick: onNavigateToInvoices
     },
     {
       title: 'Content Posts',
       value: calculations.contentPostsThisMonth.toString(),
       change: 'this month',
-      icon: FileText,
-      color: 'from-blue-500 to-indigo-500',
-      bgColor: 'from-blue-50 to-indigo-50'
+      icon: Clapperboard,
+      borderColor: 'border-l-indigo-300',
+      iconBg: 'bg-indigo-50',
+      iconColor: 'text-indigo-400'
     }
   ];
 
@@ -227,25 +231,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-4 gap-4">
         {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          const getChangeColor = () => {
+            if (stat.title === 'Overdue Invoices') return 'text-red-400';
+            if (stat.change.includes('+') || stat.change.includes('15%')) return 'text-green-600';
+            return 'text-gray-400';
+          };
+
           return (
             <div
               key={index}
-              className={`bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300 ${
+              className={`bg-white rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 ${stat.borderColor} ${
                 stat.onClick ? 'cursor-pointer' : ''
               }`}
               onClick={stat.onClick}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-full text-center">
-                  <h3 className="text-2xl font-bold text-[#1c2d5a] mb-1">{stat.value}</h3>
-                  <p className="text-sm text-gray-600">{stat.title}</p>
-                  <p className={`text-xs mt-2 ${
-                    stat.title === 'Overdue Invoices' ? 'text-red-600' : 
-                    stat.title === 'Active Brand Deals' || stat.title === 'Content Posts' ? 'text-gray-400' : 
-                    'text-green-600'
-                  }`}>{stat.change}</p>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">{stat.title}</p>
+                  <p className="text-4xl font-bold text-[#1c2d5a] mb-1">{stat.value}</p>
+                  <p className={`text-xs ${getChangeColor()}`}>{stat.change}</p>
+                </div>
+                <div className={`rounded-lg p-1.5 ${stat.iconBg}`}>
+                  <Icon className={`w-4 h-4 ${stat.iconColor}`} />
                 </div>
               </div>
             </div>
