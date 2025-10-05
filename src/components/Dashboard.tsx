@@ -254,7 +254,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                   <p className="text-4xl font-bold text-[#1c2d5a] mb-1">{stat.value}</p>
                   <p className={`text-[10px] ${getChangeColor()}`}>{stat.change}</p>
                 </div>
-                <div className={`rounded-lg p-1.5 ${stat.iconBg}`}>
+                <div className="rounded-lg p-1.5">
                   <Icon className={`w-4 h-4 ${stat.iconColor}`} />
                 </div>
               </div>
