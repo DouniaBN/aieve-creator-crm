@@ -361,6 +361,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
                             ? 'bg-blue-100 text-blue-800'
                             : post.status === 'published'
                             ? 'bg-green-100 text-green-800'
+                            : post.status === 'draft'
+                            ? 'bg-gray-100 text-gray-700'
+                            : post.status === 'edited'
+                            ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-gray-100 text-gray-800'
                         }`}>
                           {post.status}

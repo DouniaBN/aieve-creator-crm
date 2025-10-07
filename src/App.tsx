@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, LayoutDashboard, Calendar, FileText, Settings, User } from 'lucide-react';
+import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign } from 'lucide-react';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import NotificationPanel from './components/NotificationPanel';
@@ -44,7 +44,7 @@ function AppContent() {
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
     { id: 'projects', name: 'Calendar', icon: Calendar },
-    { id: 'brand-deals', name: 'Brand Deals', icon: Layout },
+    { id: 'brand-deals', name: 'Brand Deals', icon: DollarSign },
     { id: 'invoices', name: 'Invoices', icon: FileText },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
@@ -124,29 +124,39 @@ function AppContent() {
             </ul>
           </nav>
 
-          {/* Settings - Above User Profile */}
+          {/* Settings and Logout */}
           <div className="p-4">
-            <button
-              onClick={signOut}
-              className="w-full flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100/50 rounded-xl transition-all duration-200 text-sm mb-3"
-            >
-              <User className="w-4 h-4 mr-3" />
-              Logout
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('settings');
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                activeTab === 'settings'
-                  ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
-                  : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
-              }`}
-            >
-              <Settings className="w-5 h-5 mr-3" />
-              Settings
-            </button>
+            <div className="flex justify-between">
+              <div className="relative group">
+                <button
+                  onClick={() => {
+                    setActiveTab('settings');
+                    setSidebarOpen(false);
+                  }}
+                  className={`flex items-center justify-center p-3 rounded-xl transition-all duration-200 ${
+                    activeTab === 'settings'
+                      ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
+                      : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
+                  }`}
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  Settings
+                </div>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={signOut}
+                  className="flex items-center justify-center p-3 rounded-xl transition-all duration-200 text-gray-700 hover:bg-gray-100/50 hover:shadow-sm"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  Log out
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
