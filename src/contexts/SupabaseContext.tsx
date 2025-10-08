@@ -262,12 +262,27 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const generateInvoiceNumber = async (): Promise<string> => {
     if (!user) return 'INV-001'
 
-    const { count } = await supabase
+    // Get the highest existing invoice number to avoid duplicates
+    const { data, error } = await supabase
       .from('invoices')
-      .select('*', { count: 'exact', head: true })
+      .select('invoice_number')
       .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    const nextNumber = (count || 0) + 1
+    if (error) {
+      console.error('Error fetching latest invoice:', error)
+      return `INV-${Date.now()}` // Fallback to timestamp
+    }
+
+    let nextNumber = 1
+    if (data && data.length > 0 && data[0].invoice_number) {
+      // Extract number from last invoice (e.g., "INV-005" -> 5)
+      const lastInvoiceNumber = data[0].invoice_number
+      const lastNumber = parseInt(lastInvoiceNumber.replace('INV-', '')) || 0
+      nextNumber = lastNumber + 1
+    }
+
     return `INV-${nextNumber.toString().padStart(3, '0')}`
   }
 
@@ -282,6 +297,19 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     if (!brandDeal.fee || brandDeal.fee <= 0) {
       console.log(`❌ Invalid fee: ${brandDeal.fee}`);
+      return;
+    }
+
+    // Check if invoice already exists for this brand deal
+    const { data: existingInvoices } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('client_name', brandDeal.brand_name)
+      .eq('amount', brandDeal.fee)
+
+    if (existingInvoices && existingInvoices.length > 0) {
+      console.log(`⚠️ Invoice already exists for this brand deal`);
       return;
     }
 
