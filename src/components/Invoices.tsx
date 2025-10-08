@@ -372,7 +372,9 @@ const Invoices = () => {
     <div className="space-y-6">
       {/* Overview Section */}
       <div>
-        <h2 className="text-xl font-bold text-[#1c2d5a] mb-3">Overview</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-bold text-[#1c2d5a]">Overview</h2>
+        </div>
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-emerald-300">
@@ -445,49 +447,48 @@ const Invoices = () => {
         </button>
       </div>
 
+      {/* Search Bar and Filters */}
+      {showSearchBar && (
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search invoices..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setShowSearchBar(false);
+              setSearchTerm('');
+            }}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors duration-200"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="flex items-center justify-between gap-4">
-          {showSearchBar ? (
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search invoices..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  autoFocus
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => {
-                  setShowSearchBar(true);
-                  if (!showSearchBar) {
-                    setSearchTerm('');
-                  }
-                }}
-                className="p-2 text-gray-400 hover:text-[#E83F87] rounded-lg transition-colors duration-200"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            </div>
-          )}
+      <div className="flex items-center justify-end gap-4">
           <div className="flex items-center space-x-2">
-            {showSearchBar && (
-              <button
-                onClick={() => {
-                  setShowSearchBar(false);
+            <button
+              onClick={() => {
+                setShowSearchBar(true);
+                if (!showSearchBar) {
                   setSearchTerm('');
-                }}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors duration-200"
-              >
-                ✕
-              </button>
-            )}
+                }
+              }}
+              className="p-2 text-gray-400 hover:text-[#E83F87] rounded-lg transition-colors duration-200"
+            >
+              <Search className="w-5 h-5" />
+            </button>
             <Filter className="w-4 h-4 text-gray-400" />
             <select
               className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
@@ -519,7 +520,9 @@ const Invoices = () => {
 
       {/* Invoices Table */}
       {!showDrafts && !showTrash && (
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1c2d5a] mb-4">Invoices</h1>
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
           <div className="overflow-x-auto overflow-y-visible">
             <table className="w-full">
               <thead className="bg-gray-50/80">
@@ -602,6 +605,7 @@ const Invoices = () => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       )}
 
