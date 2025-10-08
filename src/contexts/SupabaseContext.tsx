@@ -31,7 +31,8 @@ interface SupabaseContextType {
   updateInvoice: (id: string, updates: Partial<Invoice>) => Promise<void>
   deleteInvoice: (id: string) => Promise<void>
   createInvoiceFromBrandDeal: (brandDeal: BrandDeal) => Promise<void>
-  
+  generateInvoiceNumber: () => Promise<string>
+
   createBrandDeal: (deal: Omit<BrandDeal, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateBrandDeal: (id: string, updates: Partial<BrandDeal>) => Promise<void>
   deleteBrandDeal: (id: string) => Promise<void>
@@ -257,12 +258,25 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }
 
+  // Generate sequential invoice number
+  const generateInvoiceNumber = async (): Promise<string> => {
+    if (!user) return 'INV-001'
+
+    const { count } = await supabase
+      .from('invoices')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    const nextNumber = (count || 0) + 1
+    return `INV-${nextNumber.toString().padStart(3, '0')}`
+  }
+
   // Create invoice from brand deal
   const createInvoiceFromBrandDeal = async (brandDeal: BrandDeal) => {
     if (!user || !brandDeal.fee || brandDeal.fee <= 0) return
 
-    // Generate invoice number
-    const invoiceNumber = `INV-${Date.now()}`
+    // Generate sequential invoice number
+    const invoiceNumber = await generateInvoiceNumber()
 
     // Calculate due date (30 days from now)
     const dueDate = new Date()
@@ -452,6 +466,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     updateInvoice,
     deleteInvoice,
     createInvoiceFromBrandDeal,
+    generateInvoiceNumber,
     createBrandDeal,
     updateBrandDeal,
     deleteBrandDeal,
