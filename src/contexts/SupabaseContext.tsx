@@ -273,10 +273,21 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Create invoice from brand deal
   const createInvoiceFromBrandDeal = async (brandDeal: BrandDeal) => {
-    if (!user || !brandDeal.fee || brandDeal.fee <= 0) return
+    console.log(`🏗️ Creating invoice from brand deal:`, brandDeal);
+
+    if (!user) {
+      console.log(`❌ No user found`);
+      return;
+    }
+
+    if (!brandDeal.fee || brandDeal.fee <= 0) {
+      console.log(`❌ Invalid fee: ${brandDeal.fee}`);
+      return;
+    }
 
     // Generate sequential invoice number
     const invoiceNumber = await generateInvoiceNumber()
+    console.log(`📋 Generated invoice number: ${invoiceNumber}`);
 
     // Calculate due date (30 days from now)
     const dueDate = new Date()
@@ -287,14 +298,16 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       client_name: brandDeal.brand_name,
       amount: brandDeal.fee,
       due_date: dueDate.toISOString().split('T')[0],
-      status: 'draft',
-      // Include brand deal contact information
-      contact_name: brandDeal.contact_name,
-      contact_email: brandDeal.contact_email,
-      deliverables: brandDeal.deliverables
+      status: 'draft'
+      // Note: Temporarily removing optional fields to test basic functionality
+      // contact_name: brandDeal.contact_name,
+      // contact_email: brandDeal.contact_email,
+      // deliverables: brandDeal.deliverables
     }
 
+    console.log(`💾 Creating invoice with data:`, invoice);
     await createInvoice(invoice)
+    console.log(`✅ Invoice created successfully!`);
   }
 
   // CRUD operations for brand deals

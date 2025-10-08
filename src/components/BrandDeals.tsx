@@ -175,23 +175,36 @@ const BrandDeals = () => {
   };
 
   const handleUpdateStatus = async (dealId: string, newStatus: string) => {
+    console.log(`🔄 Updating deal ${dealId} status to: ${newStatus}`);
     try {
       await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'completed' | 'cancelled' });
 
       // Auto-create invoice when deal is completed or posted and has a fee
       if ((newStatus === 'completed' || newStatus === 'posted') && dealId) {
+        console.log(`✅ Status matches completion criteria: ${newStatus}`);
         const deal = brandDeals.find(d => d.id === dealId);
+        console.log(`📋 Found deal:`, deal);
+
         if (deal && deal.fee && deal.fee > 0) {
+          console.log(`💰 Deal has fee of $${deal.fee}, creating invoice...`);
           try {
             await createInvoiceFromBrandDeal(deal);
-            console.log(`Invoice automatically created for brand deal: ${deal.brand_name}`);
+            console.log(`✅ Invoice automatically created for brand deal: ${deal.brand_name}`);
           } catch (error) {
-            console.error('Error auto-creating invoice:', error);
+            console.error('❌ Error auto-creating invoice:', error);
           }
+        } else {
+          console.log(`⚠️ Deal not eligible for invoice creation:`, {
+            hasDeal: !!deal,
+            hasFee: deal?.fee > 0,
+            fee: deal?.fee
+          });
         }
+      } else {
+        console.log(`ℹ️ Status ${newStatus} does not trigger invoice creation`);
       }
     } catch (error) {
-      console.error('Error updating brand deal status:', error);
+      console.error('❌ Error updating brand deal status:', error);
     }
   };
 
