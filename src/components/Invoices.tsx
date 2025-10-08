@@ -70,7 +70,7 @@ const Invoices = () => {
   const filteredInvoices = invoices.filter(invoice => {
     const matchesStatus = filterStatus === 'all' || invoice.status === filterStatus;
     const matchesSearch = invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.project.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
@@ -131,7 +131,7 @@ const Invoices = () => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Invoice ${invoice.invoiceNumber}</title>
+        <title>Invoice ${invoice.invoice_number}</title>
         <style>
           body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
           .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
@@ -161,7 +161,7 @@ const Invoices = () => {
           <div style="text-align: right;">
             <div class="invoice-title">INVOICE</div>
             <div class="invoice-details">
-              <div style="margin-bottom: 8px;"><strong>Invoice #:</strong> ${invoice.invoiceNumber}</div>
+              <div style="margin-bottom: 8px;"><strong>Invoice #:</strong> ${invoice.invoice_number}</div>
               <div style="margin-bottom: 8px;"><strong>Date:</strong> ${currentDate}</div>
               <div style="margin-bottom: 8px;"><strong>Due:</strong> ${invoice.dueDate}</div>
             </div>
@@ -238,7 +238,7 @@ const Invoices = () => {
       const amount = invoice.amount || invoice.total || 0;
       editData = {
         id: invoice.id.toString(),
-        invoiceNumber: invoice.invoiceNumber,
+        invoiceNumber: invoice.invoice_number,
         issueDate: invoice.sentDate || new Date().toISOString().split('T')[0],
         dueDate: invoice.dueDate,
         currency: 'USD',
@@ -292,16 +292,16 @@ const Invoices = () => {
   };
 
   const handleDeleteInvoice = (invoice: Invoice) => {
-    if (window.confirm(`Are you sure you want to move invoice ${invoice.invoiceNumber} to trash?`)) {
+    if (window.confirm(`Are you sure you want to move invoice ${invoice.invoice_number} to trash?`)) {
       setTrashedInvoices(prev => [...prev, { ...invoice, deletedAt: new Date().toISOString() }]);
       // In a real app, you would remove from main invoices list
       
       // Add notification for invoice deletion
-      showSuccessMessage(`Invoice ${invoice.invoiceNumber} moved to trash`);
+      showSuccessMessage(`Invoice ${invoice.invoice_number} moved to trash`);
       addNotification({
         type: 'invoice_deleted',
         title: 'Invoice Deleted',
-        message: `Invoice ${invoice.invoiceNumber} has been moved to trash`,
+        message: `Invoice ${invoice.invoice_number} has been moved to trash`,
         relatedId: invoice.id,
         relatedType: 'invoice'
       });
@@ -313,20 +313,20 @@ const Invoices = () => {
     // In a real app, you would add back to main invoices list
     
     // Add notification for invoice restoration
-    showSuccessMessage(`Invoice ${invoice.invoiceNumber} restored`);
+    showSuccessMessage(`Invoice ${invoice.invoice_number} restored`);
     addNotification({
       type: 'invoice_restored',
       title: 'Invoice Restored',
-      message: `Invoice ${invoice.invoiceNumber} has been restored from trash`,
+      message: `Invoice ${invoice.invoice_number} has been restored from trash`,
       relatedId: invoice.id,
       relatedType: 'invoice'
     });
   };
 
   const handlePermanentDelete = (invoice: Invoice) => {
-    if (window.confirm(`Are you sure you want to permanently delete invoice ${invoice.invoiceNumber}? This cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to permanently delete invoice ${invoice.invoice_number}? This cannot be undone.`)) {
       setTrashedInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
-      showSuccessMessage(`Invoice ${invoice.invoiceNumber} permanently deleted`);
+      showSuccessMessage(`Invoice ${invoice.invoice_number} permanently deleted`);
     }
   };
 
@@ -512,7 +512,7 @@ const Invoices = () => {
                   return (
                     <tr key={invoice.id} className="hover:bg-gray-50/50 transition-colors duration-200">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{invoice.invoiceNumber}</div>
+                        <div className="font-medium text-gray-900">{invoice.invoice_number}</div>
                         <div className="text-sm text-gray-500">{invoice.project}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
