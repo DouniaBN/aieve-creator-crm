@@ -10,7 +10,7 @@ import TrashSection from './TrashSection';
 import { InvoiceData } from './InvoiceGenerator';
 
 const Invoices = () => {
-  const { invoices, updateInvoice } = useSupabase();
+  const { invoices, updateInvoice, deleteInvoice, createInvoice } = useSupabase();
   const { addNotification, showSuccessMessage } = useAppContext();
   const [showGenerator, setShowGenerator] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
@@ -291,36 +291,61 @@ const Invoices = () => {
     setShowTrash(false);
   };
 
-  const handleDeleteInvoice = (invoice: Invoice) => {
+  const handleDeleteInvoice = async (invoice: Invoice) => {
     if (window.confirm(`Are you sure you want to move invoice ${invoice.invoice_number} to trash?`)) {
-      setTrashedInvoices(prev => [...prev, { ...invoice, deletedAt: new Date().toISOString() }]);
-      // In a real app, you would remove from main invoices list
-      
-      // Add notification for invoice deletion
-      showSuccessMessage(`Invoice ${invoice.invoice_number} moved to trash`);
-      addNotification({
-        type: 'invoice_deleted',
-        title: 'Invoice Deleted',
-        message: `Invoice ${invoice.invoice_number} has been moved to trash`,
-        relatedId: invoice.id,
-        relatedType: 'invoice'
-      });
+      setLoading(invoice.id, 'delete', true);
+      try {
+        // Add to trash with deletion timestamp
+        setTrashedInvoices(prev => [...prev, { ...invoice, deletedAt: new Date().toISOString() }]);
+
+        // Remove from main invoices list in database
+        await deleteInvoice(invoice.id);
+
+        // Add notification for invoice deletion
+        showSuccessMessage(`Invoice ${invoice.invoice_number} moved to trash`);
+        addNotification({
+          type: 'invoice_deleted',
+          title: 'Invoice Deleted',
+          message: `Invoice ${invoice.invoice_number} has been moved to trash`,
+          relatedId: invoice.id,
+          relatedType: 'invoice'
+        });
+      } catch (error) {
+        console.error('Error deleting invoice:', error);
+        showSuccessMessage('Error moving invoice to trash');
+      } finally {
+        setLoading(invoice.id, 'delete', false);
+      }
     }
   };
 
-  const handleRestoreInvoice = (invoice: Invoice) => {
-    setTrashedInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
-    // In a real app, you would add back to main invoices list
-    
-    // Add notification for invoice restoration
-    showSuccessMessage(`Invoice ${invoice.invoice_number} restored`);
-    addNotification({
-      type: 'invoice_restored',
-      title: 'Invoice Restored',
-      message: `Invoice ${invoice.invoice_number} has been restored from trash`,
-      relatedId: invoice.id,
-      relatedType: 'invoice'
-    });
+  const handleRestoreInvoice = async (invoice: Invoice) => {
+    try {
+      // Remove deletedAt field and restore to database
+      const { deletedAt, ...invoiceToRestore } = invoice as Invoice & { deletedAt?: string };
+
+      // Remove the id, user_id, and created_at to match the createInvoice interface
+      const { id, user_id, created_at, ...invoiceData } = invoiceToRestore;
+
+      // Create the invoice back in the database
+      await createInvoice(invoiceData);
+
+      // Remove from trash
+      setTrashedInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
+
+      // Add notification for invoice restoration
+      showSuccessMessage(`Invoice ${invoice.invoice_number} restored`);
+      addNotification({
+        type: 'invoice_restored',
+        title: 'Invoice Restored',
+        message: `Invoice ${invoice.invoice_number} has been restored from trash`,
+        relatedId: invoice.id,
+        relatedType: 'invoice'
+      });
+    } catch (error) {
+      console.error('Error restoring invoice:', error);
+      showSuccessMessage('Error restoring invoice');
+    }
   };
 
   const handlePermanentDelete = (invoice: Invoice) => {
