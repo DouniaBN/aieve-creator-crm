@@ -171,7 +171,7 @@ const Invoices = () => {
         <div class="bill-to">
           <div class="section-title">Bill To:</div>
           <div style="background: #F9FAFB; padding: 20px; border-radius: 12px;">
-            <div style="font-weight: 600; margin-bottom: 5px;">${invoice.client}</div>
+            <div style="font-weight: 600; margin-bottom: 5px;">${invoice.client_name}</div>
             <div style="color: #6B7280;">${invoice.project}</div>
           </div>
         </div>
@@ -254,8 +254,8 @@ const Invoices = () => {
         creatorYoutube: '@SarahCreatesContent',
         
         // Client Info
-        clientName: invoice.client || '',
-        clientCompany: invoice.client || '',
+        clientName: invoice.client_name || '',
+        clientCompany: invoice.client_name || '',
         clientEmail: '',
         clientAddress: '',
         clientContact: '',
@@ -516,7 +516,7 @@ const Invoices = () => {
                         <div className="text-sm text-gray-500">{invoice.project}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {invoice.client}
+                        {invoice.client_name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                         ${invoice.amount.toLocaleString()}
