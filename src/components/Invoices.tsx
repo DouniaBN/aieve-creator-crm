@@ -28,6 +28,7 @@ const Invoices = () => {
   };
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchBar, setShowSearchBar] = useState(false);
   const [loadingStates, setLoadingStates] = useState<Record<number, Record<string, boolean>>>({});
   const [trashedInvoices, setTrashedInvoices] = useState<Invoice[]>([]);
 
@@ -344,98 +345,124 @@ const Invoices = () => {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-            <p className="text-gray-600 mt-1">Create and manage your invoices and payments</p>
+      {/* Overview Section */}
+      <div>
+        <h2 className="text-xl font-bold text-[#1c2d5a] mb-3">Overview</h2>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-emerald-300">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Paid</p>
+              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">${totalPaid.toLocaleString()}</p>
+              <p className="text-[10px] text-green-600">completed payments</p>
+            </div>
+            <div className="rounded-lg p-1.5">
+              <DollarSign className="w-4 h-4 text-emerald-500" />
+            </div>
           </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={() => setShowDrafts(!showDrafts)}
-              className={`flex items-center px-4 py-2 border border-gray-200 rounded-xl transition-all duration-200 ${
-                showDrafts ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {showDrafts ? 'Hide' : 'View'} Drafts
-            </button>
-            <button
-              onClick={() => setShowTrash(!showTrash)}
-              className={`flex items-center px-4 py-2 border border-gray-200 rounded-xl transition-all duration-200 ${
-                showTrash ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <Trash className="w-4 h-4 mr-2" />
-              Trash ({trashedInvoices.length})
-            </button>
-            <button
-              onClick={() => setShowGenerator(true)}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Invoice
-            </button>
+        </div>
+
+        <div className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-orange-300">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Outstanding</p>
+              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">${totalOutstanding.toLocaleString()}</p>
+              <p className="text-[10px] text-orange-600">pending payment</p>
+            </div>
+            <div className="rounded-lg p-1.5">
+              <Clock className="w-4 h-4 text-orange-500" />
+            </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200 border-l-4 border-l-[#fc5353]">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Overdue Invoices</p>
+              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">{overdueCount}</p>
+              <p className="text-[10px] text-[#fc5353]">need attention</p>
+            </div>
+            <div className="rounded-lg p-1.5">
+              <AlertCircle className="w-4 h-4 text-[#fc5353]" />
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Outstanding</p>
-              <p className="text-2xl font-bold text-orange-600">${totalOutstanding.toLocaleString()}</p>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-xl">
-              <Clock className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Paid</p>
-              <p className="text-2xl font-bold text-green-600">${totalPaid.toLocaleString()}</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-xl">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Overdue Count</p>
-              <p className="text-2xl font-bold text-red-600">{overdueCount}</p>
-            </div>
-            <div className="p-3 bg-red-100 rounded-xl">
-              <AlertCircle className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex justify-end space-x-3">
+        <button
+          onClick={() => setShowDrafts(!showDrafts)}
+          className={`flex items-center px-4 py-2 border border-gray-200 rounded-xl transition-all duration-200 ${
+            showDrafts ? 'bg-[#E83F87] text-white border-[#E83F87]' : 'bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          {showDrafts ? 'Hide' : 'View'} Drafts
+        </button>
+        <button
+          onClick={() => setShowTrash(!showTrash)}
+          className={`flex items-center px-4 py-2 border border-gray-200 rounded-xl transition-all duration-200 ${
+            showTrash ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <Trash className="w-4 h-4 mr-2" />
+          Trash ({trashedInvoices.length})
+        </button>
+        <button
+          onClick={() => setShowGenerator(true)}
+          className="flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Invoice
+        </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search invoices..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      <div className="flex items-center justify-between gap-4">
+          {showSearchBar ? (
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search invoices..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  autoFocus
+                />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => {
+                  setShowSearchBar(true);
+                  if (!showSearchBar) {
+                    setSearchTerm('');
+                  }
+                }}
+                className="p-2 text-gray-400 hover:text-[#E83F87] rounded-lg transition-colors duration-200"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+            </div>
+          )}
           <div className="flex items-center space-x-2">
+            {showSearchBar && (
+              <button
+                onClick={() => {
+                  setShowSearchBar(false);
+                  setSearchTerm('');
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors duration-200"
+              >
+                ✕
+              </button>
+            )}
             <Filter className="w-4 h-4 text-gray-400" />
             <select
               className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
@@ -449,7 +476,6 @@ const Invoices = () => {
             </select>
           </div>
         </div>
-      </div>
 
       {/* Drafts Section */}
       {showDrafts && (
@@ -509,7 +535,7 @@ const Invoices = () => {
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => generatePDF(invoice)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                            className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
                             title="Download PDF"
                             disabled={isLoading(invoice.id, 'download')}
                           >
@@ -521,7 +547,7 @@ const Invoices = () => {
                           </button>
                           <button
                             onClick={() => handleEditInvoice(invoice)}
-                            className="p-2 text-gray-400 hover:text-[#1c2d5a] hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                            className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
                             title="Edit Invoice"
                             disabled={isLoading(invoice.id, 'edit')}
                           >
@@ -561,7 +587,7 @@ const Invoices = () => {
           <p className="text-gray-600 mb-6">Create your first invoice to start tracking payments</p>
           <button
             onClick={() => setShowGenerator(true)}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
+            className="inline-flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Invoice

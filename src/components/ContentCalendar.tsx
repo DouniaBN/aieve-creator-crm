@@ -664,7 +664,7 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                   <Button variant="outline" onClick={cancelEditing}>
                     Cancel
                   </Button>
-                  <Button onClick={saveChanges} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button onClick={saveChanges} className="bg-[#E83F87] hover:bg-[#d63577] text-white">
                     <Save className="w-4 h-4 mr-2" />
                     Save Changes
                   </Button>

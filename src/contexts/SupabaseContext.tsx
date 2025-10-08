@@ -30,6 +30,7 @@ interface SupabaseContextType {
   createInvoice: (invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateInvoice: (id: string, updates: Partial<Invoice>) => Promise<void>
   deleteInvoice: (id: string) => Promise<void>
+  createInvoiceFromBrandDeal: (brandDeal: BrandDeal) => Promise<void>
   
   createBrandDeal: (deal: Omit<BrandDeal, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateBrandDeal: (id: string, updates: Partial<BrandDeal>) => Promise<void>
@@ -247,13 +248,35 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       .from('invoices')
       .delete()
       .eq('id', id)
-    
+
     if (error) {
       console.error('Error deleting invoice:', error)
       throw error
     } else {
       await fetchInvoices()
     }
+  }
+
+  // Create invoice from brand deal
+  const createInvoiceFromBrandDeal = async (brandDeal: BrandDeal) => {
+    if (!user || !brandDeal.fee || brandDeal.fee <= 0) return
+
+    // Generate invoice number
+    const invoiceNumber = `INV-${Date.now()}`
+
+    // Calculate due date (30 days from now)
+    const dueDate = new Date()
+    dueDate.setDate(dueDate.getDate() + 30)
+
+    const invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at'> = {
+      invoice_number: invoiceNumber,
+      client_name: brandDeal.brand_name,
+      amount: brandDeal.fee,
+      due_date: dueDate.toISOString().split('T')[0],
+      status: 'draft'
+    }
+
+    await createInvoice(invoice)
   }
 
   // CRUD operations for brand deals
@@ -428,6 +451,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     createInvoice,
     updateInvoice,
     deleteInvoice,
+    createInvoiceFromBrandDeal,
     createBrandDeal,
     updateBrandDeal,
     deleteBrandDeal,

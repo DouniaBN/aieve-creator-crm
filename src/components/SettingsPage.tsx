@@ -304,7 +304,7 @@ const SettingsPage = () => {
             <div className="flex justify-end mt-8 pt-6 border-t border-gray-200/50">
               <button
                 onClick={handleSave}
-                className="flex items-center px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
+                className="flex items-center px-6 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Changes

@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 
 const BrandDeals = () => {
-  const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal } = useSupabase();
+  const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal, createInvoiceFromBrandDeal } = useSupabase();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingDeal, setEditingDeal] = useState<any>(null);
@@ -177,6 +177,19 @@ const BrandDeals = () => {
   const handleUpdateStatus = async (dealId: string, newStatus: string) => {
     try {
       await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'completed' | 'cancelled' });
+
+      // Auto-create invoice when deal is completed or posted and has a fee
+      if ((newStatus === 'completed' || newStatus === 'posted') && dealId) {
+        const deal = brandDeals.find(d => d.id === dealId);
+        if (deal && deal.fee && deal.fee > 0) {
+          try {
+            await createInvoiceFromBrandDeal(deal);
+            console.log(`Invoice automatically created for brand deal: ${deal.brand_name}`);
+          } catch (error) {
+            console.error('Error auto-creating invoice:', error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error updating brand deal status:', error);
     }
@@ -291,6 +304,17 @@ const BrandDeals = () => {
         start_date: editingDeal.start_date,
         end_date: editingDeal.end_date
       });
+
+      // Auto-create invoice when deal is completed or posted and has a fee
+      if ((editingDeal.status === 'completed' || editingDeal.status === 'posted') && editingDeal.fee && editingDeal.fee > 0) {
+        try {
+          await createInvoiceFromBrandDeal(editingDeal);
+          console.log(`Invoice automatically created for brand deal: ${editingDeal.brand_name}`);
+        } catch (error) {
+          console.error('Error auto-creating invoice:', error);
+        }
+      }
+
       setShowEditModal(false);
       setEditingDeal(null);
       setEditFeeInput('');
@@ -722,7 +746,7 @@ const BrandDeals = () => {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200">
+                <button type="submit" className="px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200">
                   Add Deal
                 </button>
               </div>
