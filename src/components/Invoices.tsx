@@ -256,15 +256,15 @@ const Invoices = () => {
         // Client Info
         clientName: invoice.client_name || '',
         clientCompany: invoice.client_name || '',
-        clientEmail: '',
+        clientEmail: invoice.contact_email || '',
         clientAddress: '',
-        clientContact: '',
+        clientContact: invoice.contact_name || '',
         poNumber: '',
         
         // Line Items
         lineItems: [{
           id: '1',
-          description: invoice.project || 'Service',
+          description: invoice.deliverables || invoice.project || 'Service',
           quantity: 1,
           rate: amount,
           amount: amount

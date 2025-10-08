@@ -287,7 +287,11 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       client_name: brandDeal.brand_name,
       amount: brandDeal.fee,
       due_date: dueDate.toISOString().split('T')[0],
-      status: 'draft'
+      status: 'draft',
+      // Include brand deal contact information
+      contact_name: brandDeal.contact_name,
+      contact_email: brandDeal.contact_email,
+      deliverables: brandDeal.deliverables
     }
 
     await createInvoice(invoice)

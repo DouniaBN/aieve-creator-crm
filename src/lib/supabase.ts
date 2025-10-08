@@ -31,6 +31,10 @@ export interface Invoice {
   due_date: string
   status: 'draft' | 'sent' | 'paid' | 'overdue'
   created_at: string
+  // Optional contact information (from brand deals)
+  contact_name?: string
+  contact_email?: string
+  deliverables?: string
 }
 
 export interface BrandDeal {
