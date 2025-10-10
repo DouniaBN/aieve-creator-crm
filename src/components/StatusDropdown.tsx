@@ -103,7 +103,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           ${currentConfig?.hoverColor || 'hover:bg-gray-200'}
           hover:shadow-md hover:scale-[1.02]
           focus:outline-none focus:ring-4 focus:ring-white/50
-          relative z-10
+          relative z-[1000]
         `}
       >
         <div className="flex items-center gap-2">
@@ -117,9 +117,9 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
       {isOpen && (
         <div
           className={`
-            absolute min-w-[200px] bg-white rounded-xl shadow-lg
+            absolute min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200
             overflow-hidden
-            transform transition-all duration-300 origin-top z-50
+            transform transition-all duration-300 origin-top z-[9999]
             ${dropdownPosition === 'top' ? 'bottom-full mb-3' : 'top-full mt-3'}
             ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
           `}
@@ -143,21 +143,16 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     setIsOpen(false);
                   }}
                   className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium
-                    transition-all duration-300 text-left group
+                    w-full flex items-center gap-3 px-4 py-3 text-sm font-medium
+                    transition-all duration-200 text-left
+                    border-l-4 border-transparent
                     ${isSelected
-                      ? `${config.color}`
-                      : `hover:${config.color} hover:bg-gray-100`
+                      ? `${config.color} border-l-gray-400`
+                      : 'text-gray-700 hover:bg-gray-50 hover:border-l-gray-300'
                     }
                   `}
                 >
-                  <div className={`
-                    p-2 rounded-xl transition-all duration-300
-                    ${isSelected
-                      ? 'bg-white/30 shadow-sm'
-                      : 'bg-white/60 group-hover:bg-white/40'
-                    }
-                  `}>
+                  <div className="p-2 rounded-lg bg-gray-100">
                     {Icon && (
                       <Icon className={`w-4 h-4 ${isSelected ? 'opacity-100' : 'opacity-80'}`} />
                     )}

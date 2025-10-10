@@ -522,8 +522,8 @@ const Invoices = () => {
       {!showDrafts && !showTrash && (
         <div>
           <h1 className="text-2xl font-bold text-[#1c2d5a] mb-4">Invoices</h1>
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50">
-          <div className="overflow-x-auto overflow-y-visible">
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50" style={{ overflowY: 'visible' }}>
+          <div className="overflow-x-auto" style={{ overflowY: 'visible' }}>
             <table className="w-full">
               <thead className="bg-gray-50/80">
                 <tr>
