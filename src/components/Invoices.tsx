@@ -264,7 +264,7 @@ const Invoices = () => {
         // Line Items
         lineItems: [{
           id: '1',
-          description: invoice.deliverables || invoice.project || 'Service',
+          description: invoice.deliverables || invoice.project || '',
           quantity: 1,
           rate: amount,
           amount: amount

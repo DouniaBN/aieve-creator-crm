@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft } from 'lucide-react';
+import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
+import { format } from 'date-fns';
+import { Calendar as CalendarComponent } from './ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Button } from './ui/button';
+import { cn } from '../lib/utils';
 
 interface LineItem {
   id: string;
@@ -61,6 +66,8 @@ interface InvoiceGeneratorProps {
 const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [showTax, setShowTax] = useState(false);
+  const [showDiscount, setShowDiscount] = useState(false);
   
   const currencies = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -160,6 +167,9 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   useEffect(() => {
     if (editingInvoice) {
       setInvoiceData(editingInvoice);
+      // Show tax and discount sections if they have values
+      if (editingInvoice.taxRate > 0) setShowTax(true);
+      if (editingInvoice.discountRate > 0) setShowDiscount(true);
     }
   }, [editingInvoice]);
 
@@ -539,15 +549,13 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
+      <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+        {/* Sticky Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {editingInvoice ? 'Edit Invoice' : 'Generate Invoice'}
-              </h2>
-              <p className="text-gray-600 mt-1">Create professional invoices for your brand partnerships</p>
+              <h2 className="text-2xl font-bold text-gray-900">Create Invoice</h2>
+              <p className="text-gray-600 mt-1">For {invoiceData.clientCompany || 'Brand Deal'} brand deal</p>
             </div>
             <button
               onClick={onClose}
@@ -558,348 +566,280 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
           </div>
         </div>
 
-        <div className="p-6 space-y-8">
-          {/* Invoice Header Info */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
-              <div className="flex items-center mb-4">
-                <FileText className="w-5 h-5 text-[#1c2d5a] mr-2" />
-                <h3 className="font-semibold text-gray-900">Invoice Details</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Invoice Number</label>
-                  <input
-                    type="text"
-                    value={invoiceData.invoiceNumber}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Issue Date</label>
-                    <input
-                      type="date"
-                      value={invoiceData.issueDate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, issueDate: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
-                    <input
-                      type="date"
-                      value={invoiceData.dueDate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, dueDate: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
-                  <select
-                    value={invoiceData.currency}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, currency: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                  >
-                    {currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.symbol} {currency.code} - {currency.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+        <div className="p-6">
+          {/* 3-Column Grid Layout */}
+          <div className="grid grid-cols-3 gap-6">
 
-            {/* Creator Info */}
-            <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
-              <div className="flex items-center mb-4">
-                <User className="w-5 h-5 text-blue-600 mr-2" />
-                <h3 className="font-semibold text-gray-900">Creator Information</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    value={invoiceData.creatorName}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                  />
+            {/* Left Column - Invoice Details & Client Info */}
+            <div className="space-y-6">
+
+              {/* Invoice Details Card */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-center mb-4">
+                  <Calendar className="w-5 h-5 text-blue-600 mr-2" />
+                  <h3 className="font-semibold text-gray-900">Invoice Details</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Invoice Number</label>
+                    <input
+                      type="text"
+                      value={invoiceData.invoiceNumber}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceNumber: e.target.value }))}
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Issue Date</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200 text-sm py-2 px-3 h-auto",
+                              !invoiceData.issueDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {invoiceData.issueDate ? (
+                              format(new Date(invoiceData.issueDate), "MMM d, yyyy")
+                            ) : (
+                              <span>Issue date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={invoiceData.issueDate ? new Date(invoiceData.issueDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                setInvoiceData(prev => ({ ...prev, issueDate: format(date, 'yyyy-MM-dd') }));
+                              }
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Due Date</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal border border-gray-200 rounded-xl hover:bg-gray-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200 text-sm py-2 px-3 h-auto",
+                              !invoiceData.dueDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {invoiceData.dueDate ? (
+                              format(new Date(invoiceData.dueDate), "MMM d, yyyy")
+                            ) : (
+                              <span>Due date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={invoiceData.dueDate ? new Date(invoiceData.dueDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
+                                setInvoiceData(prev => ({ ...prev, dueDate: format(date, 'yyyy-MM-dd') }));
+                              }
+                            }}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Currency</label>
+                    <select
+                      value={invoiceData.currency}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, currency: e.target.value }))}
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.symbol} {currency.code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Info Card */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <Building2 className="w-5 h-5 text-gray-600 mr-2" />
+                    <h3 className="font-semibold text-gray-900">Client Info</h3>
+                  </div>
+                  <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">Auto-filled</span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Company Name</label>
+                    <input
+                      type="text"
+                      value={invoiceData.clientCompany}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientCompany: e.target.value }))}
+                      placeholder="Company Name"
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Contact Person</label>
+                    <input
+                      type="text"
+                      value={invoiceData.clientContact}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientContact: e.target.value }))}
+                      placeholder="Contact Person"
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
                     <input
                       type="email"
-                      value={invoiceData.creatorEmail}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorEmail: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value={invoiceData.creatorPhone}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorPhone: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                  <textarea
-                    value={invoiceData.creatorAddress}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorAddress: e.target.value }))}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tax ID</label>
-                    <input
-                      type="text"
-                      value={invoiceData.creatorTaxId}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorTaxId: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-                    <input
-                      type="url"
-                      value={invoiceData.creatorWebsite}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorWebsite: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
-                    <input
-                      type="text"
-                      value={invoiceData.creatorInstagram}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorInstagram: e.target.value }))}
-                      placeholder="@username"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
-                    <input
-                      type="text"
-                      value={invoiceData.creatorYoutube}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorYoutube: e.target.value }))}
-                      placeholder="@channel"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors duration-200"
+                      value={invoiceData.clientEmail}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientEmail: e.target.value }))}
+                      placeholder="contact@company.com"
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500"
+                      style={{ color: '#000000' }}
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Client Info */}
-            <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
-              <div className="flex items-center mb-4">
-                <Building className="w-5 h-5 text-green-600 mr-2" />
-                <h3 className="font-semibold text-gray-900">Client Information</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                  <input
-                    type="text"
-                    value={invoiceData.clientCompany}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, clientCompany: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
-                  <input
-                    type="text"
-                    value={invoiceData.clientContact}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, clientContact: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={invoiceData.clientEmail}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, clientEmail: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Billing Address</label>
-                  <textarea
-                    value={invoiceData.clientAddress}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, clientAddress: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors duration-200"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">PO Number (Optional)</label>
-                  <input
-                    type="text"
-                    value={invoiceData.poNumber}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, poNumber: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-colors duration-200"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+            {/* Right 2 Columns - Line Items, Payment Terms, Total */}
+            <div className="col-span-2 space-y-6">
 
-          {/* Line Items */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900">Services & Line Items</h3>
-                <button
-                  onClick={addLineItem}
-                  className="flex items-center px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-200"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Item
-                </button>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Description</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Qty</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Rate</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Amount</th>
-                    <th className="px-6 py-3 text-center text-sm font-medium text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
+              {/* Line Items */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Services & Line Items</h3>
+                  <button
+                    onClick={addLineItem}
+                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 text-sm"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                  </button>
+                </div>
+
+                <div className="space-y-3">
                   {invoiceData.lineItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4">
-                        <div className="space-y-2">
+                    <div key={item.id} className="bg-gray-50 rounded-lg p-4">
+                      <div className="grid grid-cols-12 gap-3 items-start">
+                        <div className="col-span-6">
                           <input
                             type="text"
                             value={item.description}
                             onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                            placeholder="Service description"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                            placeholder="Description of service"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                           />
-                          <select
-                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 text-sm"
-                          >
-                            <option value="">Select a service...</option>
-                            {contentCreatorServices.map(service => (
-                              <option key={service} value={service}>{service}</option>
-                            ))}
-                          </select>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => updateLineItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                          min="0"
-                          step="0.01"
-                          className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                            {selectedCurrency?.symbol}
-                          </span>
+                        <div className="col-span-2">
                           <input
                             type="number"
-                            value={item.rate}
-                            onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                            min="0"
-                            step="0.01"
-                            className="w-32 pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                            value={item.quantity === 0 ? '' : item.quantity}
+                            onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                            onFocus={(e) => e.target.select()}
+                            min="1"
+                            step="1"
+                            placeholder="1"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                           />
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-medium text-gray-900">
-                          {selectedCurrency?.symbol}{item.amount.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {invoiceData.lineItems.length > 1 && (
-                          <button
-                            onClick={() => removeLineItem(item.id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Calculations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Tax & Discount Settings */}
-            <div className="space-y-6">
-              <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
-                <div className="flex items-center mb-4">
-                  <Calculator className="w-5 h-5 text-orange-600 mr-2" />
-                  <h3 className="font-semibold text-gray-900">Tax & Discounts</h3>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Tax Rate (%)</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <select
-                        onChange={(e) => {
-                          const rate = taxRates[e.target.value as keyof typeof taxRates] || 0;
-                          setInvoiceData(prev => ({ ...prev, taxRate: rate }));
-                        }}
-                        className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors duration-200"
-                      >
-                        <option value="">Select Region</option>
-                        <option value="US">United States (8.5%)</option>
-                        <option value="UK">United Kingdom (20%)</option>
-                        <option value="EU">European Union (21%)</option>
-                        <option value="CA">Canada (13%)</option>
-                        <option value="AU">Australia (10%)</option>
-                        <option value="JP">Japan (10%)</option>
-                        <option value="CH">Switzerland (7.7%)</option>
-                        <option value="SE">Sweden (25%)</option>
-                        <option value="NO">Norway (25%)</option>
-                        <option value="DK">Denmark (25%)</option>
-                      </select>
-                      <input
-                        type="number"
-                        value={invoiceData.taxRate}
-                        onChange={(e) => setInvoiceData(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors duration-200"
-                      />
+                        <div className="col-span-3">
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                              {selectedCurrency?.symbol}
+                            </span>
+                            <input
+                              type="number"
+                              value={item.rate === 0 ? '' : item.rate}
+                              onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                              onFocus={(e) => e.target.select()}
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              className="w-full text-sm py-2 pl-8 pr-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="col-span-1 flex justify-center">
+                          {invoiceData.lineItems.length > 1 && (
+                            <button
+                              onClick={() => removeLineItem(item.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Add Tax/Discount Buttons */}
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => {
+                      setShowTax(!showTax);
+                      if (showTax) {
+                        setInvoiceData(prev => ({ ...prev, taxRate: 0 }));
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    {showTax ? '- Remove Tax' : '+ Add Tax'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDiscount(!showDiscount);
+                      if (showDiscount) {
+                        setInvoiceData(prev => ({ ...prev, discountRate: 0 }));
+                      }
+                    }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    {showDiscount ? '- Remove Discount' : '+ Add Discount'}
+                  </button>
+                </div>
+
+                {/* Tax Fields */}
+                {showTax && (
+                  <div className="bg-gray-50 rounded-lg p-4 mt-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                    <input
+                      type="number"
+                      value={invoiceData.taxRate}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="w-32 text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Discount Rate (%)</label>
+                )}
+
+                {/* Discount Fields */}
+                {showDiscount && (
+                  <div className="bg-gray-50 rounded-lg p-4 mt-3">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Discount Rate (%)</label>
                     <input
                       type="number"
                       value={invoiceData.discountRate}
@@ -907,25 +847,25 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                       min="0"
                       max="100"
                       step="0.1"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors duration-200"
+                      className="w-32 text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Payment Terms */}
-              <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
+              {/* Payment Terms Card */}
+              <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                 <div className="flex items-center mb-4">
-                  <DollarSign className="w-5 h-5 text-indigo-600 mr-2" />
+                  <DollarSign className="w-5 h-5 text-purple-600 mr-2" />
                   <h3 className="font-semibold text-gray-900">Payment Terms</h3>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Terms</label>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Payment Terms</label>
                     <select
                       value={invoiceData.paymentTerms}
                       onChange={(e) => setInvoiceData(prev => ({ ...prev, paymentTerms: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors duration-200"
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                     >
                       <option value="immediate">Due Immediately</option>
                       <option value="net15">Net 15 Days</option>
@@ -934,118 +874,118 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Methods</label>
-                    <div className="space-y-2">
-                      {['bank', 'paypal', 'stripe', 'crypto'].map(method => (
-                        <label key={method} className="flex items-center">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">Payment Methods</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'bank', label: '🏦 Bank Transfer' },
+                        { key: 'paypal', label: '💰 PayPal' },
+                        { key: 'stripe', label: '💳 Stripe' },
+                        { key: 'crypto', label: '₿ Crypto' }
+                      ].map(method => (
+                        <label key={method.key} className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-white cursor-pointer transition-colors">
                           <input
                             type="checkbox"
-                            checked={invoiceData.paymentMethods.includes(method)}
+                            checked={invoiceData.paymentMethods.includes(method.key)}
                             onChange={(e) => {
                               if (e.target.checked) {
                                 setInvoiceData(prev => ({
                                   ...prev,
-                                  paymentMethods: [...prev.paymentMethods, method]
+                                  paymentMethods: [...prev.paymentMethods, method.key]
                                 }));
                               } else {
                                 setInvoiceData(prev => ({
                                   ...prev,
-                                  paymentMethods: prev.paymentMethods.filter(m => m !== method)
+                                  paymentMethods: prev.paymentMethods.filter(m => m !== method.key)
                                 }));
                               }
                             }}
-                            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2"
                           />
-                          <span className="ml-2 text-sm text-gray-700 capitalize">{method} Transfer</span>
+                          <span className="text-sm font-medium">{method.label}</span>
                         </label>
                       ))}
+                    </div>
+                  </div>
+                  <div>
+                    <textarea
+                      value={invoiceData.notes}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
+                      rows={2}
+                      placeholder="Payment instructions, terms..."
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Summary Card */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium text-gray-900">
+                      {selectedCurrency?.symbol}{invoiceData.subtotal.toFixed(2)}
+                    </span>
+                  </div>
+                  {invoiceData.discountRate > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Discount ({invoiceData.discountRate}%)</span>
+                      <span className="font-medium text-red-600">
+                        -{selectedCurrency?.symbol}{invoiceData.discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {invoiceData.taxRate > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Tax ({invoiceData.taxRate}%)</span>
+                      <span className="font-medium text-gray-900">
+                        {selectedCurrency?.symbol}{invoiceData.taxAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-300 pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-900">Total</span>
+                      <span className="text-3xl font-bold text-blue-900">
+                        {selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Invoice Summary */}
-            <div className="rounded-xl p-6" style={{ backgroundColor: '#FAFAFA' }}>
-              <h3 className="font-semibold text-gray-900 mb-6">Invoice Summary</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-900">
-                    {selectedCurrency?.symbol}{invoiceData.subtotal.toFixed(2)}
-                  </span>
-                </div>
-                {invoiceData.discountRate > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Discount ({invoiceData.discountRate}%)</span>
-                    <span className="font-medium text-red-600">
-                      -{selectedCurrency?.symbol}{invoiceData.discountAmount.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                {invoiceData.taxRate > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Tax ({invoiceData.taxRate}%)</span>
-                    <span className="font-medium text-gray-900">
-                      {selectedCurrency?.symbol}{invoiceData.taxAmount.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                <div className="border-t border-gray-300 pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-900">Total</span>
-                    <span className="text-2xl font-bold text-[#1c2d5a]">
-                      {selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                <textarea
-                  value={invoiceData.notes}
-                  onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
-                  rows={3}
-                  placeholder="Additional notes or terms..."
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-                />
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Footer Actions */}
+        {/* Sticky Footer */}
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 rounded-b-2xl">
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+          <div className="flex items-center justify-between">
             <button
               onClick={onClose}
               className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
             >
               Cancel
             </button>
-            <button
-              onClick={handlePreview}
-              className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Preview Invoice
-            </button>
-            <button
-              onClick={handleSaveDraft}
-              className="flex items-center px-6 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Draft
-            </button>
-            <button
-              onClick={handleGenerate}
-              className="flex items-center px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Generate Invoice
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={handleSaveDraft}
+                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-200"
+              >
+                Save Draft
+              </button>
+              <button
+                onClick={handlePreview}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+              >
+                Preview Invoice
+              </button>
+              <button
+                onClick={handleGenerate}
+                className="px-6 py-2 bg-gradient-to-r from-[#E83F87] to-[#d63577] text-white rounded-xl hover:from-[#d63577] hover:to-[#c12a64] transition-all duration-200 shadow-lg"
+              >
+                Generate Invoice
+              </button>
+            </div>
           </div>
         </div>
       </div>
