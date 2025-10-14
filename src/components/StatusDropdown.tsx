@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 
 interface StatusOption {
@@ -24,6 +25,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
+  const [absolutePosition, setAbsolutePosition] = useState({ top: 0, left: 0, width: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -36,13 +38,26 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     const dropdownHeight = 250; // Estimated dropdown height
     const spaceBelow = viewportHeight - triggerRect.bottom;
     const spaceAbove = triggerRect.top;
+    const gap = 8; // Gap between trigger and dropdown
+
+    let top: number;
+    let position: 'bottom' | 'top';
 
     // If there's not enough space below but enough above, show dropdown above
     if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-      setDropdownPosition('top');
+      position = 'top';
+      top = triggerRect.top - gap;
     } else {
-      setDropdownPosition('bottom');
+      position = 'bottom';
+      top = triggerRect.bottom + gap;
     }
+
+    setDropdownPosition(position);
+    setAbsolutePosition({
+      top,
+      left: triggerRect.left,
+      width: Math.max(triggerRect.width, 200) // Ensure minimum width
+    });
   };
 
   // Close dropdown when clicking outside
@@ -89,6 +104,54 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     setIsOpen(!isOpen);
   };
 
+  // Helper function to get status-specific hover classes
+  const getHoverColorClasses = (statusKey: string) => {
+    switch (statusKey) {
+      case 'draft':
+        return 'hover:bg-gray-100 hover:text-gray-800 hover:border-l-gray-400';
+      case 'sent':
+        return 'hover:bg-pink-50 hover:text-pink-800 hover:border-l-pink-400';
+      case 'paid':
+        return 'hover:bg-green-50 hover:text-green-800 hover:border-l-green-400';
+      case 'overdue':
+        return 'hover:bg-red-50 hover:text-red-800 hover:border-l-red-400';
+      default:
+        return 'hover:bg-gray-50 hover:text-gray-700 hover:border-l-gray-300';
+    }
+  };
+
+  // Helper function to get icon background color
+  const getIconBackgroundColor = (statusKey: string) => {
+    switch (statusKey) {
+      case 'draft':
+        return 'bg-gray-200';
+      case 'sent':
+        return 'bg-pink-200';
+      case 'paid':
+        return 'bg-green-200';
+      case 'overdue':
+        return 'bg-red-200';
+      default:
+        return 'bg-gray-200';
+    }
+  };
+
+  // Helper function to get icon color
+  const getIconColor = (statusKey: string) => {
+    switch (statusKey) {
+      case 'draft':
+        return 'text-gray-600';
+      case 'sent':
+        return 'text-pink-600';
+      case 'paid':
+        return 'text-green-600';
+      case 'overdue':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Trigger Button */}
@@ -113,18 +176,22 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
+      {/* Portal-rendered Dropdown Menu */}
+      {isOpen && createPortal(
         <div
+          ref={dropdownRef}
           className={`
-            absolute min-w-[200px] bg-white rounded-xl shadow-lg border border-gray-200
-            overflow-hidden
-            transform transition-all duration-300 origin-top z-[9999]
-            ${dropdownPosition === 'top' ? 'bottom-full mb-3' : 'top-full mt-3'}
+            fixed bg-white rounded-xl shadow-xl border border-gray-200
+            overflow-hidden z-[99999]
+            transform transition-all duration-200
+            ${dropdownPosition === 'top' ? 'origin-bottom' : 'origin-top'}
             ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
           `}
           style={{
-            maxHeight: '400px',
+            top: dropdownPosition === 'top' ? absolutePosition.top - 250 : absolutePosition.top,
+            left: absolutePosition.left,
+            minWidth: `${absolutePosition.width}px`,
+            maxHeight: '250px',
             overflowY: 'auto'
           }}
         >
@@ -147,14 +214,15 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     transition-all duration-200 text-left
                     border-l-4 border-transparent
                     ${isSelected
-                      ? `${config.color} border-l-gray-400`
-                      : 'text-gray-700 hover:bg-gray-50 hover:border-l-gray-300'
+                      ? config.color
+                      : 'text-gray-700 hover:bg-gray-50'
                     }
+                    ${getHoverColorClasses(key)}
                   `}
                 >
-                  <div className="p-2 rounded-lg bg-gray-100">
+                  <div className={`p-2 rounded-lg ${getIconBackgroundColor(key)}`}>
                     {Icon && (
-                      <Icon className={`w-4 h-4 ${isSelected ? 'opacity-100' : 'opacity-80'}`} />
+                      <Icon className={`w-4 h-4 ${getIconColor(key)} ${isSelected ? 'opacity-100' : 'opacity-80'}`} />
                     )}
                   </div>
                   <span className="flex-1 font-semibold">{config.label}</span>
@@ -165,7 +233,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
               );
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
