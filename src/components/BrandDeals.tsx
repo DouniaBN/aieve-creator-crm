@@ -586,8 +586,8 @@ const BrandDeals = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100000] p-4" style={{ isolation: 'isolate' }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto relative z-10">
             <h2 className="text-xl font-semibold mb-4">Add New Brand Deal</h2>
             <form onSubmit={handleCreateDeal} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -688,7 +688,7 @@ const BrandDeals = () => {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100001]" align="start">
                       <Calendar
                         mode="single"
                         selected={newDeal.start_date ? new Date(newDeal.start_date) : undefined}
@@ -721,7 +721,7 @@ const BrandDeals = () => {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100001]" align="start">
                       <Calendar
                         mode="single"
                         selected={newDeal.end_date ? new Date(newDeal.end_date) : undefined}
@@ -758,8 +758,8 @@ const BrandDeals = () => {
 
       {/* Edit Modal */}
       {showEditModal && editingDeal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100000] p-4" style={{ isolation: 'isolate' }}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto relative z-10">
             <h2 className="text-xl font-semibold mb-4">Edit Brand Deal</h2>
             <form onSubmit={handleUpdateDeal} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -860,7 +860,7 @@ const BrandDeals = () => {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100001]" align="start">
                       <Calendar
                         mode="single"
                         selected={editingDeal.start_date ? new Date(editingDeal.start_date) : undefined}
@@ -893,7 +893,7 @@ const BrandDeals = () => {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 z-[100001]" align="start">
                       <Calendar
                         mode="single"
                         selected={editingDeal.end_date ? new Date(editingDeal.end_date) : undefined}

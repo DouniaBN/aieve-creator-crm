@@ -262,28 +262,50 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const generateInvoiceNumber = async (): Promise<string> => {
     if (!user) return 'INV-001'
 
-    // Get the highest existing invoice number to avoid duplicates
+    // Get all existing invoice numbers to find the highest sequential one
     const { data, error } = await supabase
       .from('invoices')
       .select('invoice_number')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
 
     if (error) {
       console.error('Error fetching latest invoice:', error)
-      return `INV-${Date.now()}` // Fallback to timestamp
+      return 'INV-001' // Fallback to first invoice
     }
 
-    let nextNumber = 1
-    if (data && data.length > 0 && data[0].invoice_number) {
-      // Extract number from last invoice (e.g., "INV-005" -> 5)
-      const lastInvoiceNumber = data[0].invoice_number
-      const lastNumber = parseInt(lastInvoiceNumber.replace('INV-', '')) || 0
-      nextNumber = lastNumber + 1
+    const existingNumbers = new Set<string>()
+    let highestSequentialNumber = 0
+
+    if (data && data.length > 0) {
+      for (const invoice of data) {
+        if (invoice.invoice_number) {
+          const invoiceNumber = invoice.invoice_number
+          existingNumbers.add(invoiceNumber)
+
+          // Only process properly formatted sequential numbers (INV-001 to INV-999)
+          const match = invoiceNumber.match(/^INV-?(\d{1,3})$/)
+          if (match) {
+            const number = parseInt(match[1])
+            if (number > highestSequentialNumber) {
+              highestSequentialNumber = number
+            }
+          }
+          // Ignore timestamp-based invoice numbers
+        }
+      }
     }
 
-    return `INV-${nextNumber.toString().padStart(3, '0')}`
+    // Generate next sequential number that doesn't exist
+    let nextNumber = Math.max(1, highestSequentialNumber + 1)
+    let candidateNumber = `INV-${nextNumber.toString().padStart(3, '0')}`
+
+    // Ensure the generated number is truly unique
+    while (existingNumbers.has(candidateNumber)) {
+      nextNumber++
+      candidateNumber = `INV-${nextNumber.toString().padStart(3, '0')}`
+    }
+
+    return candidateNumber
   }
 
   // Create invoice from brand deal
@@ -305,15 +327,18 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Generate sequential invoice number
     const invoiceNumber = await generateInvoiceNumber()
 
-    // Calculate due date (30 days from now)
-    const dueDate = new Date()
-    dueDate.setDate(dueDate.getDate() + 30)
+    // Use brand deal end date as invoice due date, or 30 days from now as fallback
+    const dueDate = brandDeal.end_date || (() => {
+      const fallbackDate = new Date()
+      fallbackDate.setDate(fallbackDate.getDate() + 30)
+      return fallbackDate.toISOString().split('T')[0]
+    })()
 
     const invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at'> = {
       invoice_number: invoiceNumber,
       client_name: brandDeal.brand_name,
       amount: brandDeal.fee,
-      due_date: dueDate.toISOString().split('T')[0],
+      due_date: dueDate,
       status: 'draft',
       contact_name: brandDeal.contact_name,
       contact_email: brandDeal.contact_email

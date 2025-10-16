@@ -33,6 +33,8 @@ export interface Invoice {
   created_at: string
   contact_name?: string
   contact_email?: string
+  payment_instructions?: string
+  notes?: string
 }
 
 export interface BrandDeal {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
+import { useSupabase } from '../contexts/SupabaseContext';
 import { format } from 'date-fns';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -9,6 +10,7 @@ import { cn } from '../lib/utils';
 
 interface LineItem {
   id: string;
+  service: string;
   description: string;
   quantity: number;
   rate: number;
@@ -52,6 +54,7 @@ export interface InvoiceData {
   // Payment & Terms
   paymentTerms: string;
   paymentMethods: string[];
+  paymentInstructions: string;
   notes: string;
   
   status: 'draft' | 'sent' | 'paid' | 'overdue';
@@ -65,6 +68,7 @@ interface InvoiceGeneratorProps {
 
 const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
+  const { generateInvoiceNumber, createInvoice, updateInvoice, invoices } = useSupabase();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showTax, setShowTax] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
@@ -116,8 +120,9 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     'Equipment Rental'
   ];
 
+  const [customPaymentMethod, setCustomPaymentMethod] = useState('');
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
-    invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+    invoiceNumber: 'INV-001',
     issueDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     currency: 'USD',
@@ -143,6 +148,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     // Invoice Details
     lineItems: [{
       id: '1',
+      service: '',
       description: '',
       quantity: 1,
       rate: 0,
@@ -158,6 +164,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     // Payment & Terms
     paymentTerms: 'net30',
     paymentMethods: ['bank'],
+    paymentInstructions: '',
     notes: '',
     
     status: 'draft'
@@ -172,6 +179,36 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
       if (editingInvoice.discountRate > 0) setShowDiscount(true);
     }
   }, [editingInvoice]);
+
+  // Generate sequential invoice number for new invoices
+  useEffect(() => {
+    const generateNewInvoiceNumber = async () => {
+      if (isOpen && !editingInvoice) {
+        try {
+          const newNumber = await generateInvoiceNumber();
+          setInvoiceData(prev => ({ ...prev, invoiceNumber: newNumber }));
+        } catch (error) {
+          console.error('Error generating invoice number:', error);
+        }
+      }
+    };
+
+    generateNewInvoiceNumber();
+  }, [isOpen, editingInvoice, generateInvoiceNumber]);
+
+  // Handle keyboard shortcuts for preview modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (viewMode === 'preview' && event.key === 'Escape') {
+        setViewMode('edit');
+      }
+    };
+
+    if (viewMode === 'preview') {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [viewMode]);
 
   // Calculate totals whenever line items or rates change
   useEffect(() => {
@@ -209,6 +246,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   const addLineItem = () => {
     const newItem: LineItem = {
       id: Date.now().toString(),
+      service: '',
       description: '',
       quantity: 1,
       rate: 0,
@@ -229,38 +267,75 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     }
   };
 
-  const handleSaveDraft = () => {
-    // Save to localStorage for now (in real app, would save to database)
-    const drafts = JSON.parse(localStorage.getItem('invoiceDrafts') || '[]');
-    const draftData = { ...invoiceData, id: invoiceData.id || Date.now().toString() };
-    
-    const existingIndex = drafts.findIndex((d: InvoiceData) => d.id === draftData.id);
-    if (existingIndex >= 0) {
-      drafts[existingIndex] = draftData;
+  const saveOrUpdateInvoice = async (status: 'draft' | 'sent') => {
+    const dbInvoice = {
+      invoice_number: invoiceData.invoiceNumber,
+      client_name: invoiceData.clientCompany || invoiceData.clientName || 'Client',
+      amount: invoiceData.total,
+      due_date: invoiceData.dueDate,
+      status,
+      contact_name: invoiceData.clientName,
+      contact_email: invoiceData.clientEmail,
+      payment_instructions: invoiceData.paymentInstructions,
+      notes: invoiceData.notes
+    };
+
+    // Check if invoice already exists in database by invoice number
+    const existingInvoice = invoices.find(inv => inv.invoice_number === invoiceData.invoiceNumber);
+
+    if (existingInvoice) {
+      // Update existing invoice
+      await updateInvoice(existingInvoice.id, dbInvoice);
     } else {
-      drafts.push(draftData);
+      // Create new invoice
+      await createInvoice(dbInvoice);
     }
-    
-    localStorage.setItem('invoiceDrafts', JSON.stringify(drafts));
-    showSuccessMessage('Invoice saved as draft!');
   };
 
-  const handleGenerate = () => {
-    // Generate and send invoice
-    handleSaveDraft();
-    setInvoiceData(prev => ({ ...prev, status: 'sent' }));
-    
-    // Add notification for invoice creation
-    addNotification({
-      type: 'invoice_created',
-      title: 'Invoice Created',
-      message: `Invoice ${invoiceData.invoiceNumber} has been created for ${invoiceData.clientCompany || 'client'}`,
-      relatedId: parseInt(invoiceData.id || '0'),
-      relatedType: 'invoice'
-    });
-    
-    showSuccessMessage('Invoice generated successfully!');
-    onClose();
+  const handleSaveDraft = async () => {
+    try {
+      await saveOrUpdateInvoice('draft');
+
+      // Also save to localStorage for backwards compatibility
+      const drafts = JSON.parse(localStorage.getItem('invoiceDrafts') || '[]');
+      const draftData = { ...invoiceData, id: invoiceData.id || Date.now().toString() };
+
+      const existingIndex = drafts.findIndex((d: InvoiceData) => d.id === draftData.id);
+      if (existingIndex >= 0) {
+        drafts[existingIndex] = draftData;
+      } else {
+        drafts.push(draftData);
+      }
+
+      localStorage.setItem('invoiceDrafts', JSON.stringify(drafts));
+      showSuccessMessage('Invoice saved as draft!');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      showSuccessMessage('Error saving draft. Please try again.');
+    }
+  };
+
+  const handleGenerate = async () => {
+    try {
+      await saveOrUpdateInvoice('sent');
+
+      setInvoiceData(prev => ({ ...prev, status: 'sent' }));
+
+      // Add notification for invoice creation
+      addNotification({
+        type: 'invoice_created',
+        title: 'Invoice Created',
+        message: `Invoice ${invoiceData.invoiceNumber} has been created for ${invoiceData.clientCompany || invoiceData.clientName || 'client'}`,
+        relatedId: parseInt(invoiceData.id || '0'),
+        relatedType: 'invoice'
+      });
+
+      showSuccessMessage('Invoice generated successfully!');
+      onClose();
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      showSuccessMessage('Error creating invoice. Please try again.');
+    }
   };
 
   const handlePreview = () => {
@@ -299,7 +374,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
   // Invoice Preview Component
   const InvoicePreview = () => (
-    <div className="bg-white min-h-screen print:min-h-0">
+    <div className="bg-white rounded-xl shadow-lg invoice-preview">
       {/* Print Styles */}
       <style jsx>{`
         @media print {
@@ -309,47 +384,6 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
           .no-print { display: none !important; }
         }
       `}</style>
-
-      {/* Header Actions - Hidden in Print */}
-      <div className="no-print sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-        <button
-          onClick={handleBackToEdit}
-          className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Edit
-        </button>
-        <div className="flex space-x-3">
-          <button
-            onClick={handlePrint}
-            className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </button>
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download PDF
-          </button>
-          <button
-            onClick={handleSendEmail}
-            className="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200"
-          >
-            <Mail className="w-4 h-4 mr-2" />
-            Send Email
-          </button>
-          <button
-            onClick={handleCopyLink}
-            className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200"
-          >
-            <Link className="w-4 h-4 mr-2" />
-            Copy Link
-          </button>
-        </div>
-      </div>
 
       {/* Invoice Content */}
       <div className="invoice-preview max-w-4xl mx-auto p-8 print:p-0">
@@ -445,7 +479,14 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               <tbody className="divide-y divide-gray-200">
                 {invoiceData.lineItems.map((item) => (
                   <tr key={item.id} className="bg-white">
-                    <td className="px-6 py-4 text-sm text-gray-900">{item.description}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {item.service && (
+                        <div className="font-semibold text-gray-900 mb-1">{item.service}</div>
+                      )}
+                      {item.description && (
+                        <div className="text-gray-600">{item.description}</div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-center text-sm text-gray-900">{item.quantity}</td>
                     <td className="px-6 py-4 text-right text-sm text-gray-900">{selectedCurrency?.symbol}{item.rate.toFixed(2)}</td>
                     <td className="px-6 py-4 text-right text-sm font-semibold text-gray-900">{selectedCurrency?.symbol}{item.amount.toFixed(2)}</td>
@@ -490,15 +531,21 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         {invoiceData.paymentMethods.length > 0 && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Accepted Payment Methods:</h3>
-            <div className="bg-blue-50 p-4 rounded-xl">
-              <div className="flex flex-wrap gap-3">
-                {invoiceData.paymentMethods.map(method => (
-                  <span key={method} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium capitalize">
-                    {method} Transfer
-                  </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-3">
+              {invoiceData.paymentMethods.map(method => (
+                <span key={method} className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium capitalize">
+                  {method === 'bank' ? 'Bank Transfer' : method}
+                </span>
+              ))}
             </div>
+          </div>
+        )}
+
+        {/* Payment Instructions */}
+        {invoiceData.paymentInstructions && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Instructions:</h3>
+            <p className="text-gray-700 whitespace-pre-line">{invoiceData.paymentInstructions}</p>
           </div>
         )}
 
@@ -506,9 +553,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         {invoiceData.notes && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes:</h3>
-            <div className="bg-yellow-50 p-4 rounded-xl">
-              <p className="text-gray-700 whitespace-pre-line">{invoiceData.notes}</p>
-            </div>
+            <p className="text-gray-700 whitespace-pre-line">{invoiceData.notes}</p>
           </div>
         )}
 
@@ -541,8 +586,60 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   // Return preview mode if selected
   if (viewMode === 'preview') {
     return (
-      <div className="fixed inset-0 bg-white z-50">
-        <InvoicePreview />
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setViewMode('edit');
+          }
+        }}
+      >
+        <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl">
+          {/* Preview Modal Header */}
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 rounded-t-2xl z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handleBackToEdit}
+                  className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Edit
+                </button>
+                <h2 className="text-xl font-bold text-gray-900">Invoice Preview</h2>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 text-sm"
+                >
+                  <Printer className="w-4 h-4 mr-1" />
+                  Print
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 text-sm"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  PDF
+                </button>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  <X className="w-6 h-6 text-gray-500" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Preview Content */}
+          <div className="overflow-y-auto max-h-[calc(95vh-80px)] bg-gray-50 p-6">
+            <div className="max-w-4xl mx-auto">
+              <InvoicePreview />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -740,54 +837,68 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                 <div className="space-y-3">
                   {invoiceData.lineItems.map((item) => (
                     <div key={item.id} className="bg-gray-50 rounded-lg p-4">
-                      <div className="grid grid-cols-12 gap-3 items-start">
-                        <div className="col-span-6">
+                      <div className="space-y-3">
+                        {/* Service Name */}
+                        <div>
                           <input
                             type="text"
-                            value={item.description}
-                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                            placeholder="Description of service"
-                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            value={item.service}
+                            onChange={(e) => updateLineItem(item.id, 'service', e.target.value)}
+                            placeholder="Service (e.g., Social Media Content Creation)"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                           />
                         </div>
-                        <div className="col-span-2">
-                          <input
-                            type="number"
-                            value={item.quantity === 0 ? '' : item.quantity}
-                            onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                            onFocus={(e) => e.target.select()}
-                            min="1"
-                            step="1"
-                            placeholder="1"
-                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                          />
-                        </div>
-                        <div className="col-span-3">
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                              {selectedCurrency?.symbol}
-                            </span>
+
+                        {/* Description and Details Row */}
+                        <div className="grid grid-cols-12 gap-3 items-start">
+                          <div className="col-span-6">
                             <input
-                              type="number"
-                              value={item.rate === 0 ? '' : item.rate}
-                              onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                              onFocus={(e) => e.target.select()}
-                              min="0"
-                              step="0.01"
-                              placeholder="0.00"
-                              className="w-full text-sm py-2 pl-8 pr-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                              type="text"
+                              value={item.description}
+                              onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                              placeholder="Description of service"
+                              className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                             />
                           </div>
-                        </div>
-                        <div className="col-span-1 flex justify-center">
-                          {invoiceData.lineItems.length > 1 && (
-                            <button
-                              onClick={() => removeLineItem(item.id)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              value={item.quantity === 0 ? '' : item.quantity}
+                              onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                              onFocus={(e) => e.target.select()}
+                              min="1"
+                              step="1"
+                              placeholder="1"
+                              className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                                {selectedCurrency?.symbol}
+                              </span>
+                              <input
+                                type="number"
+                                value={item.rate === 0 ? '' : item.rate}
+                                onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                                onFocus={(e) => e.target.select()}
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                className="w-full text-sm py-2 pl-8 pr-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                              />
+                            </div>
+                          </div>
+                          <div className="col-span-1 flex justify-center">
+                            {invoiceData.lineItems.length > 1 && (
+                              <button
+                                onClick={() => removeLineItem(item.id)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -875,43 +986,105 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-2">Payment Methods</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { key: 'bank', label: '🏦 Bank Transfer' },
-                        { key: 'paypal', label: '💰 PayPal' },
-                        { key: 'stripe', label: '💳 Stripe' },
-                        { key: 'crypto', label: '₿ Crypto' }
-                      ].map(method => (
-                        <label key={method.key} className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-white cursor-pointer transition-colors">
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { key: 'bank', label: '🏦 Bank Transfer' },
+                          { key: 'paypal', label: '💰 PayPal' }
+                        ].map(method => (
+                          <label key={method.key} className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-white cursor-pointer transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={invoiceData.paymentMethods.includes(method.key)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setInvoiceData(prev => ({
+                                    ...prev,
+                                    paymentMethods: [...prev.paymentMethods, method.key]
+                                  }));
+                                } else {
+                                  setInvoiceData(prev => ({
+                                    ...prev,
+                                    paymentMethods: prev.paymentMethods.filter(m => m !== method.key)
+                                  }));
+                                }
+                              }}
+                              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2"
+                            />
+                            <span className="text-sm font-medium">{method.label}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Custom Payment Method */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
                           <input
-                            type="checkbox"
-                            checked={invoiceData.paymentMethods.includes(method.key)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
+                            type="text"
+                            value={customPaymentMethod}
+                            onChange={(e) => setCustomPaymentMethod(e.target.value)}
+                            placeholder="Add custom payment method (e.g., Zelle, Venmo, Stripe, etc.)"
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200 text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (customPaymentMethod.trim() && !invoiceData.paymentMethods.includes(customPaymentMethod.trim())) {
                                 setInvoiceData(prev => ({
                                   ...prev,
-                                  paymentMethods: [...prev.paymentMethods, method.key]
+                                  paymentMethods: [...prev.paymentMethods, customPaymentMethod.trim()]
                                 }));
-                              } else {
-                                setInvoiceData(prev => ({
-                                  ...prev,
-                                  paymentMethods: prev.paymentMethods.filter(m => m !== method.key)
-                                }));
+                                setCustomPaymentMethod('');
                               }
                             }}
-                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2"
-                          />
-                          <span className="text-sm font-medium">{method.label}</span>
-                        </label>
-                      ))}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors duration-200 text-sm font-medium"
+                          >
+                            Add
+                          </button>
+                        </div>
+
+                        {/* Display custom payment methods */}
+                        {invoiceData.paymentMethods.filter(method => !['bank', 'paypal'].includes(method)).length > 0 && (
+                          <div className="space-y-1">
+                            {invoiceData.paymentMethods.filter(method => !['bank', 'paypal'].includes(method)).map(method => (
+                              <div key={method} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <span className="text-sm font-medium">💳 {method}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setInvoiceData(prev => ({
+                                      ...prev,
+                                      paymentMethods: prev.paymentMethods.filter(m => m !== method)
+                                    }));
+                                  }}
+                                  className="text-red-500 hover:text-red-700 text-sm"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-2">Payment Instructions</label>
+                    <textarea
+                      value={invoiceData.paymentInstructions}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, paymentInstructions: e.target.value }))}
+                      rows={3}
+                      placeholder="Bank details, PayPal email, Stripe link, or other payment instructions..."
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-2">Notes</label>
                     <textarea
                       value={invoiceData.notes}
                       onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
                       rows={2}
-                      placeholder="Payment instructions, terms..."
+                      placeholder="Additional notes or comments..."
                       className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                     />
                   </div>

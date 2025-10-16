@@ -12,6 +12,16 @@ import { InvoiceData } from './InvoiceGenerator';
 const Invoices = () => {
   const { invoices, updateInvoice, deleteInvoice, createInvoice } = useSupabase();
   const { addNotification, showSuccessMessage } = useAppContext();
+
+  // Format date from YYYY-MM-DD to DD/MM/YYYY
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
   const [showGenerator, setShowGenerator] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
@@ -125,7 +135,7 @@ const Invoices = () => {
   };
 
   const generateInvoiceHTML = (invoice: Invoice) => {
-    const currentDate = new Date().toLocaleDateString();
+    const currentDate = formatDate(new Date().toISOString().split('T')[0]);
     
     return `
       <!DOCTYPE html>
@@ -163,7 +173,7 @@ const Invoices = () => {
             <div class="invoice-details">
               <div style="margin-bottom: 8px;"><strong>Invoice #:</strong> ${invoice.invoice_number}</div>
               <div style="margin-bottom: 8px;"><strong>Date:</strong> ${currentDate}</div>
-              <div style="margin-bottom: 8px;"><strong>Due:</strong> ${invoice.dueDate}</div>
+              <div style="margin-bottom: 8px;"><strong>Due:</strong> ${formatDate(invoice.due_date)}</div>
             </div>
           </div>
         </div>
@@ -240,7 +250,7 @@ const Invoices = () => {
         id: invoice.id.toString(),
         invoiceNumber: invoice.invoice_number,
         issueDate: invoice.sentDate || new Date().toISOString().split('T')[0],
-        dueDate: invoice.dueDate,
+        dueDate: invoice.due_date,
         currency: 'USD',
         
         // Creator Info (pre-filled)
@@ -279,7 +289,8 @@ const Invoices = () => {
         // Payment & Terms
         paymentTerms: 'net30',
         paymentMethods: ['bank'],
-        notes: '',
+        paymentInstructions: invoice.payment_instructions || '',
+        notes: invoice.notes || '',
         
         status: invoice.status || 'draft'
       };
@@ -521,45 +532,45 @@ const Invoices = () => {
       {/* Invoices Table */}
       {!showDrafts && !showTrash && (
         <div>
-          <h1 className="text-2xl font-bold text-[#1c2d5a] mb-4">Invoices</h1>
+          <h1 className="text-xl font-bold text-[#1c2d5a] mb-4">Invoices</h1>
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50" style={{ overflowY: 'visible' }}>
           <div className="overflow-x-auto" style={{ overflowY: 'visible' }}>
             <table className="w-full">
               <thead className="bg-gray-50/80">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200/50">
                 {filteredInvoices.map((invoice) => {
                   return (
                     <tr key={invoice.id} className="hover:bg-gray-50/50 transition-colors duration-200">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{invoice.invoice_number}</div>
-                        <div className="text-sm text-gray-500">{invoice.project}</div>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{invoice.invoice_number}</div>
+                        <div className="text-xs text-gray-500">{invoice.project}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-900">
                         {invoice.client_name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
                         ${invoice.amount.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {invoice.dueDate}
+                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-900">
+                        {formatDate(invoice.due_date)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <StatusDropdown
                           currentStatus={invoice.status}
                           statusConfig={statusConfig}
                           onStatusChange={(newStatus) => updateInvoiceStatus(invoice.id, newStatus)}
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-4 py-3 whitespace-nowrap text-right text-xs font-medium">
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => generatePDF(invoice)}
