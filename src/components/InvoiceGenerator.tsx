@@ -911,8 +911,8 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                   {/* Creator Details Section */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Select which details show on invoice</h4>
-                    <div className="flex flex-wrap gap-2" style={{ width: '100%' }}>
-                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                    <div className="flex flex-wrap gap-3">
+                      <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
                         <input
                           type="checkbox"
                           checked={invoiceData.customization?.showPhone ?? defaultCustomization.showPhone}
@@ -920,11 +920,11 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                             ...prev,
                             customization: { ...(prev.customization || defaultCustomization), showPhone: e.target.checked }
                           }))}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
                         />
-                        <span className="text-sm whitespace-nowrap">Phone Number</span>
+                        <span className="text-sm font-medium whitespace-nowrap">Phone Number</span>
                       </label>
-                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                      <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
                         <input
                           type="checkbox"
                           checked={invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite}
@@ -932,11 +932,11 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                             ...prev,
                             customization: { ...(prev.customization || defaultCustomization), showWebsite: e.target.checked }
                           }))}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
                         />
-                        <span className="text-sm whitespace-nowrap">Website</span>
+                        <span className="text-sm font-medium whitespace-nowrap">Website</span>
                       </label>
-                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                      <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
                         <input
                           type="checkbox"
                           checked={invoiceData.customization?.showAddress ?? defaultCustomization.showAddress}
@@ -944,11 +944,11 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                             ...prev,
                             customization: { ...(prev.customization || defaultCustomization), showAddress: e.target.checked }
                           }))}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
                         />
-                        <span className="text-sm whitespace-nowrap">Address</span>
+                        <span className="text-sm font-medium whitespace-nowrap">Address</span>
                       </label>
-                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                      <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
                         <input
                           type="checkbox"
                           checked={invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId}
@@ -956,11 +956,11 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                             ...prev,
                             customization: { ...(prev.customization || defaultCustomization), showTaxId: e.target.checked }
                           }))}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
                         />
-                        <span className="text-sm whitespace-nowrap">Tax ID</span>
+                        <span className="text-sm font-medium whitespace-nowrap">Tax ID</span>
                       </label>
-                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                      <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
                         <input
                           type="checkbox"
                           checked={invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram}
@@ -968,9 +968,9 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                             ...prev,
                             customization: { ...(prev.customization || defaultCustomization), showInstagram: e.target.checked }
                           }))}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
                         />
-                        <span className="text-sm whitespace-nowrap">Social Media Handle</span>
+                        <span className="text-sm font-medium whitespace-nowrap">Social Media Handle</span>
                       </label>
                     </div>
 
