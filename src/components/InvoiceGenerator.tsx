@@ -17,6 +17,32 @@ interface LineItem {
   amount: number;
 }
 
+interface InvoiceCustomization {
+  // Creator Details
+  showPhone: boolean;
+  showAddress: boolean;
+  showTaxId: boolean;
+  showWebsite: boolean;
+  showInstagram: boolean;
+  showYoutube: boolean;
+
+  // Client Details
+  showClientAddress: boolean;
+  showClientPhone: boolean;
+  showContactPerson: boolean;
+
+  // Financial Options
+  showTax: boolean;
+  showDiscount: boolean;
+  showSubtotal: boolean;
+
+  // Payment & Terms
+  showPaymentMethods: boolean;
+  showPaymentInstructions: boolean;
+  showPaymentTerms: boolean;
+  showNotes: boolean;
+}
+
 export interface InvoiceData {
   id?: string;
   invoiceNumber: string;
@@ -39,6 +65,7 @@ export interface InvoiceData {
   clientCompany: string;
   clientEmail: string;
   clientAddress: string;
+  clientPhone: string;
   clientContact: string;
   poNumber: string;
   
@@ -46,6 +73,7 @@ export interface InvoiceData {
   lineItems: LineItem[];
   subtotal: number;
   taxRate: number;
+  taxName?: string;
   taxAmount: number;
   discountRate: number;
   discountAmount: number;
@@ -56,7 +84,10 @@ export interface InvoiceData {
   paymentMethods: string[];
   paymentInstructions: string;
   notes: string;
-  
+
+  // Customization Options
+  customization: InvoiceCustomization;
+
   status: 'draft' | 'sent' | 'paid' | 'overdue';
 }
 
@@ -120,13 +151,40 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     'Equipment Rental'
   ];
 
+  // Default customization settings
+  const defaultCustomization: InvoiceCustomization = {
+    // Creator Details
+    showPhone: true,
+    showAddress: true,
+    showTaxId: false,
+    showWebsite: true,
+    showInstagram: true,
+    showYoutube: true,
+
+    // Client Details
+    showClientAddress: false,
+    showClientPhone: false,
+    showContactPerson: true,
+
+    // Financial Options
+    showTax: false,
+    showDiscount: false,
+    showSubtotal: true,
+
+    // Payment & Terms
+    showPaymentMethods: true,
+    showPaymentInstructions: true,
+    showPaymentTerms: true,
+    showNotes: true,
+  };
+
   const [customPaymentMethod, setCustomPaymentMethod] = useState('');
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     invoiceNumber: 'INV-001',
     issueDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     currency: 'USD',
-    
+
     // Creator Info (pre-filled with default data)
     creatorName: 'Sarah Chen',
     creatorEmail: 'sarah@example.com',
@@ -136,15 +194,16 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     creatorWebsite: 'sarahcreates.com',
     creatorInstagram: '@sarahcreates',
     creatorYoutube: '@SarahCreatesContent',
-    
+
     // Client Info
     clientName: '',
     clientCompany: '',
     clientEmail: '',
     clientAddress: '',
+    clientPhone: '',
     clientContact: '',
     poNumber: '',
-    
+
     // Invoice Details
     lineItems: [{
       id: '1',
@@ -160,20 +219,27 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     discountRate: 0,
     discountAmount: 0,
     total: 0,
-    
+
     // Payment & Terms
     paymentTerms: 'net30',
     paymentMethods: ['bank'],
     paymentInstructions: '',
     notes: '',
-    
+
+    // Customization Options
+    customization: defaultCustomization,
+
     status: 'draft'
   });
 
   // Load editing invoice data
   useEffect(() => {
     if (editingInvoice) {
-      setInvoiceData(editingInvoice);
+      setInvoiceData({
+        ...editingInvoice,
+        // Ensure customization exists with fallback to defaults
+        customization: editingInvoice.customization || defaultCustomization
+      });
       // Show tax and discount sections if they have values
       if (editingInvoice.taxRate > 0) setShowTax(true);
       if (editingInvoice.discountRate > 0) setShowDiscount(true);
@@ -393,12 +459,12 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{invoiceData.creatorName}</h1>
             <div className="text-gray-600 space-y-1">
               <p>{invoiceData.creatorEmail}</p>
-              <p>{invoiceData.creatorPhone}</p>
-              <p className="whitespace-pre-line">{invoiceData.creatorAddress}</p>
-              {invoiceData.creatorWebsite && <p>{invoiceData.creatorWebsite}</p>}
+              {(invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && <p>{invoiceData.creatorPhone}</p>}
+              {(invoiceData.customization?.showAddress ?? defaultCustomization.showAddress) && <p className="whitespace-pre-line">{invoiceData.creatorAddress}</p>}
+              {(invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite) && invoiceData.creatorWebsite && <p>{invoiceData.creatorWebsite}</p>}
               <div className="flex space-x-4 mt-2">
-                {invoiceData.creatorInstagram && <span className="text-[#1c2d5a]">{invoiceData.creatorInstagram}</span>}
-                {invoiceData.creatorYoutube && <span className="text-red-600">{invoiceData.creatorYoutube}</span>}
+                {(invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram) && invoiceData.creatorInstagram && <span className="text-[#1c2d5a]">{invoiceData.creatorInstagram}</span>}
+                {(invoiceData.customization?.showYoutube ?? defaultCustomization.showYoutube) && invoiceData.creatorYoutube && <span className="text-red-600">{invoiceData.creatorYoutube}</span>}
               </div>
             </div>
           </div>
@@ -436,9 +502,10 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="space-y-1">
                 {invoiceData.clientCompany && <p className="font-semibold text-gray-900">{invoiceData.clientCompany}</p>}
-                {invoiceData.clientContact && <p className="text-gray-700">{invoiceData.clientContact}</p>}
+                {(invoiceData.customization?.showContactPerson ?? defaultCustomization.showContactPerson) && invoiceData.clientContact && <p className="text-gray-700">{invoiceData.clientContact}</p>}
                 {invoiceData.clientEmail && <p className="text-gray-600">{invoiceData.clientEmail}</p>}
-                {invoiceData.clientAddress && <p className="text-gray-600 whitespace-pre-line">{invoiceData.clientAddress}</p>}
+                {(invoiceData.customization?.showClientAddress ?? defaultCustomization.showClientAddress) && invoiceData.clientAddress && <p className="text-gray-600 whitespace-pre-line">{invoiceData.clientAddress}</p>}
+                {(invoiceData.customization?.showClientPhone ?? defaultCustomization.showClientPhone) && invoiceData.clientPhone && <p className="text-gray-600">{invoiceData.clientPhone}</p>}
               </div>
             </div>
           </div>
@@ -450,14 +517,18 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                   <span className="text-gray-600">Currency:</span>
                   <span className="font-semibold">{selectedCurrency?.code} ({selectedCurrency?.symbol})</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Payment Terms:</span>
-                  <span className="font-semibold capitalize">{invoiceData.paymentTerms.replace('net', 'Net ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tax ID:</span>
-                  <span className="font-semibold">{invoiceData.creatorTaxId}</span>
-                </div>
+                {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Terms:</span>
+                    <span className="font-semibold capitalize">{invoiceData.paymentTerms.replace('net', 'Net ')}</span>
+                  </div>
+                )}
+                {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax ID:</span>
+                    <span className="font-semibold">{invoiceData.creatorTaxId}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -528,7 +599,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         </div>
 
         {/* Payment Methods */}
-        {invoiceData.paymentMethods.length > 0 && (
+        {(invoiceData.customization?.showPaymentMethods ?? defaultCustomization.showPaymentMethods) && invoiceData.paymentMethods.length > 0 && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Accepted Payment Methods:</h3>
             <div className="flex flex-wrap gap-3">
@@ -542,7 +613,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         )}
 
         {/* Payment Instructions */}
-        {invoiceData.paymentInstructions && (
+        {(invoiceData.customization?.showPaymentInstructions ?? defaultCustomization.showPaymentInstructions) && invoiceData.paymentInstructions && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Instructions:</h3>
             <p className="text-gray-700 whitespace-pre-line">{invoiceData.paymentInstructions}</p>
@@ -550,7 +621,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         )}
 
         {/* Notes */}
-        {invoiceData.notes && (
+        {(invoiceData.customization?.showNotes ?? defaultCustomization.showNotes) && invoiceData.notes && (
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes:</h3>
             <p className="text-gray-700 whitespace-pre-line">{invoiceData.notes}</p>
@@ -560,13 +631,15 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         {/* Footer */}
         <div className="border-t border-gray-200 pt-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Payment Terms:</h4>
-              <p className="text-sm text-gray-600">
-                Payment is due within {invoiceData.paymentTerms.replace('net', '').replace('immediate', '0')} days of invoice date.
-                Late payments may incur additional fees.
-              </p>
-            </div>
+            {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2">Payment Terms:</h4>
+                <p className="text-sm text-gray-600">
+                  Payment is due within {invoiceData.paymentTerms.replace('net', '').replace('immediate', '0')} days of invoice date.
+                  Late payments may incur additional fees.
+                </p>
+              </div>
+            )}
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Thank You!</h4>
               <p className="text-sm text-gray-600">
@@ -814,6 +887,162 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                       style={{ color: '#000000' }}
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Address (Optional)</label>
+                    <textarea
+                      value={invoiceData.clientAddress}
+                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientAddress: e.target.value }))}
+                      placeholder="123 Client Street, City, State, ZIP"
+                      rows={2}
+                      className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500"
+                      style={{ color: '#000000' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Creator Details Card */}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex items-center mb-4">
+                  <Building className="w-5 h-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-900">Creator Details</h3>
+                </div>
+                <div className="space-y-4">
+                  {/* Creator Details Section */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Select which details show on invoice</h4>
+                    <div className="flex flex-wrap gap-2" style={{ width: '100%' }}>
+                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                        <input
+                          type="checkbox"
+                          checked={invoiceData.customization?.showPhone ?? defaultCustomization.showPhone}
+                          onChange={(e) => setInvoiceData(prev => ({
+                            ...prev,
+                            customization: { ...(prev.customization || defaultCustomization), showPhone: e.target.checked }
+                          }))}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                        />
+                        <span className="text-sm whitespace-nowrap">Phone Number</span>
+                      </label>
+                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                        <input
+                          type="checkbox"
+                          checked={invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite}
+                          onChange={(e) => setInvoiceData(prev => ({
+                            ...prev,
+                            customization: { ...(prev.customization || defaultCustomization), showWebsite: e.target.checked }
+                          }))}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                        />
+                        <span className="text-sm whitespace-nowrap">Website</span>
+                      </label>
+                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                        <input
+                          type="checkbox"
+                          checked={invoiceData.customization?.showAddress ?? defaultCustomization.showAddress}
+                          onChange={(e) => setInvoiceData(prev => ({
+                            ...prev,
+                            customization: { ...(prev.customization || defaultCustomization), showAddress: e.target.checked }
+                          }))}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                        />
+                        <span className="text-sm whitespace-nowrap">Address</span>
+                      </label>
+                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                        <input
+                          type="checkbox"
+                          checked={invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId}
+                          onChange={(e) => setInvoiceData(prev => ({
+                            ...prev,
+                            customization: { ...(prev.customization || defaultCustomization), showTaxId: e.target.checked }
+                          }))}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                        />
+                        <span className="text-sm whitespace-nowrap">Tax ID</span>
+                      </label>
+                      <label className="flex items-center p-1.5 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors" style={{ width: 'calc(33.333% - 0.375rem)' }}>
+                        <input
+                          type="checkbox"
+                          checked={invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram}
+                          onChange={(e) => setInvoiceData(prev => ({
+                            ...prev,
+                            customization: { ...(prev.customization || defaultCustomization), showInstagram: e.target.checked }
+                          }))}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2 flex-shrink-0"
+                        />
+                        <span className="text-sm whitespace-nowrap">Social Media Handle</span>
+                      </label>
+                    </div>
+
+                    {/* Conditional input fields */}
+                    <div className="mt-4 space-y-3">
+                      {(invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+                          <input
+                            type="tel"
+                            value={invoiceData.creatorPhone}
+                            onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorPhone: e.target.value }))}
+                            placeholder="+1 (555) 123-4567"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                          />
+                        </div>
+                      )}
+
+                      {(invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite) && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Website</label>
+                          <input
+                            type="url"
+                            value={invoiceData.creatorWebsite}
+                            onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorWebsite: e.target.value }))}
+                            placeholder="https://www.yourwebsite.com"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                          />
+                        </div>
+                      )}
+
+                      {(invoiceData.customization?.showAddress ?? defaultCustomization.showAddress) && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Address</label>
+                          <textarea
+                            value={invoiceData.creatorAddress}
+                            onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorAddress: e.target.value }))}
+                            placeholder="123 Main Street&#10;City, State 12345&#10;Country"
+                            rows={3}
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 resize-vertical"
+                          />
+                        </div>
+                      )}
+
+                      {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Tax ID</label>
+                          <input
+                            type="text"
+                            value={invoiceData.creatorTaxId}
+                            onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorTaxId: e.target.value }))}
+                            placeholder="12-3456789"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                          />
+                        </div>
+                      )}
+
+                      {(invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram) && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Social Media Handle</label>
+                          <input
+                            type="text"
+                            value={invoiceData.creatorInstagram}
+                            onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorInstagram: e.target.value }))}
+                            placeholder="@yourusername"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -821,13 +1050,16 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
             {/* Right 2 Columns - Line Items, Payment Terms, Total */}
             <div className="col-span-2 space-y-6">
 
-              {/* Line Items */}
-              <div>
+              {/* Services & Line Items Card */}
+              <div className="bg-pink-50 border border-pink-200 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Services & Line Items</h3>
+                  <div className="flex items-center">
+                    <FileText className="w-5 h-5 text-pink-600 mr-2" />
+                    <h3 className="font-semibold text-gray-900">Services & Line Items</h3>
+                  </div>
                   <button
                     onClick={addLineItem}
-                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200 text-sm"
+                    className="flex items-center px-3 py-2 bg-pink-600 text-white rounded-xl hover:bg-pink-700 transition-colors duration-200 text-sm"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Item
@@ -836,7 +1068,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
                 <div className="space-y-3">
                   {invoiceData.lineItems.map((item) => (
-                    <div key={item.id} className="bg-gray-50 rounded-lg p-4">
+                    <div key={item.id} className="space-y-3">
                       <div className="space-y-3">
                         {/* Service Name */}
                         <div>
@@ -933,32 +1165,50 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
                 {/* Tax Fields */}
                 {showTax && (
-                  <div className="bg-gray-50 rounded-lg p-4 mt-3">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Tax Rate (%)</label>
-                    <input
-                      type="number"
-                      value={invoiceData.taxRate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      className="w-32 text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    />
+                  <div className="mt-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Tax Name</label>
+                        <input
+                          type="text"
+                          value={invoiceData.taxName || ''}
+                          onChange={(e) => setInvoiceData(prev => ({ ...prev, taxName: e.target.value }))}
+                          placeholder="VAT, GST, Sales Tax..."
+                          className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                        <input
+                          type="number"
+                          value={invoiceData.taxRate === 0 ? '' : invoiceData.taxRate}
+                          onChange={(e) => setInvoiceData(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                          onFocus={(e) => e.target.select()}
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          placeholder="20"
+                          className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {/* Discount Fields */}
                 {showDiscount && (
-                  <div className="bg-gray-50 rounded-lg p-4 mt-3">
+                  <div className="mt-3">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Discount Rate (%)</label>
                     <input
                       type="number"
-                      value={invoiceData.discountRate}
+                      value={invoiceData.discountRate === 0 ? '' : invoiceData.discountRate}
                       onChange={(e) => setInvoiceData(prev => ({ ...prev, discountRate: parseFloat(e.target.value) || 0 }))}
+                      onFocus={(e) => e.target.select()}
                       min="0"
                       max="100"
                       step="0.1"
-                      className="w-32 text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      placeholder="10"
+                      className="w-32 text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500"
                     />
                   </div>
                 )}
