@@ -474,6 +474,38 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
   const selectedCurrency = currencies.find(c => c.code === invoiceData.currency);
 
+  // Calculate dynamic spacing based on visible creator info fields
+  const getCreatorInfoFieldCount = () => {
+    let count = 2; // Always has name/business name + email
+
+    if ((invoiceData.customization?.showAddress ?? defaultCustomization.showAddress) && invoiceData.creatorAddress) count++;
+    if ((invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && invoiceData.creatorPhone) count++;
+    if ((invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite) && invoiceData.creatorWebsite) count++;
+    if ((invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram) && invoiceData.creatorInstagram) count++;
+
+    return count;
+  };
+
+  // Dynamic spacing for header section based on creator info density
+  const getDynamicSpacing = () => {
+    const fieldCount = getCreatorInfoFieldCount();
+    if (fieldCount <= 2) return 'mb-4'; // Minimal spacing for just name + email
+    if (fieldCount <= 3) return 'mb-5'; // Less spacing for fewer fields
+    if (fieldCount <= 4) return 'mb-6'; // Medium spacing
+    if (fieldCount <= 5) return 'mb-7'; // More spacing
+    return 'mb-8'; // Full spacing for many fields
+  };
+
+  // Calculate dynamic spacing for subsequent sections
+  const getSectionSpacing = () => {
+    const fieldCount = getCreatorInfoFieldCount();
+    // More aggressive spacing reduction for subsequent sections
+    if (fieldCount <= 2) return 'mb-4'; // Very compact layout
+    if (fieldCount <= 3) return 'mb-5'; // Compact layout
+    if (fieldCount <= 4) return 'mb-6'; // Balanced layout
+    return 'mb-8'; // Standard spacing for full layouts
+  };
+
   if (!isOpen) return null;
 
   // Invoice Preview Component
@@ -492,7 +524,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
       {/* Invoice Content */}
       <div className="invoice-preview max-w-4xl mx-auto p-8 print:p-0">
         {/* Invoice Header */}
-        <div className="flex justify-between items-start mb-8">
+        <div className={`flex justify-between items-start ${getDynamicSpacing()}`}>
           <div>
             {(invoiceData.customization?.showBusinessName ?? defaultCustomization.showBusinessName) && invoiceData.creatorBusinessName ? (
               <>
@@ -537,7 +569,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Due Date:</span>
-                  <span className="font-semibold text-gray-900">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
+                  <span className="font-bold text-lg text-gray-900">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
                 </div>
                 {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && invoiceData.creatorTaxId && (
                   <div className="flex justify-between">
@@ -557,7 +589,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         </div>
 
         {/* Bill To Section */}
-        <div className="mb-8">
+        <div className={getSectionSpacing()}>
           <div className="max-w-md">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Bill To:</h3>
             <div className="bg-gray-50 p-4 rounded-xl">
@@ -573,7 +605,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         </div>
 
         {/* Line Items Table */}
-        <div className="mb-8">
+        <div className={getSectionSpacing()}>
           <h3 className="text-lg font-semibold text-gray-900 mb-3">Services Provided:</h3>
           <div className="border border-gray-200 rounded-xl overflow-hidden">
             <table className="w-full">
@@ -629,7 +661,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               <div className="border-t border-gray-300 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-bold text-gray-900">Total:</span>
-                  <span className="text-2xl font-bold text-black">{selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-black">{selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -667,21 +699,26 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         )}
 
         {/* Footer */}
-        <div className="border-t border-gray-200 pt-2">
-          {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
-            <div className="mb-6">
-              <p className="text-[10px] text-gray-500">
-                Payment is due within {invoiceData.paymentTerms.replace('net', '').replace('immediate', '0')} days of invoice date.
-                Late payments may incur additional fees.
-              </p>
-            </div>
-          )}
-          <div className="text-center">
+        <div className="border-t border-gray-200 pt-6">
+          {/* Thank You Section First */}
+          <div className="text-center mb-6">
             <h4 className="font-semibold text-gray-900 mb-2">Thank You</h4>
             <p className="text-sm text-gray-600">
               Thank you for choosing to work with me!
             </p>
           </div>
+
+          {/* Divider */}
+          {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
+            <div className="border-t border-gray-200 pt-4">
+              <div className="text-center">
+                <p className="text-[10px] text-gray-500">
+                  Payment is due within {invoiceData.paymentTerms.replace('net', '').replace('immediate', '0')} days of invoice date.
+                  Late payments may incur additional fees.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
