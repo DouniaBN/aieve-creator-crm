@@ -26,15 +26,49 @@ export interface Invoice {
   id: string
   user_id: string
   invoice_number: string
-  client_name: string
-  amount: number
+  issue_date?: string
   due_date: string
-  status: 'draft' | 'sent' | 'paid' | 'overdue'
-  created_at: string
+  currency?: string
+
+  // Client Info
+  client_name: string
+  client_company?: string
+  client_address?: string
+  client_phone?: string
+  client_contact_person?: string
   contact_name?: string
   contact_email?: string
+  po_number?: string
+
+  // Creator Info
+  creator_business_name?: string
+  creator_phone?: string
+  creator_address?: string
+  creator_tax_id?: string
+  creator_website?: string
+  creator_social_handle?: string
+
+  // Financial Details
+  line_items?: any[]
+  subtotal?: number
+  tax_rate?: number
+  tax_name?: string
+  tax_amount?: number
+  discount_rate?: number
+  discount_amount?: number
+  amount: number
+
+  // Payment & Terms
+  payment_terms?: string
+  payment_methods?: string[]
   payment_instructions?: string
   notes?: string
+
+  // Settings
+  customization_settings?: any
+
+  status: 'draft' | 'sent' | 'paid' | 'overdue'
+  created_at: string
 }
 
 export interface BrandDeal {

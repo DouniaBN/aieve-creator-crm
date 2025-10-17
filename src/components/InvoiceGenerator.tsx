@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon } from 'lucide-react';
+import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon, CreditCard, Banknote } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { format } from 'date-fns';
@@ -19,6 +19,7 @@ interface LineItem {
 
 interface InvoiceCustomization {
   // Creator Details
+  showBusinessName: boolean;
   showPhone: boolean;
   showAddress: boolean;
   showTaxId: boolean;
@@ -52,6 +53,7 @@ export interface InvoiceData {
   
   // Creator Info
   creatorName: string;
+  creatorBusinessName: string;
   creatorEmail: string;
   creatorPhone: string;
   creatorAddress: string;
@@ -154,6 +156,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   // Default customization settings
   const defaultCustomization: InvoiceCustomization = {
     // Creator Details
+    showBusinessName: true,
     showPhone: true,
     showAddress: true,
     showTaxId: false,
@@ -187,6 +190,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
     // Creator Info (pre-filled with default data)
     creatorName: 'Sarah Chen',
+    creatorBusinessName: 'Sarah Creates Studio',
     creatorEmail: 'sarah@example.com',
     creatorPhone: '+1 (555) 123-4567',
     creatorAddress: '123 Creator St, Los Angeles, CA 90210',
@@ -336,14 +340,48 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   const saveOrUpdateInvoice = async (status: 'draft' | 'sent') => {
     const dbInvoice = {
       invoice_number: invoiceData.invoiceNumber,
-      client_name: invoiceData.clientCompany || invoiceData.clientName || 'Client',
-      amount: invoiceData.total,
+      issue_date: invoiceData.issueDate,
       due_date: invoiceData.dueDate,
-      status,
+      currency: invoiceData.currency,
+
+      // Client Info
+      client_name: invoiceData.clientCompany || invoiceData.clientName || 'Client',
+      client_company: invoiceData.clientCompany,
+      client_address: invoiceData.clientAddress,
+      client_phone: invoiceData.clientPhone,
+      client_contact_person: invoiceData.clientContact,
       contact_name: invoiceData.clientName,
       contact_email: invoiceData.clientEmail,
+      po_number: invoiceData.poNumber,
+
+      // Creator Info
+      creator_business_name: invoiceData.creatorBusinessName,
+      creator_phone: invoiceData.creatorPhone,
+      creator_address: invoiceData.creatorAddress,
+      creator_tax_id: invoiceData.creatorTaxId,
+      creator_website: invoiceData.creatorWebsite,
+      creator_social_handle: invoiceData.creatorInstagram,
+
+      // Financial Details
+      line_items: invoiceData.lineItems,
+      subtotal: invoiceData.subtotal,
+      tax_rate: invoiceData.taxRate,
+      tax_name: invoiceData.taxName,
+      tax_amount: invoiceData.taxAmount,
+      discount_rate: invoiceData.discountRate,
+      discount_amount: invoiceData.discountAmount,
+      amount: invoiceData.total,
+
+      // Payment & Terms
+      payment_terms: invoiceData.paymentTerms,
+      payment_methods: invoiceData.paymentMethods,
       payment_instructions: invoiceData.paymentInstructions,
-      notes: invoiceData.notes
+      notes: invoiceData.notes,
+
+      // Settings
+      customization_settings: invoiceData.customization,
+
+      status
     };
 
     // Check if invoice already exists in database by invoice number
@@ -456,20 +494,37 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         {/* Invoice Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{invoiceData.creatorName}</h1>
-            <div className="text-gray-600 space-y-1">
-              <p>{invoiceData.creatorEmail}</p>
-              {(invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && <p>{invoiceData.creatorPhone}</p>}
-              {(invoiceData.customization?.showAddress ?? defaultCustomization.showAddress) && <p className="whitespace-pre-line">{invoiceData.creatorAddress}</p>}
-              {(invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite) && invoiceData.creatorWebsite && <p>{invoiceData.creatorWebsite}</p>}
-              <div className="flex space-x-4 mt-2">
-                {(invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram) && invoiceData.creatorInstagram && <span className="text-[#1c2d5a]">{invoiceData.creatorInstagram}</span>}
-                {(invoiceData.customization?.showYoutube ?? defaultCustomization.showYoutube) && invoiceData.creatorYoutube && <span className="text-red-600">{invoiceData.creatorYoutube}</span>}
-              </div>
-            </div>
+            {(invoiceData.customization?.showBusinessName ?? defaultCustomization.showBusinessName) && invoiceData.creatorBusinessName ? (
+              <>
+                <h1 className="text-3xl font-bold text-black mb-2">{invoiceData.creatorBusinessName}</h1>
+                <div className="text-black space-y-1">
+                  <p className="text-sm text-black">Contact: {invoiceData.creatorName}</p>
+                  {(invoiceData.customization?.showAddress ?? defaultCustomization.showAddress) && <p className="whitespace-pre-line">{invoiceData.creatorAddress}</p>}
+                  <p>{invoiceData.creatorEmail}</p>
+                  {(invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && <p>{invoiceData.creatorPhone}</p>}
+                  {(invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite) && invoiceData.creatorWebsite && <p>{invoiceData.creatorWebsite}</p>}
+                  <div className="flex space-x-4 mt-2">
+                    {(invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram) && invoiceData.creatorInstagram && <span className="text-black">{invoiceData.creatorInstagram}</span>}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold text-black mb-2">{invoiceData.creatorName}</h1>
+                <div className="text-black space-y-1">
+                  {(invoiceData.customization?.showAddress ?? defaultCustomization.showAddress) && <p className="whitespace-pre-line">{invoiceData.creatorAddress}</p>}
+                  <p>{invoiceData.creatorEmail}</p>
+                  {(invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && <p>{invoiceData.creatorPhone}</p>}
+                  {(invoiceData.customization?.showWebsite ?? defaultCustomization.showWebsite) && invoiceData.creatorWebsite && <p>{invoiceData.creatorWebsite}</p>}
+                  <div className="flex space-x-4 mt-2">
+                    {(invoiceData.customization?.showInstagram ?? defaultCustomization.showInstagram) && invoiceData.creatorInstagram && <span className="text-black">{invoiceData.creatorInstagram}</span>}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className="text-right">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">INVOICE</h2>
+            <h2 className="text-4xl font-bold text-[#1c2d5a] mb-4">INVOICE</h2>
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="space-y-2">
                 <div className="flex justify-between">
@@ -482,8 +537,14 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Due Date:</span>
-                  <span className="font-semibold text-red-600">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
+                  <span className="font-semibold text-gray-900">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
                 </div>
+                {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && invoiceData.creatorTaxId && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax ID:</span>
+                    <span className="font-semibold">{invoiceData.creatorTaxId}</span>
+                  </div>
+                )}
                 {invoiceData.poNumber && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">PO Number:</span>
@@ -496,9 +557,9 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         </div>
 
         {/* Bill To Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Bill To:</h3>
+        <div className="mb-8">
+          <div className="max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Bill To:</h3>
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="space-y-1">
                 {invoiceData.clientCompany && <p className="font-semibold text-gray-900">{invoiceData.clientCompany}</p>}
@@ -509,34 +570,11 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               </div>
             </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Payment Details:</h3>
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Currency:</span>
-                  <span className="font-semibold">{selectedCurrency?.code} ({selectedCurrency?.symbol})</span>
-                </div>
-                {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Terms:</span>
-                    <span className="font-semibold capitalize">{invoiceData.paymentTerms.replace('net', 'Net ')}</span>
-                  </div>
-                )}
-                {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax ID:</span>
-                    <span className="font-semibold">{invoiceData.creatorTaxId}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Line Items Table */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Services Provided:</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Services Provided:</h3>
           <div className="border border-gray-200 rounded-xl overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -591,7 +629,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               <div className="border-t border-gray-300 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-bold text-gray-900">Total:</span>
-                  <span className="text-2xl font-bold text-[#1c2d5a]">{selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-black">{selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -601,7 +639,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         {/* Payment Methods */}
         {(invoiceData.customization?.showPaymentMethods ?? defaultCustomization.showPaymentMethods) && invoiceData.paymentMethods.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Accepted Payment Methods:</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Accepted Payment Methods:</h3>
             <div className="flex flex-wrap gap-3">
               {invoiceData.paymentMethods.map(method => (
                 <span key={method} className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium capitalize">
@@ -615,41 +653,34 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
         {/* Payment Instructions */}
         {(invoiceData.customization?.showPaymentInstructions ?? defaultCustomization.showPaymentInstructions) && invoiceData.paymentInstructions && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Instructions:</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Payment Instructions:</h3>
             <p className="text-gray-700 whitespace-pre-line">{invoiceData.paymentInstructions}</p>
           </div>
         )}
 
         {/* Notes */}
         {(invoiceData.customization?.showNotes ?? defaultCustomization.showNotes) && invoiceData.notes && (
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes:</h3>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes:</h3>
             <p className="text-gray-700 whitespace-pre-line">{invoiceData.notes}</p>
           </div>
         )}
 
         {/* Footer */}
-        <div className="border-t border-gray-200 pt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Payment Terms:</h4>
-                <p className="text-sm text-gray-600">
-                  Payment is due within {invoiceData.paymentTerms.replace('net', '').replace('immediate', '0')} days of invoice date.
-                  Late payments may incur additional fees.
-                </p>
-              </div>
-            )}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Thank You!</h4>
-              <p className="text-sm text-gray-600">
-                Thank you for choosing to work with me. I look forward to our continued partnership.
+        <div className="border-t border-gray-200 pt-2">
+          {(invoiceData.customization?.showPaymentTerms ?? defaultCustomization.showPaymentTerms) && (
+            <div className="mb-6">
+              <p className="text-[10px] text-gray-500">
+                Payment is due within {invoiceData.paymentTerms.replace('net', '').replace('immediate', '0')} days of invoice date.
+                Late payments may incur additional fees.
               </p>
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500">Signature: _________________________</p>
-                <p className="text-xs text-gray-500 mt-2">Date: _________________________</p>
-              </div>
             </div>
+          )}
+          <div className="text-center">
+            <h4 className="font-semibold text-gray-900 mb-2">Thank You</h4>
+            <p className="text-sm text-gray-600">
+              Thank you for choosing to work with me!
+            </p>
           </div>
         </div>
       </div>
@@ -915,6 +946,18 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                       <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
                         <input
                           type="checkbox"
+                          checked={invoiceData.customization?.showBusinessName ?? defaultCustomization.showBusinessName}
+                          onChange={(e) => setInvoiceData(prev => ({
+                            ...prev,
+                            customization: { ...(prev.customization || defaultCustomization), showBusinessName: e.target.checked }
+                          }))}
+                          className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
+                        />
+                        <span className="text-sm font-medium whitespace-nowrap">Business Name</span>
+                      </label>
+                      <label className="flex items-center gap-3 py-3 px-4 border border-gray-200 rounded-lg hover:bg-white cursor-pointer transition-colors w-fit min-w-[180px]">
+                        <input
+                          type="checkbox"
                           checked={invoiceData.customization?.showPhone ?? defaultCustomization.showPhone}
                           onChange={(e) => setInvoiceData(prev => ({
                             ...prev,
@@ -976,6 +1019,19 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
 
                     {/* Conditional input fields */}
                     <div className="mt-4 space-y-3">
+                      {(invoiceData.customization?.showBusinessName ?? defaultCustomization.showBusinessName) && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Business Name</label>
+                          <input
+                            type="text"
+                            value={invoiceData.creatorBusinessName}
+                            onChange={(e) => setInvoiceData(prev => ({ ...prev, creatorBusinessName: e.target.value }))}
+                            placeholder="Your Business Name"
+                            className="w-full text-sm py-2 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                          />
+                        </div>
+                      )}
+
                       {(invoiceData.customization?.showPhone ?? defaultCustomization.showPhone) && (
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
@@ -1239,8 +1295,8 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                     <div className="space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         {[
-                          { key: 'bank', label: '🏦 Bank Transfer' },
-                          { key: 'paypal', label: '💰 PayPal' }
+                          { key: 'bank', label: 'Bank Transfer', icon: Banknote },
+                          { key: 'paypal', label: 'PayPal', icon: CreditCard }
                         ].map(method => (
                           <label key={method.key} className="flex items-center p-3 border border-gray-200 rounded-xl hover:bg-white cursor-pointer transition-colors">
                             <input
@@ -1261,6 +1317,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                               }}
                               className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mr-2"
                             />
+                            <method.icon className="w-4 h-4 mr-2 text-purple-600" />
                             <span className="text-sm font-medium">{method.label}</span>
                           </label>
                         ))}
@@ -1298,7 +1355,10 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                           <div className="space-y-1">
                             {invoiceData.paymentMethods.filter(method => !['bank', 'paypal'].includes(method)).map(method => (
                               <div key={method} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                                <span className="text-sm font-medium">💳 {method}</span>
+                                <div className="flex items-center">
+                                  <CreditCard className="w-4 h-4 mr-2 text-purple-600" />
+                                  <span className="text-sm font-medium">{method}</span>
+                                </div>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1369,7 +1429,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                   <div className="border-t border-gray-300 pt-3">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Total</span>
-                      <span className="text-3xl font-bold text-blue-900">
+                      <span className="text-3xl font-bold text-black">
                         {selectedCurrency?.symbol}{invoiceData.total.toFixed(2)}
                       </span>
                     </div>

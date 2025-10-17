@@ -249,49 +249,74 @@ const Invoices = () => {
       editData = {
         id: invoice.id.toString(),
         invoiceNumber: invoice.invoice_number,
-        issueDate: invoice.sentDate || new Date().toISOString().split('T')[0],
+        issueDate: invoice.issue_date || new Date().toISOString().split('T')[0],
         dueDate: invoice.due_date,
-        currency: 'USD',
-        
-        // Creator Info (pre-filled)
-        creatorName: 'Sarah Chen',
-        creatorEmail: 'sarah@example.com',
-        creatorPhone: '+1 (555) 123-4567',
-        creatorAddress: '123 Creator St, Los Angeles, CA 90210',
-        creatorTaxId: '12-3456789',
-        creatorWebsite: 'sarahcreates.com',
-        creatorInstagram: '@sarahcreates',
+        currency: invoice.currency || 'USD',
+
+        // Creator Info (load from database or defaults)
+        creatorName: 'Sarah Chen', // Static name
+        creatorBusinessName: invoice.creator_business_name || 'Sarah Creates Studio',
+        creatorEmail: 'sarah@example.com', // Static email
+        creatorPhone: invoice.creator_phone || '+1 (555) 123-4567',
+        creatorAddress: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
+        creatorTaxId: invoice.creator_tax_id || '12-3456789',
+        creatorWebsite: invoice.creator_website || 'sarahcreates.com',
+        creatorInstagram: invoice.creator_social_handle || '@sarahcreates',
         creatorYoutube: '@SarahCreatesContent',
-        
+
         // Client Info
-        clientName: invoice.client_name || '',
-        clientCompany: invoice.client_name || '',
+        clientName: invoice.contact_name || '',
+        clientCompany: invoice.client_company || invoice.client_name || '',
         clientEmail: invoice.contact_email || '',
-        clientAddress: '',
-        clientContact: invoice.contact_name || '',
-        poNumber: '',
+        clientAddress: invoice.client_address || '',
+        clientPhone: invoice.client_phone || '',
+        clientContact: invoice.client_contact_person || '',
+        poNumber: invoice.po_number || '',
         
-        // Line Items
-        lineItems: [{
+        // Line Items (load from database or create default)
+        lineItems: invoice.line_items || [{
           id: '1',
+          service: '',
           description: invoice.deliverables || invoice.project || '',
           quantity: 1,
           rate: amount,
           amount: amount
         }],
-        subtotal: amount,
-        taxRate: 0,
-        taxAmount: 0,
-        discountRate: 0,
-        discountAmount: 0,
+        subtotal: invoice.subtotal || amount,
+        taxRate: invoice.tax_rate || 0,
+        taxName: invoice.tax_name || '',
+        taxAmount: invoice.tax_amount || 0,
+        discountRate: invoice.discount_rate || 0,
+        discountAmount: invoice.discount_amount || 0,
         total: amount,
-        
+
         // Payment & Terms
-        paymentTerms: 'net30',
-        paymentMethods: ['bank'],
+        paymentTerms: invoice.payment_terms || 'net30',
+        paymentMethods: invoice.payment_methods || ['bank'],
         paymentInstructions: invoice.payment_instructions || '',
         notes: invoice.notes || '',
-        
+
+        // Customization
+        customization: invoice.customization_settings || {
+          showBusinessName: true,
+          showPhone: true,
+          showAddress: true,
+          showTaxId: false,
+          showWebsite: true,
+          showInstagram: true,
+          showYoutube: true,
+          showClientAddress: false,
+          showClientPhone: false,
+          showContactPerson: true,
+          showTax: false,
+          showDiscount: false,
+          showSubtotal: true,
+          showPaymentMethods: true,
+          showPaymentInstructions: true,
+          showPaymentTerms: true,
+          showNotes: true,
+        },
+
         status: invoice.status || 'draft'
       };
     }
@@ -622,7 +647,9 @@ const Invoices = () => {
 
       {!showDrafts && !showTrash && filteredInvoices.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📄</div>
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+            <FileText className="w-8 h-8 text-gray-400" />
+          </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No invoices found</h3>
           <p className="text-gray-600 mb-6">Create your first invoice to start tracking payments</p>
           <button
