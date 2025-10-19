@@ -97,12 +97,13 @@ interface InvoiceGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
   editingInvoice?: InvoiceData | null;
+  previewMode?: boolean;
 }
 
-const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice }) => {
+const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
   const { generateInvoiceNumber, createInvoice, updateInvoice, invoices } = useSupabase();
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>(previewMode ? 'preview' : 'edit');
   const [showTax, setShowTax] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
   
@@ -512,14 +513,16 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   const InvoicePreview = () => (
     <div className="bg-white rounded-xl shadow-lg invoice-preview">
       {/* Print Styles */}
-      <style jsx>{`
-        @media print {
-          body * { visibility: hidden; }
-          .invoice-preview, .invoice-preview * { visibility: visible; }
-          .invoice-preview { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            body * { visibility: hidden; }
+            .invoice-preview, .invoice-preview * { visibility: visible; }
+            .invoice-preview { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+          }
+        `
+      }} />
 
       {/* Invoice Content */}
       <div className="invoice-preview max-w-4xl mx-auto p-8 print:p-0">
@@ -564,12 +567,12 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
                   <span className="font-semibold">{invoiceData.invoiceNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Issue Date:</span>
+                  <span className="text-gray-600">Issue Date: </span>
                   <span className="font-semibold">{new Date(invoiceData.issueDate).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Due Date:</span>
-                  <span className="font-bold text-lg text-gray-900">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
+                  <span className="text-gray-600">Due Date: </span>
+                  <span className="font-semibold">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
                 </div>
                 {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && invoiceData.creatorTaxId && (
                   <div className="flex justify-between">

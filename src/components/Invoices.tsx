@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash, Send } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash, Send, Eye } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';
 import { Invoice } from '../lib/supabase';
@@ -26,6 +26,8 @@ const Invoices = () => {
   const [showDrafts, setShowDrafts] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<InvoiceData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Wrapper function to match the expected signature
   const updateInvoiceStatus = async (id: string, status: Invoice['status']) => {
@@ -104,6 +106,87 @@ const Invoices = () => {
 
   const isLoading = (invoiceId, action) => {
     return loadingStates[`${invoiceId}-${action}`] || false;
+  };
+
+  const handlePreviewInvoice = (invoice: Invoice) => {
+    // Convert Invoice to InvoiceData format for the generator
+    const amount = invoice.amount || invoice.total || 0;
+    const convertedInvoice = {
+      id: invoice.id.toString(),
+      invoiceNumber: invoice.invoice_number,
+      issueDate: invoice.issue_date || new Date().toISOString().split('T')[0],
+      dueDate: invoice.due_date,
+      currency: invoice.currency || 'USD',
+
+      // Creator Info
+      creatorName: 'Sarah Chen',
+      creatorBusinessName: invoice.creator_business_name || 'Sarah Creates Studio',
+      creatorEmail: 'sarah@example.com',
+      creatorPhone: invoice.creator_phone || '+1 (555) 123-4567',
+      creatorAddress: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
+      creatorTaxId: invoice.creator_tax_id || '12-3456789',
+      creatorWebsite: invoice.creator_website || 'sarahcreates.com',
+      creatorInstagram: invoice.creator_social_handle || '@sarahcreates',
+      creatorYoutube: '@SarahCreatesContent',
+
+      // Client Info
+      clientName: invoice.contact_name || '',
+      clientCompany: invoice.client_company || invoice.client_name || '',
+      clientEmail: invoice.contact_email || '',
+      clientAddress: invoice.client_address || '',
+      clientPhone: invoice.client_phone || '',
+      clientContact: invoice.client_contact_person || '',
+      poNumber: invoice.po_number || '',
+
+      // Line Items
+      lineItems: invoice.line_items || [{
+        id: '1',
+        service: '',
+        description: invoice.deliverables || invoice.project || '',
+        quantity: 1,
+        rate: amount,
+        amount: amount
+      }],
+      subtotal: invoice.subtotal || amount,
+      taxRate: invoice.tax_rate || 0,
+      taxName: invoice.tax_name || '',
+      taxAmount: invoice.tax_amount || 0,
+      discountRate: invoice.discount_rate || 0,
+      discountAmount: invoice.discount_amount || 0,
+      total: amount,
+
+      // Payment & Terms
+      paymentTerms: invoice.payment_terms || 'net30',
+      paymentMethods: invoice.payment_methods || ['bank'],
+      paymentInstructions: invoice.payment_instructions || '',
+      notes: invoice.notes || '',
+
+      // Customization
+      customization: invoice.customization_settings || {
+        showBusinessName: true,
+        showPhone: true,
+        showAddress: true,
+        showTaxId: false,
+        showWebsite: true,
+        showInstagram: true,
+        showYoutube: true,
+        showClientAddress: false,
+        showClientPhone: false,
+        showContactPerson: true,
+        showTax: false,
+        showDiscount: false,
+        showSubtotal: true,
+        showPaymentMethods: true,
+        showPaymentInstructions: true,
+        showPaymentTerms: true,
+        showNotes: true,
+      },
+
+      status: invoice.status || 'draft'
+    };
+
+    setPreviewInvoice(convertedInvoice);
+    setShowPreview(true);
   };
 
   const generatePDF = async (invoice: Invoice) => {
@@ -596,42 +679,65 @@ const Invoices = () => {
                       </td>
                       <td className="pl-0 pr-0 py-3 whitespace-nowrap text-right text-xs font-medium">
                         <div className="flex justify-end space-x-1 -ml-8">
-                          <button
-                            onClick={() => generatePDF(invoice)}
-                            className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
-                            title="Download PDF"
-                            disabled={isLoading(invoice.id, 'download')}
-                          >
-                            {isLoading(invoice.id, 'download') ? (
-                              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Download className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleEditInvoice(invoice)}
-                            className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
-                            title="Edit Invoice"
-                            disabled={isLoading(invoice.id, 'edit')}
-                          >
-                            {isLoading(invoice.id, 'edit') ? (
-                              <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Edit className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteInvoice(invoice)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                            title="Move to Trash"
-                            disabled={isLoading(invoice.id, 'delete')}
-                          >
-                            {isLoading(invoice.id, 'delete') ? (
-                              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
+                          <div className="relative group">
+                            <button
+                              onClick={() => handlePreviewInvoice(invoice)}
+                              className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              Preview
+                            </div>
+                          </div>
+                          <div className="relative group">
+                            <button
+                              onClick={() => generatePDF(invoice)}
+                              className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
+                              disabled={isLoading(invoice.id, 'download')}
+                            >
+                              {isLoading(invoice.id, 'download') ? (
+                                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4" />
+                              )}
+                            </button>
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              Download
+                            </div>
+                          </div>
+                          <div className="relative group">
+                            <button
+                              onClick={() => handleEditInvoice(invoice)}
+                              className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
+                              disabled={isLoading(invoice.id, 'edit')}
+                            >
+                              {isLoading(invoice.id, 'edit') ? (
+                                <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Edit className="w-4 h-4" />
+                              )}
+                            </button>
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              Edit
+                            </div>
+                          </div>
+                          <div className="relative group">
+                            <button
+                              onClick={() => handleDeleteInvoice(invoice)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                              disabled={isLoading(invoice.id, 'delete')}
+                            >
+                              {isLoading(invoice.id, 'delete') ? (
+                                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                            <div className="absolute bottom-full right-0 transform translate-x-0 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              Delete
+                            </div>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -659,6 +765,16 @@ const Invoices = () => {
             New Invoice
           </button>
         </div>
+      )}
+
+      {/* Invoice Preview Modal */}
+      {showPreview && previewInvoice && (
+        <InvoiceGenerator
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          editingInvoice={previewInvoice}
+          previewMode={true}
+        />
       )}
 
       {/* Invoice Generator */}
