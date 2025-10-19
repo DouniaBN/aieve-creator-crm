@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Edit, Trash2, Send, FileText, Calendar, DollarSign, Building } from 'lucide-react';
-import { InvoiceData } from './InvoiceGenerator';
+import { useSupabase } from '../contexts/SupabaseContext';
+import { useAppContext } from '../contexts/AppContext';
+import { Invoice } from '../lib/supabase';
 
 interface InvoiceDraftsProps {
-  onEditInvoice: (invoice: InvoiceData) => void;
+  onEditInvoice: (invoice: Invoice) => void;
 }
 
 const InvoiceDrafts: React.FC<InvoiceDraftsProps> = ({ onEditInvoice }) => {
-  const [drafts, setDrafts] = useState<InvoiceData[]>([]);
+  const { invoices, updateInvoice, deleteInvoice } = useSupabase();
+  const { showSuccessMessage } = useAppContext();
+
+  // Filter invoices to show only drafts
+  const drafts = invoices.filter(invoice => invoice.status === 'draft');
 
   const currencies = {
     'USD': '$',
@@ -22,28 +28,24 @@ const InvoiceDrafts: React.FC<InvoiceDraftsProps> = ({ onEditInvoice }) => {
     'DKK': 'kr'
   };
 
-  useEffect(() => {
-    loadDrafts();
-  }, []);
-
-  const loadDrafts = () => {
-    const savedDrafts = JSON.parse(localStorage.getItem('invoiceDrafts') || '[]');
-    setDrafts(savedDrafts);
+  const deleteDraft = async (id: string) => {
+    try {
+      await deleteInvoice(id);
+      showSuccessMessage('Draft deleted successfully');
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      showSuccessMessage('Error deleting draft');
+    }
   };
 
-  const deleteDraft = (id: string) => {
-    const updatedDrafts = drafts.filter(draft => draft.id !== id);
-    setDrafts(updatedDrafts);
-    localStorage.setItem('invoiceDrafts', JSON.stringify(updatedDrafts));
-  };
-
-  const sendInvoice = (invoice: InvoiceData) => {
-    const updatedInvoice = { ...invoice, status: 'sent' as const };
-    const updatedDrafts = drafts.map(draft => 
-      draft.id === invoice.id ? updatedInvoice : draft
-    );
-    setDrafts(updatedDrafts);
-    localStorage.setItem('invoiceDrafts', JSON.stringify(updatedDrafts));
+  const sendInvoice = async (invoice: Invoice) => {
+    try {
+      await updateInvoice(invoice.id, { status: 'sent' });
+      showSuccessMessage('Invoice sent successfully');
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      showSuccessMessage('Error sending invoice');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -97,16 +99,16 @@ const InvoiceDrafts: React.FC<InvoiceDraftsProps> = ({ onEditInvoice }) => {
           <tbody className="divide-y divide-gray-200/50">
             {drafts.map((draft) => {
               const currencySymbol = currencies[draft.currency as keyof typeof currencies] || '$';
-              
+
               return (
                 <tr key={draft.id} className="hover:bg-gray-50/50 transition-colors duration-200">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <FileText className="w-5 h-5 text-gray-400 mr-3" />
                       <div>
-                        <div className="font-medium text-gray-900">{draft.invoiceNumber}</div>
+                        <div className="font-medium text-gray-900">{draft.invoice_number}</div>
                         <div className="text-sm text-gray-500">
-                          Created {new Date(draft.issueDate).toLocaleDateString()}
+                          Created {new Date(draft.issue_date || draft.created_at).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -115,8 +117,8 @@ const InvoiceDrafts: React.FC<InvoiceDraftsProps> = ({ onEditInvoice }) => {
                     <div className="flex items-center">
                       <Building className="w-4 h-4 text-gray-400 mr-2" />
                       <div>
-                        <div className="font-medium text-gray-900">{draft.clientCompany || 'No Company'}</div>
-                        <div className="text-sm text-gray-500">{draft.clientContact || 'No Contact'}</div>
+                        <div className="font-medium text-gray-900">{draft.client_name || 'No Client'}</div>
+                        <div className="text-sm text-gray-500">{draft.project || 'No Project'}</div>
                       </div>
                     </div>
                   </td>
@@ -124,7 +126,7 @@ const InvoiceDrafts: React.FC<InvoiceDraftsProps> = ({ onEditInvoice }) => {
                     <div className="flex items-center">
                       <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
                       <span className="font-semibold text-gray-900">
-                        {currencySymbol}{draft.total.toFixed(2)}
+                        {currencySymbol}{draft.amount.toFixed(2)}
                       </span>
                     </div>
                   </td>
@@ -132,7 +134,7 @@ const InvoiceDrafts: React.FC<InvoiceDraftsProps> = ({ onEditInvoice }) => {
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 text-gray-400 mr-2" />
                       <span className="text-sm text-gray-900">
-                        {new Date(draft.dueDate).toLocaleDateString()}
+                        {new Date(draft.due_date).toLocaleDateString()}
                       </span>
                     </div>
                   </td>

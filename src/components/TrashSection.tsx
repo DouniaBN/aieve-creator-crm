@@ -1,14 +1,8 @@
 import React from 'react';
 import { RotateCcw, Trash, AlertTriangle, Calendar, DollarSign, FileText } from 'lucide-react';
+import { Invoice } from '../lib/supabase';
 
-interface TrashedInvoice {
-  id: number;
-  invoiceNumber: string;
-  client: string;
-  amount: number;
-  dueDate: string;
-  status: string;
-  project: string;
+interface TrashedInvoice extends Invoice {
   deletedAt: string;
 }
 
@@ -75,13 +69,13 @@ const TrashSection: React.FC<TrashSectionProps> = ({
                   <div className="flex items-center">
                     <FileText className="w-5 h-5 text-gray-400 mr-3" />
                     <div>
-                      <div className="font-medium text-gray-900">{invoice.invoiceNumber}</div>
+                      <div className="font-medium text-gray-900">{invoice.invoice_number}</div>
                       <div className="text-sm text-gray-500">{invoice.project}</div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {invoice.client}
+                  {invoice.client_name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">

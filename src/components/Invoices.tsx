@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash, Send, Eye } from 'lucide-react';
+import { Plus, Download, Edit, Trash2, AlertCircle, CheckCircle, Clock, DollarSign, Filter, Search, FileText, Trash, Send, Eye, Receipt } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';
 import { Invoice } from '../lib/supabase';
@@ -23,8 +23,7 @@ const Invoices = () => {
     return `${day}/${month}/${year}`;
   };
   const [showGenerator, setShowGenerator] = useState(false);
-  const [showDrafts, setShowDrafts] = useState(false);
-  const [showTrash, setShowTrash] = useState(false);
+  const [activeSection, setActiveSection] = useState<'invoices' | 'drafts' | 'trash'>('invoices');
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -495,18 +494,27 @@ const Invoices = () => {
           <h2 className="text-xl font-bold text-[#1c2d5a]">Overview</h2>
           <div className="flex space-x-2">
             <button
-              onClick={() => setShowDrafts(!showDrafts)}
+              onClick={() => setActiveSection('invoices')}
+              className={`flex items-center px-3 py-1.5 text-sm border transition-all duration-200 rounded-lg ${
+                activeSection === 'invoices' ? 'bg-white text-gray-700 border-[#E83F87]' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5 mr-1.5" />
+              Invoices
+            </button>
+            <button
+              onClick={() => setActiveSection('drafts')}
               className={`flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg transition-all duration-200 ${
-                showDrafts ? 'bg-[#E83F87] text-white border-[#E83F87]' : 'bg-white text-gray-700 hover:bg-gray-50'
+                activeSection === 'drafts' ? 'bg-[#E83F87] text-white border-[#E83F87]' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
               <FileText className="w-3.5 h-3.5 mr-1.5" />
               Drafts
             </button>
             <button
-              onClick={() => setShowTrash(!showTrash)}
+              onClick={() => setActiveSection('trash')}
               className={`flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg transition-all duration-200 ${
-                showTrash ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-700 hover:bg-gray-50'
+                activeSection === 'trash' ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
               <Trash className="w-3.5 h-3.5 mr-1.5" />
@@ -622,13 +630,13 @@ const Invoices = () => {
         </div>
 
       {/* Drafts Section */}
-      {showDrafts && (
+      {activeSection === 'drafts' && (
         <InvoiceDrafts onEditInvoice={handleEditInvoice} />
       )}
 
       {/* Trash Section */}
-      {showTrash && (
-        <TrashSection 
+      {activeSection === 'trash' && (
+        <TrashSection
           trashedInvoices={trashedInvoices}
           onRestore={handleRestoreInvoice}
           onPermanentDelete={handlePermanentDelete}
@@ -637,7 +645,7 @@ const Invoices = () => {
       )}
 
       {/* Invoices Table */}
-      {!showDrafts && !showTrash && (
+      {activeSection === 'invoices' && (
         <div>
           <h1 className="text-xl font-bold text-[#1c2d5a] mb-4">Invoices</h1>
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-200/50" style={{ overflowY: 'visible' }}>
@@ -750,7 +758,7 @@ const Invoices = () => {
         </div>
       )}
 
-      {!showDrafts && !showTrash && filteredInvoices.length === 0 && (
+      {activeSection === 'invoices' && filteredInvoices.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
             <FileText className="w-8 h-8 text-gray-400" />
