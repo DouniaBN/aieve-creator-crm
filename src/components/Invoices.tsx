@@ -147,7 +147,7 @@ const Invoices = () => {
           .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
           .logo { width: 60px; height: 60px; background: linear-gradient(135deg, #8B5CF6, #EC4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; }
           .invoice-title { font-size: 36px; font-weight: bold; color: #1F2937; }
-          .invoice-details { background: #F9FAFB; padding: 20px; border-radius: 12px; }
+          .invoice-details { background: #F9FAFB; padding: 20px; border-radius: 12px; font-weight: normal; }
           .bill-to { margin: 40px 0; }
           .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #1F2937; }
           .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
@@ -173,7 +173,7 @@ const Invoices = () => {
             <div class="invoice-details">
               <div style="margin-bottom: 8px;"><strong>Invoice #:</strong> ${invoice.invoice_number}</div>
               <div style="margin-bottom: 8px;"><strong>Date:</strong> ${currentDate}</div>
-              <div style="margin-bottom: 8px;"><strong>Due:</strong> ${formatDate(invoice.due_date)}</div>
+              <div style="margin-bottom: 8px;">Due: ${formatDate(invoice.due_date)}</div>
             </div>
           </div>
         </div>
@@ -405,11 +405,31 @@ const Invoices = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Overview Section */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold text-[#1c2d5a]">Overview</h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowDrafts(!showDrafts)}
+              className={`flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg transition-all duration-200 ${
+                showDrafts ? 'bg-[#E83F87] text-white border-[#E83F87]' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 mr-1.5" />
+              Drafts
+            </button>
+            <button
+              onClick={() => setShowTrash(!showTrash)}
+              className={`flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg transition-all duration-200 ${
+                showTrash ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Trash className="w-3.5 h-3.5 mr-1.5" />
+              Trash
+            </button>
+          </div>
         </div>
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-4">
@@ -454,34 +474,6 @@ const Invoices = () => {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end space-x-3">
-        <button
-          onClick={() => setShowDrafts(!showDrafts)}
-          className={`flex items-center px-4 py-2 border border-gray-200 rounded-xl transition-all duration-200 ${
-            showDrafts ? 'bg-[#E83F87] text-white border-[#E83F87]' : 'bg-white text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          {showDrafts ? 'Hide' : 'View'} Drafts
-        </button>
-        <button
-          onClick={() => setShowTrash(!showTrash)}
-          className={`flex items-center px-4 py-2 border border-gray-200 rounded-xl transition-all duration-200 ${
-            showTrash ? 'bg-red-100 text-red-700 border-red-300' : 'bg-white text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <Trash className="w-4 h-4 mr-2" />
-          Trash ({trashedInvoices.length})
-        </button>
-        <button
-          onClick={() => setShowGenerator(true)}
-          className="flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Invoice
-        </button>
-      </div>
 
       {/* Search Bar and Filters */}
       {showSearchBar && (
@@ -512,7 +504,7 @@ const Invoices = () => {
       )}
 
       {/* Filters */}
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex items-center justify-between gap-4">
           <div className="flex items-center space-x-2">
             <button
               onClick={() => {
@@ -527,7 +519,7 @@ const Invoices = () => {
             </button>
             <Filter className="w-4 h-4 text-gray-400" />
             <select
-              className="border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
@@ -537,6 +529,13 @@ const Invoices = () => {
               ))}
             </select>
           </div>
+          <button
+            onClick={() => setShowGenerator(true)}
+            className="flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Invoice
+          </button>
         </div>
 
       {/* Drafts Section */}
@@ -576,27 +575,27 @@ const Invoices = () => {
                   return (
                     <tr key={invoice.id} className="hover:bg-gray-50/50 transition-colors duration-200">
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{invoice.invoice_number}</div>
+                        <div className="text-base font-medium text-gray-900">{invoice.invoice_number}</div>
                         <div className="text-xs text-gray-500">{invoice.project}</div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-base text-gray-900">
                         {invoice.client_name}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-base font-semibold text-gray-900">
                         ${invoice.amount.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-900">
+                      <td className="px-4 py-3 whitespace-nowrap text-base text-gray-900">
                         {formatDate(invoice.due_date)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="pr-0 pl-4 py-3 whitespace-nowrap">
                         <StatusDropdown
                           currentStatus={invoice.status}
                           statusConfig={statusConfig}
                           onStatusChange={(newStatus) => updateInvoiceStatus(invoice.id, newStatus)}
                         />
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-xs font-medium">
-                        <div className="flex justify-end space-x-2">
+                      <td className="pl-0 pr-0 py-3 whitespace-nowrap text-right text-xs font-medium">
+                        <div className="flex justify-end space-x-1 -ml-8">
                           <button
                             onClick={() => generatePDF(invoice)}
                             className="p-2 text-gray-400 hover:text-[#E83F87] hover:bg-pink-50 rounded-lg transition-colors duration-200"
