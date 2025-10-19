@@ -563,26 +563,26 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
             <div className="bg-gray-50 p-4 rounded-xl">
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Invoice #:</span>
+                  <span className="text-gray-600">Invoice #:&nbsp;</span>
                   <span className="font-semibold">{invoiceData.invoiceNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Issue Date: </span>
+                  <span className="text-gray-600">Issue Date:&nbsp;</span>
                   <span className="font-semibold">{new Date(invoiceData.issueDate).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Due Date: </span>
+                  <span className="text-gray-600">Due Date:&nbsp;</span>
                   <span className="font-semibold">{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
                 </div>
                 {(invoiceData.customization?.showTaxId ?? defaultCustomization.showTaxId) && invoiceData.creatorTaxId && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Tax ID:</span>
+                    <span className="text-gray-600">Tax ID:&nbsp;</span>
                     <span className="font-semibold">{invoiceData.creatorTaxId}</span>
                   </div>
                 )}
                 {invoiceData.poNumber && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">PO Number:</span>
+                    <span className="text-gray-600">PO Number:&nbsp;</span>
                     <span className="font-semibold">{invoiceData.poNumber}</span>
                   </div>
                 )}

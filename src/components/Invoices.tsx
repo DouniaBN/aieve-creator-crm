@@ -254,8 +254,8 @@ const Invoices = () => {
           <div style="text-align: right;">
             <div class="invoice-title">INVOICE</div>
             <div class="invoice-details">
-              <div style="margin-bottom: 8px;"><strong>Invoice #:</strong> ${invoice.invoice_number}</div>
-              <div style="margin-bottom: 8px;"><strong>Date:</strong> ${currentDate}</div>
+              <div style="margin-bottom: 8px;"><strong>Invoice #: </strong>${invoice.invoice_number}</div>
+              <div style="margin-bottom: 8px;"><strong>Date: </strong>${currentDate}</div>
               <div style="margin-bottom: 8px;">Due: ${formatDate(invoice.due_date)}</div>
             </div>
           </div>
