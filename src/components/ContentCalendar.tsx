@@ -343,7 +343,11 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                       return (
                         <div
                           key={post.id}
-                          className="text-xs p-1.5 rounded border border-gray-200 bg-white hover:shadow-sm transition-shadow cursor-pointer"
+                          className={`text-xs p-1.5 rounded bg-white hover:shadow-sm transition-shadow cursor-pointer ${
+                            post.brand_deal_id
+                              ? 'border-2 border-[#1c2d5a] shadow-sm'
+                              : 'border border-gray-200'
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             openPostModal(post);

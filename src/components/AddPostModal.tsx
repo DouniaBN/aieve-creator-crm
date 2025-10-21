@@ -114,30 +114,32 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
   // Get selected brand deal data
   const selectedDeal = availableBrandDeals.find(deal => deal.id === selectedBrandDeal);
 
-  // Auto-populate title when brand deal and platform are selected
+  // Auto-populate title when brand deal is selected
   useEffect(() => {
-    if (linkToBrandDeal && selectedDeal && formData.platforms.length === 1) {
-      const platform = platformOptions.find(p => p.value === formData.platforms[0]);
-      if (platform) {
-        setFormData(prev => ({
-          ...prev,
-          title: `${selectedDeal.brand_name} - ${platform.label}`
-        }));
-      }
+    if (linkToBrandDeal && selectedDeal) {
+      setFormData(prev => ({
+        ...prev,
+        title: selectedDeal.brand_name
+      }));
     }
-  }, [selectedBrandDeal, formData.platforms, linkToBrandDeal, selectedDeal]);
+  }, [selectedBrandDeal, linkToBrandDeal, selectedDeal]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form data
     if (formData.platforms.length === 0) {
       alert('Please select at least one platform');
       return;
     }
-    
+
     if (!formData.title.trim()) {
       alert('Please enter a post title');
+      return;
+    }
+
+    if (!formData.scheduled_date) {
+      alert('Please select a date for the post');
       return;
     }
     
@@ -227,52 +229,51 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Post Title</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-base font-medium text-gray-700">Post Title</label>
+              <div className={`inline-flex items-center gap-2 border border-gray-200 rounded-lg bg-gray-50/50 px-2 py-1.5`}>
+                <label className="text-xs font-medium text-[#1c2d5a]">Link to Brand Deal</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLinkToBrandDeal(!linkToBrandDeal);
+                    if (!linkToBrandDeal) {
+                      setSelectedBrandDeal('');
+                      setFormData(prev => ({ ...prev, title: '' }));
+                    }
+                  }}
+                  className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-[#E83F87] focus:ring-offset-1 ${
+                    linkToBrandDeal ? 'bg-[#E83F87]' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                      linkToBrandDeal ? 'translate-x-4' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-              placeholder={linkToBrandDeal ? "Title will auto-populate when brand deal and platform selected" : "Enter post title"}
+              placeholder="Enter post title"
               required
-              disabled={linkToBrandDeal && selectedDeal && formData.platforms.length === 1}
+              disabled={linkToBrandDeal && selectedDeal}
             />
-          </div>
-
-          {/* Brand Deal Link Toggle */}
-          <div className={`border border-gray-200 rounded-lg bg-gray-50/50 ${linkToBrandDeal ? 'p-3' : 'px-3 py-2'}`}>
-            <div className={`flex items-center gap-3 ${linkToBrandDeal ? 'mb-2' : ''}`}>
-              <label className="text-sm font-medium text-gray-700">Link to Brand Deal</label>
-              <button
-                type="button"
-                onClick={() => {
-                  setLinkToBrandDeal(!linkToBrandDeal);
-                  if (!linkToBrandDeal) {
-                    setSelectedBrandDeal('');
-                    setFormData(prev => ({ ...prev, title: '' }));
-                  }
-                }}
-                className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-purple-500 focus:ring-offset-1 ${
-                  linkToBrandDeal ? 'bg-purple-600' : 'bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                    linkToBrandDeal ? 'translate-x-4' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
-            </div>
 
             {linkToBrandDeal && (
-              <div className="space-y-3">
+              <div className="space-y-3 mt-3">
                 {/* Brand Deal Dropdown */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Select Brand Deal</label>
                   <select
                     value={selectedBrandDeal}
                     onChange={(e) => setSelectedBrandDeal(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
                     required={linkToBrandDeal}
                   >
                     <option value="">Choose a brand deal...</option>
@@ -286,7 +287,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
                 {/* Selected Deal Info */}
                 {selectedDeal && (
-                  <div className="bg-white rounded-lg p-3 border border-purple-200">
+                  <div className="bg-white rounded-lg p-3 border border-[#E83F87]/30">
                     <h4 className="font-medium text-gray-900 mb-2">{selectedDeal.brand_name}</h4>
                     <div className="space-y-2 text-sm">
                       <div>
