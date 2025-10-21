@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Instagram, Youtube, Mail, Globe, FileText, Linkedin, ChevronLeft, ChevronRight, X, Clock, Calendar as CalendarIcon, User, Edit2, Save, Trash2 } from 'lucide-react';
+import { Plus, Instagram, Youtube, Mail, Globe, FileText, Linkedin, ChevronLeft, ChevronRight, X, Clock, Calendar as CalendarIcon, User, Edit2, Save, Trash2, DollarSign } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { ContentPost } from '../lib/supabase';
 import { Card, CardContent } from './ui/card';
@@ -343,9 +343,9 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                       return (
                         <div
                           key={post.id}
-                          className={`text-xs p-1.5 rounded bg-white hover:shadow-sm transition-shadow cursor-pointer ${
+                          className={`text-xs p-1.5 rounded bg-white hover:shadow-sm transition-shadow cursor-pointer relative ${
                             post.brand_deal_id
-                              ? 'border-2 border-[#1c2d5a] shadow-sm'
+                              ? 'border border-gray-200 border-l-4 border-l-[#EC4899] shadow-sm'
                               : 'border border-gray-200'
                           }`}
                           onClick={(e) => {
@@ -353,6 +353,9 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
                             openPostModal(post);
                           }}
                         >
+                          {post.brand_deal_id && (
+                            <DollarSign className="w-3 h-3 text-[#1c2d5a] absolute top-1 right-1" />
+                          )}
                           <div className="flex items-center space-x-1 mb-1">
                             <PlatformIcon className="w-3 h-3 flex-shrink-0" />
                             <span className={`text-xs px-1 py-0.5 rounded ${platformColor} font-medium`}>
