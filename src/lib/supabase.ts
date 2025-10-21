@@ -89,6 +89,7 @@ export interface ContentPost {
   id: string
   user_id: string
   project_id?: string
+  brand_deal_id?: string
   title: string
   platform: 'newsletter' | 'x' | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'linkedin' | 'blog'
   status: 'draft' | 'scheduled' | 'published'

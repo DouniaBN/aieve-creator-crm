@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar as CalendarIcon, Globe, Mail, FileText, Instagram, Youtube, Linkedin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSupabase } from '../contexts/SupabaseContext';
@@ -54,9 +54,11 @@ interface AddPostModalProps {
 }
 
 const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDate, onPostAdded }) => {
-  const { createContentPost, fetchContentPosts } = useSupabase();
+  const { createContentPost, fetchContentPosts, brandDeals, fetchBrandDeals } = useSupabase();
   const { showSuccessMessage } = useAppContext();
   const [loading, setLoading] = useState(false);
+  const [linkToBrandDeal, setLinkToBrandDeal] = useState(false);
+  const [selectedBrandDeal, setSelectedBrandDeal] = useState<string>('');
   
   // Safely convert initialDate to Date object with validation
   const [date] = useState(() => {
@@ -97,6 +99,34 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
     { value: 'published', label: 'Published', color: 'text-green-600' }
   ];
 
+  // Fetch brand deals when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchBrandDeals();
+    }
+  }, [isOpen, fetchBrandDeals]);
+
+  // Get all brand deals (not just active ones) - user can choose any brand deal
+  const availableBrandDeals = brandDeals.filter(deal =>
+    deal.status !== 'cancelled' // Only exclude cancelled deals
+  );
+
+  // Get selected brand deal data
+  const selectedDeal = availableBrandDeals.find(deal => deal.id === selectedBrandDeal);
+
+  // Auto-populate title when brand deal and platform are selected
+  useEffect(() => {
+    if (linkToBrandDeal && selectedDeal && formData.platforms.length === 1) {
+      const platform = platformOptions.find(p => p.value === formData.platforms[0]);
+      if (platform) {
+        setFormData(prev => ({
+          ...prev,
+          title: `${selectedDeal.brand_name} - ${platform.label}`
+        }));
+      }
+    }
+  }, [selectedBrandDeal, formData.platforms, linkToBrandDeal, selectedDeal]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -131,7 +161,8 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
           platform: platform as ContentPost['platform'],
           status: formData.status,
           scheduled_date: scheduledDateTime,
-          project_id: undefined
+          project_id: undefined,
+          brand_deal_id: linkToBrandDeal && selectedBrandDeal ? selectedBrandDeal : undefined
         };
         await createContentPost(postData);
       }
@@ -157,6 +188,8 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
         scheduled_time: null,
         content: ''
       });
+      setLinkToBrandDeal(false);
+      setSelectedBrandDeal('');
     } catch (error) {
       console.error('Error creating post:', error);
       console.error('Full error object:', error);
@@ -181,7 +214,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Add Content Post</h2>
           <button
@@ -200,9 +233,92 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-              placeholder="Enter post title"
+              placeholder={linkToBrandDeal ? "Title will auto-populate when brand deal and platform selected" : "Enter post title"}
               required
+              disabled={linkToBrandDeal && selectedDeal && formData.platforms.length === 1}
             />
+          </div>
+
+          {/* Brand Deal Link Toggle */}
+          <div className={`border border-gray-200 rounded-lg bg-gray-50/50 ${linkToBrandDeal ? 'p-3' : 'px-3 py-2'}`}>
+            <div className={`flex items-center gap-3 ${linkToBrandDeal ? 'mb-2' : ''}`}>
+              <label className="text-sm font-medium text-gray-700">Link to Brand Deal</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setLinkToBrandDeal(!linkToBrandDeal);
+                  if (!linkToBrandDeal) {
+                    setSelectedBrandDeal('');
+                    setFormData(prev => ({ ...prev, title: '' }));
+                  }
+                }}
+                className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-purple-500 focus:ring-offset-1 ${
+                  linkToBrandDeal ? 'bg-purple-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                    linkToBrandDeal ? 'translate-x-4' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {linkToBrandDeal && (
+              <div className="space-y-3">
+                {/* Brand Deal Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Brand Deal</label>
+                  <select
+                    value={selectedBrandDeal}
+                    onChange={(e) => setSelectedBrandDeal(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                    required={linkToBrandDeal}
+                  >
+                    <option value="">Choose a brand deal...</option>
+                    {availableBrandDeals.map((deal) => (
+                      <option key={deal.id} value={deal.id}>
+                        {deal.brand_name} - ${deal.fee?.toLocaleString() || 0}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Selected Deal Info */}
+                {selectedDeal && (
+                  <div className="bg-white rounded-lg p-3 border border-purple-200">
+                    <h4 className="font-medium text-gray-900 mb-2">{selectedDeal.brand_name}</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Deliverables:</span>
+                        <p className="text-gray-700 mt-1">{selectedDeal.deliverables}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Fee:</span>
+                        <span className="text-gray-700 ml-2">${selectedDeal.fee?.toLocaleString() || 0}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Status:</span>
+                        <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                          selectedDeal.status === 'confirmed'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {selectedDeal.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {availableBrandDeals.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No active brand deals available</p>
+                    <p className="text-gray-400 text-xs mt-1">Create a brand deal first to link it to content posts</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

@@ -10,7 +10,7 @@ import BrandDeals from './components/BrandDeals';
 import Invoices from './components/Invoices';
 import SettingsPage from './components/SettingsPage';
 import SuccessMessage from './components/SuccessMessage';
-import logoImage from './assets/nobglogo.png';
+import logoImage from './assets/no-bg-logo.png';
 
 function AppContent() {
   const { user, loading, signOut } = useSupabase();

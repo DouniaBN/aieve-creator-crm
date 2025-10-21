@@ -253,9 +253,9 @@ const Invoices = () => {
           <div style="text-align: right;">
             <div class="invoice-title">INVOICE</div>
             <div class="invoice-details">
-              <div style="margin-bottom: 8px;"><strong>Invoice #: </strong>${invoice.invoice_number}</div>
-              <div style="margin-bottom: 8px;"><strong>Date: </strong>${currentDate}</div>
-              <div style="margin-bottom: 8px;">Due: ${formatDate(invoice.due_date)}</div>
+              <div style="margin-bottom: 8px;"><strong>Invoice #:&nbsp;</strong>${invoice.invoice_number}</div>
+              <div style="margin-bottom: 8px;"><strong>Issue Date:&nbsp;</strong>${new Date(invoice.issue_date || invoice.created_at).toLocaleDateString()}</div>
+              <div style="margin-bottom: 8px;"><strong>Due Date:&nbsp;</strong>${new Date(invoice.due_date).toLocaleDateString()}</div>
             </div>
           </div>
         </div>
@@ -622,9 +622,9 @@ const Invoices = () => {
           </div>
           <button
             onClick={() => setShowGenerator(true)}
-            className="flex items-center px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
+            className="flex items-center px-5 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg text-base"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             New Invoice
           </button>
         </div>

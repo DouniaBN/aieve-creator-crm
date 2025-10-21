@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
-import logoImage from '../assets/nobglogo.png'
+import logoImage from '../assets/no-bg-logo.png'
 
 interface AuthProps {
   onAuthSuccess: () => void

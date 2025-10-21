@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, DollarSign, Palette, Bell, Shield, Save } from 'lucide-react';
-import logoImage from '../assets/nobglogo.png';
+import logoImage from '../assets/no-bg-logo.png';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
