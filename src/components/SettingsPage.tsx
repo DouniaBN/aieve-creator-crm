@@ -10,7 +10,6 @@ const SettingsPage = () => {
     website: 'sarahcreates.com',
     bio: 'Content creator specializing in lifestyle, beauty, and wellness',
     address: '123 Creator St, Los Angeles, CA 90210',
-    taxId: '12-3456789',
     currency: 'USD'
   });
 
@@ -82,16 +81,7 @@ const SettingsPage = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tax ID / EIN</label>
-          <input
-            type="text"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
-            value={profile.taxId}
-            onChange={(e) => setProfile({ ...profile, taxId: e.target.value })}
-          />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
           <select
@@ -99,10 +89,16 @@ const SettingsPage = () => {
             value={profile.currency}
             onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
           >
-            <option value="USD">USD - US Dollar</option>
-            <option value="EUR">EUR - Euro</option>
-            <option value="GBP">GBP - British Pound</option>
-            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="USD">$ USD - US Dollar</option>
+            <option value="EUR">€ EUR - Euro</option>
+            <option value="GBP">£ GBP - British Pound</option>
+            <option value="CAD">C$ CAD - Canadian Dollar</option>
+            <option value="AUD">A$ AUD - Australian Dollar</option>
+            <option value="JPY">¥ JPY - Japanese Yen</option>
+            <option value="CHF">CHF CHF - Swiss Franc</option>
+            <option value="SEK">kr SEK - Swedish Krona</option>
+            <option value="NOK">kr NOK - Norwegian Krone</option>
+            <option value="DKK">kr DKK - Danish Krone</option>
           </select>
         </div>
       </div>
