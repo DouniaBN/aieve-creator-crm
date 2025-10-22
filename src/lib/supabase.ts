@@ -104,3 +104,16 @@ export interface Task {
   completed: boolean
   created_at: string
 }
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: 'invoice_created' | 'invoice_sent' | 'invoice_paid' | 'invoice_overdue' | 'invoice_deleted' | 'invoice_restored' | 'project_updated' | 'brand_deal_updated' | 'content_scheduled' | 'content_published' | 'content_updated'
+  title: string
+  message: string
+  read: boolean
+  related_id?: number
+  related_type?: 'invoice' | 'project' | 'brand_deal' | 'content_post'
+  created_at: string
+  updated_at: string
+}

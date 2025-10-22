@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase, Project, Invoice, BrandDeal, ContentPost, Task } from '../lib/supabase'
+import { supabase, Project, Invoice, BrandDeal, ContentPost, Task, Notification } from '../lib/supabase'
 
 interface SupabaseContextType {
   user: User | null
@@ -14,6 +14,8 @@ interface SupabaseContextType {
   brandDeals: BrandDeal[]
   contentPosts: ContentPost[]
   tasks: Task[]
+  notifications: Notification[]
+  unreadCount: number
   
   // Data operations
   fetchProjects: () => Promise<void>
@@ -21,6 +23,7 @@ interface SupabaseContextType {
   fetchBrandDeals: () => Promise<void>
   fetchContentPosts: () => Promise<void>
   fetchTasks: () => Promise<void>
+  fetchNotifications: () => Promise<void>
   
   // CRUD operations
   createProject: (project: Omit<Project, 'id' | 'user_id' | 'created_at'>) => Promise<void>
@@ -44,6 +47,13 @@ interface SupabaseContextType {
   createTask: (task: Omit<Task, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
+
+  // Notification operations
+  createNotification: (notification: Omit<Notification, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<void>
+  markNotificationAsRead: (id: string) => Promise<void>
+  markAllNotificationsAsRead: () => Promise<void>
+  clearAllNotifications: () => Promise<void>
+  createTestNotification: () => Promise<void>
 }
 
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined)
@@ -67,6 +77,10 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [brandDeals, setBrandDeals] = useState<BrandDeal[]>([])
   const [contentPosts, setContentPosts] = useState<ContentPost[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+
+  // Calculate unread count
+  const unreadCount = notifications.filter(n => !n.read).length
 
   useEffect(() => {
     // Get initial session
@@ -156,17 +170,33 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const fetchTasks = useCallback(async () => {
     if (!user) return
-    
+
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(5)
-    
+
     if (error) {
       console.error('Error fetching tasks:', error)
     } else {
       setTasks(data || [])
+    }
+  }, [user])
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error) {
+      console.error('Error fetching notifications:', error)
+    } else {
+      setNotifications(data || [])
     }
   }, [user])
 
@@ -217,30 +247,86 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   // CRUD operations for invoices
   const createInvoice = async (invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return
-    
-    const { error } = await supabase
+
+    const { data, error } = await supabase
       .from('invoices')
       .insert([{ ...invoice, user_id: user.id }])
-    
+      .select()
+
     if (error) {
       console.error('Error creating invoice:', error)
       throw error
     } else {
       await fetchInvoices()
+
+      // Create notification for invoice creation
+      if (data && data[0]) {
+        await createNotification({
+          type: 'invoice_created',
+          title: 'Invoice Created',
+          message: `Invoice ${invoice.invoice_number} for ${invoice.client_name} has been created.`,
+          read: false,
+          related_id: parseInt(data[0].id),
+          related_type: 'invoice'
+        })
+      }
     }
   }
 
   const updateInvoice = async (id: string, updates: Partial<Invoice>) => {
+    // Get current invoice data first
+    const { data: currentInvoice } = await supabase
+      .from('invoices')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('invoices')
       .update(updates)
       .eq('id', id)
-    
+
     if (error) {
       console.error('Error updating invoice:', error)
       throw error
     } else {
       await fetchInvoices()
+
+      // Create notifications based on status changes
+      if (currentInvoice && updates.status && updates.status !== currentInvoice.status) {
+        let notificationType: 'invoice_sent' | 'invoice_paid' | 'invoice_overdue'
+        let title: string
+        let message: string
+
+        switch (updates.status) {
+          case 'sent':
+            notificationType = 'invoice_sent'
+            title = 'Invoice Sent'
+            message = `Invoice ${currentInvoice.invoice_number} has been sent to ${currentInvoice.client_name}.`
+            break
+          case 'paid':
+            notificationType = 'invoice_paid'
+            title = 'Invoice Paid'
+            message = `Invoice ${currentInvoice.invoice_number} has been paid by ${currentInvoice.client_name}.`
+            break
+          case 'overdue':
+            notificationType = 'invoice_overdue'
+            title = 'Invoice Overdue'
+            message = `Invoice ${currentInvoice.invoice_number} is now overdue.`
+            break
+          default:
+            return
+        }
+
+        await createNotification({
+          type: notificationType,
+          title,
+          message,
+          read: false,
+          related_id: parseInt(id),
+          related_type: 'invoice'
+        })
+      }
     }
   }
 
@@ -350,30 +436,78 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   // CRUD operations for brand deals
   const createBrandDeal = async (deal: Omit<BrandDeal, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return
-    
-    const { error } = await supabase
+
+    const { data, error } = await supabase
       .from('brand_deals')
       .insert([{ ...deal, user_id: user.id }])
-    
+      .select()
+
     if (error) {
       console.error('Error creating brand deal:', error)
       throw error
     } else {
       await fetchBrandDeals()
+
+      // Create notification for brand deal creation
+      if (data && data[0]) {
+        await createNotification({
+          type: 'brand_deal_updated',
+          title: 'Brand Deal Created',
+          message: `New brand deal with ${deal.brand_name} has been created.`,
+          read: false,
+          related_id: parseInt(data[0].id),
+          related_type: 'brand_deal'
+        })
+      }
     }
   }
 
   const updateBrandDeal = async (id: string, updates: Partial<BrandDeal>) => {
+    // Get current brand deal data first
+    const { data: currentDeal } = await supabase
+      .from('brand_deals')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('brand_deals')
       .update(updates)
       .eq('id', id)
-    
+
     if (error) {
       console.error('Error updating brand deal:', error)
       throw error
     } else {
       await fetchBrandDeals()
+
+      // Create notification for significant status changes
+      if (currentDeal && updates.status && updates.status !== currentDeal.status) {
+        let message: string
+
+        switch (updates.status) {
+          case 'confirmed':
+            message = `Brand deal with ${currentDeal.brand_name} has been confirmed.`
+            break
+          case 'completed':
+            message = `Brand deal with ${currentDeal.brand_name} has been completed.`
+            break
+          case 'cancelled':
+            message = `Brand deal with ${currentDeal.brand_name} has been cancelled.`
+            break
+          default:
+            message = `Brand deal with ${currentDeal.brand_name} has been updated.`
+        }
+
+        await createNotification({
+          type: 'brand_deal_updated',
+          title: 'Brand Deal Updated',
+          message,
+          read: false,
+          related_id: parseInt(id),
+          related_type: 'brand_deal'
+        })
+      }
     }
   }
 
@@ -394,32 +528,90 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   // CRUD operations for content posts
   const createContentPost = async (post: Omit<ContentPost, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return
-    
+
     const postData = { ...post, user_id: user.id };
-    
-    const { error } = await supabase
+
+    const { data, error } = await supabase
       .from('content_posts')
       .insert([postData])
-    
+      .select()
+
     if (error) {
       console.error('Error creating content post:', error)
       throw error
     } else {
       await fetchContentPosts()
+
+      // Create notification for content post creation
+      if (data && data[0]) {
+        const notificationType = post.status === 'scheduled' ? 'content_scheduled' : 'content_updated'
+        const message = post.status === 'scheduled'
+          ? `"${post.title}" has been scheduled for ${post.platform}.`
+          : `"${post.title}" content post has been created for ${post.platform}.`
+
+        await createNotification({
+          type: notificationType,
+          title: post.status === 'scheduled' ? 'Content Scheduled' : 'Content Created',
+          message,
+          read: false,
+          related_id: parseInt(data[0].id),
+          related_type: 'content_post'
+        })
+      }
     }
   }
 
   const updateContentPost = async (id: string, updates: Partial<ContentPost>) => {
+    // Get current content post data first
+    const { data: currentPost } = await supabase
+      .from('content_posts')
+      .select('*')
+      .eq('id', id)
+      .single()
+
     const { error } = await supabase
       .from('content_posts')
       .update(updates)
       .eq('id', id)
-    
+
     if (error) {
       console.error('Error updating content post:', error)
       throw error
     } else {
       await fetchContentPosts()
+
+      // Create notifications for status changes
+      if (currentPost && updates.status && updates.status !== currentPost.status) {
+        let notificationType: 'content_scheduled' | 'content_published' | 'content_updated'
+        let title: string
+        let message: string
+
+        switch (updates.status) {
+          case 'scheduled':
+            notificationType = 'content_scheduled'
+            title = 'Content Scheduled'
+            message = `"${currentPost.title}" has been scheduled for ${currentPost.platform}.`
+            break
+          case 'published':
+            notificationType = 'content_published'
+            title = 'Content Published'
+            message = `"${currentPost.title}" has been published on ${currentPost.platform}.`
+            break
+          default:
+            notificationType = 'content_updated'
+            title = 'Content Updated'
+            message = `"${currentPost.title}" content post has been updated.`
+        }
+
+        await createNotification({
+          type: notificationType,
+          title,
+          message,
+          read: false,
+          related_id: parseInt(id),
+          related_type: 'content_post'
+        })
+      }
     }
   }
 
@@ -472,13 +664,86 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       .from('tasks')
       .delete()
       .eq('id', id)
-    
+
     if (error) {
       console.error('Error deleting task:', error)
       throw error
     } else {
       await fetchTasks()
     }
+  }
+
+  // Notification CRUD operations
+  const createNotification = async (notification: Omit<Notification, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) return
+
+    const { error } = await supabase
+      .from('notifications')
+      .insert([{ ...notification, user_id: user.id }])
+
+    if (error) {
+      console.error('Error creating notification:', error)
+      throw error
+    } else {
+      await fetchNotifications()
+    }
+  }
+
+  const markNotificationAsRead = async (id: string) => {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error marking notification as read:', error)
+      throw error
+    } else {
+      await fetchNotifications()
+    }
+  }
+
+  const markAllNotificationsAsRead = async () => {
+    if (!user) return
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .eq('read', false)
+
+    if (error) {
+      console.error('Error marking all notifications as read:', error)
+      throw error
+    } else {
+      await fetchNotifications()
+    }
+  }
+
+  const clearAllNotifications = async () => {
+    if (!user) return
+
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('Error clearing all notifications:', error)
+      throw error
+    } else {
+      await fetchNotifications()
+    }
+  }
+
+  // Test function to create a sample notification
+  const createTestNotification = async () => {
+    await createNotification({
+      type: 'invoice_created',
+      title: 'Test Notification',
+      message: 'This is a test notification to verify the system is working.',
+      read: false
+    })
   }
 
   // Fetch data when user changes
@@ -489,14 +754,16 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       fetchBrandDeals()
       fetchContentPosts()
       fetchTasks()
+      fetchNotifications()
     } else {
       setProjects([])
       setInvoices([])
       setBrandDeals([])
       setContentPosts([])
       setTasks([])
+      setNotifications([])
     }
-  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks])
+  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks, fetchNotifications])
 
   const value = {
     user,
@@ -508,11 +775,14 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     brandDeals,
     contentPosts,
     tasks,
+    notifications,
+    unreadCount,
     fetchProjects,
     fetchInvoices,
     fetchBrandDeals,
     fetchContentPosts,
     fetchTasks,
+    fetchNotifications,
     createProject,
     updateProject,
     deleteProject,
@@ -530,6 +800,11 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     createTask,
     updateTask,
     deleteTask,
+    createNotification,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    clearAllNotifications,
+    createTestNotification,
   }
 
   return (

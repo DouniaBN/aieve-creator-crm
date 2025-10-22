@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, X, CheckCheck, Trash2, Clock, DollarSign, FileText, AlertCircle, Send } from 'lucide-react';
-import { useAppContext, Notification } from '../contexts/AppContext';
+import { Bell, X, CheckCheck, Trash2, Clock, DollarSign, FileText, AlertCircle, Send, Calendar, CheckCircle } from 'lucide-react';
+import { useSupabase } from '../contexts/SupabaseContext';
+import { Notification } from '../lib/supabase';
 
 const NotificationPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const { 
-    notifications, 
-    unreadCount, 
-    markNotificationAsRead, 
-    markAllNotificationsAsRead, 
-    clearAllNotifications 
-  } = useAppContext();
+  const {
+    notifications,
+    unreadCount,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    clearAllNotifications
+  } = useSupabase();
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -51,6 +52,12 @@ const NotificationPanel = () => {
       case 'project_updated':
       case 'brand_deal_updated':
         return <Send className="w-4 h-4 text-[#1c2d5a]" />;
+      case 'content_scheduled':
+        return <Calendar className="w-4 h-4 text-purple-600" />;
+      case 'content_published':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'content_updated':
+        return <FileText className="w-4 h-4 text-blue-600" />;
       default:
         return <Bell className="w-4 h-4 text-gray-600" />;
     }
@@ -71,6 +78,12 @@ const NotificationPanel = () => {
       case 'project_updated':
       case 'brand_deal_updated':
         return 'border-l-purple-500 bg-purple-50';
+      case 'content_scheduled':
+        return 'border-l-purple-500 bg-purple-50';
+      case 'content_published':
+        return 'border-l-green-500 bg-green-50';
+      case 'content_updated':
+        return 'border-l-blue-500 bg-blue-50';
       default:
         return 'border-l-gray-500 bg-gray-50';
     }
@@ -188,7 +201,7 @@ const NotificationPanel = () => {
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-500 flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {formatTimestamp(notification.timestamp)}
+                              {formatTimestamp(notification.created_at)}
                             </span>
                             {!notification.read && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
