@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { User, DollarSign, Palette, Bell, Shield, Save } from 'lucide-react';
-import logoImage from '../assets/no-bg-logo.png';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -12,7 +11,6 @@ const SettingsPage = () => {
     bio: 'Content creator specializing in lifestyle, beauty, and wellness',
     address: '123 Creator St, Los Angeles, CA 90210',
     taxId: '12-3456789',
-    hourlyRate: 150,
     currency: 'USD'
   });
 
@@ -30,30 +28,12 @@ const SettingsPage = () => {
 
   const renderProfileTab = () => (
     <div className="space-y-6">
-      <div className="flex items-center space-x-6">
-        <div className="w-24 h-24 rounded-full bg-white border-4 border-gray-200 flex items-center justify-center overflow-hidden">
-          <img 
-            src={logoImage} 
-            alt="AIEVE Logo" 
-            className="h-16 w-auto"
-          />
-        </div>
-        <div>
-          <button className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors duration-200 mr-3">
-            Change Photo
-          </button>
-          <button className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
-            Remove
-          </button>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
           <input
             type="text"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.name}
             onChange={(e) => setProfile({ ...profile, name: e.target.value })}
           />
@@ -62,7 +42,7 @@ const SettingsPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
           <input
             type="email"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.email}
             onChange={(e) => setProfile({ ...profile, email: e.target.value })}
           />
@@ -71,7 +51,7 @@ const SettingsPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
           <input
             type="tel"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.phone}
             onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
           />
@@ -80,7 +60,7 @@ const SettingsPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
           <input
             type="url"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.website}
             onChange={(e) => setProfile({ ...profile, website: e.target.value })}
           />
@@ -95,7 +75,7 @@ const SettingsPage = () => {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Business Address</label>
         <textarea
-          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+          className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
           rows="3"
           value={profile.address}
           onChange={(e) => setProfile({ ...profile, address: e.target.value })}
@@ -107,7 +87,7 @@ const SettingsPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Tax ID / EIN</label>
           <input
             type="text"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.taxId}
             onChange={(e) => setProfile({ ...profile, taxId: e.target.value })}
           />
@@ -115,7 +95,7 @@ const SettingsPage = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
           <select
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.currency}
             onChange={(e) => setProfile({ ...profile, currency: e.target.value })}
           >
@@ -127,18 +107,6 @@ const SettingsPage = () => {
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Default Hourly Rate</label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-          <input
-            type="number"
-            className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
-            value={profile.hourlyRate}
-            onChange={(e) => setProfile({ ...profile, hourlyRate: parseFloat(e.target.value) })}
-          />
-        </div>
-      </div>
     </div>
   );
 
@@ -159,7 +127,7 @@ const SettingsPage = () => {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" defaultChecked />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E83F87]"></div>
             </label>
           </div>
         ))}
@@ -183,7 +151,7 @@ const SettingsPage = () => {
               />
               <label
                 htmlFor={theme.toLowerCase()}
-                className="flex flex-col items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 peer-checked:border-purple-500 peer-checked:bg-purple-50 transition-colors duration-200"
+                className="flex flex-col items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 peer-checked:border-[#E83F87] peer-checked:bg-[#E83F87]/10 transition-colors duration-200"
               >
                 <div className={`w-12 h-8 rounded mb-2 ${theme === 'Light' ? 'bg-white border-2 border-gray-200' : theme === 'Dark' ? 'bg-gray-800' : 'bg-gradient-to-r from-white to-gray-800'}`}></div>
                 <span className="text-sm font-medium text-gray-900">{theme}</span>
@@ -204,7 +172,7 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
             <input
               type="password"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
               placeholder="Enter current password"
             />
           </div>
@@ -212,7 +180,7 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
             <input
               type="password"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
               placeholder="Enter new password"
             />
           </div>
@@ -220,11 +188,11 @@ const SettingsPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
             <input
               type="password"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
               placeholder="Confirm new password"
             />
           </div>
-          <button className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors duration-200">
+          <button className="px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-colors duration-200">
             Update Password
           </button>
         </div>
@@ -238,7 +206,7 @@ const SettingsPage = () => {
               <h4 className="font-medium text-gray-900">SMS Authentication</h4>
               <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
             </div>
-            <button className="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors duration-200">
+            <button className="px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-colors duration-200">
               Enable
             </button>
           </div>
@@ -284,7 +252,7 @@ const SettingsPage = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
+                      ? 'bg-[#E83F87] text-white shadow-lg shadow-[#E83F87]/25'
                       : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                   }`}
                 >
