@@ -112,13 +112,11 @@ const SettingsPage = () => {
 
   const renderNotificationsTab = () => (
     <div className="space-y-6">
+      {/* In-App Notifications */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Email Notifications</h3>
+        <h3 className="text-lg font-medium text-gray-900">In-App Notifications</h3>
         {[
-          { id: 'project-updates', label: 'Project Updates', description: 'Get notified when project status changes' },
-          { id: 'payment-reminders', label: 'Payment Reminders', description: 'Reminders for overdue invoices' },
-          { id: 'new-opportunities', label: 'New Opportunities', description: 'Brand collaboration requests' },
-          { id: 'weekly-summary', label: 'Weekly Summary', description: 'Weekly report of your activities' }
+          { id: 'dashboard-notifications', label: 'Dashboard Notifications', description: 'Show notifications in the bell icon on dashboard' }
         ].map((notification) => (
           <div key={notification.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl">
             <div>
@@ -132,14 +130,85 @@ const SettingsPage = () => {
           </div>
         ))}
       </div>
+
+      {/* Divider */}
+      <div className="border-t border-gray-200/50"></div>
+
+      {/* Coming Soon Sections */}
+      <div className="space-y-6">
+        {/* Email Notifications */}
+        <div className="opacity-50 pointer-events-none">
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Email Notifications</h3>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E83F87]/10 text-[#E83F87]">
+              Coming Soon
+            </span>
+          </div>
+          <div className="space-y-3">
+            {[
+              { id: 'email-payment-reminders', label: 'Payment Reminders', description: 'Email reminders for overdue invoices' },
+              { id: 'email-weekly-summary', label: 'Weekly Summary', description: 'Weekly report of your activities via email' },
+              { id: 'aieve-newsletter', label: 'AIEVE Newsletter', description: 'Be the first to know about creator tips, tricks and upcoming features' }
+            ].map((notification) => (
+              <div key={notification.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl">
+                <div>
+                  <h4 className="font-medium text-gray-500">{notification.label}</h4>
+                  <p className="text-sm text-gray-400">{notification.description}</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-not-allowed">
+                  <input type="checkbox" className="sr-only peer" disabled />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full"></div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SMS Notifications */}
+        <div className="opacity-50 pointer-events-none">
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-lg font-medium text-gray-900">SMS Notifications</h3>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E83F87]/10 text-[#E83F87]">
+              Coming Soon
+            </span>
+          </div>
+          <div className="space-y-3">
+            {[
+              { id: 'sms-urgent-alerts', label: 'Urgent Payment Alerts', description: 'SMS alerts for severely overdue invoices' }
+            ].map((notification) => (
+              <div key={notification.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl">
+                <div>
+                  <h4 className="font-medium text-gray-500">{notification.label}</h4>
+                  <p className="text-sm text-gray-400">{notification.description}</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-not-allowed">
+                  <input type="checkbox" className="sr-only peer" disabled />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full"></div>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-500">
+          Email and SMS notification integrations will be available in a future update.
+        </p>
+      </div>
     </div>
   );
 
   const renderAppearanceTab = () => (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Theme</h3>
-        <div className="grid grid-cols-3 gap-4">
+      <div className="relative">
+        {/* Coming Soon Badge */}
+        <div className="flex items-center gap-3 mb-6">
+          <h3 className="text-lg font-medium text-gray-900">Theme</h3>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E83F87]/10 text-[#E83F87]">
+            Coming Soon
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 opacity-50 pointer-events-none">
           {['Light', 'Dark', 'Auto'].map((theme) => (
             <div key={theme} className="relative">
               <input
@@ -148,17 +217,22 @@ const SettingsPage = () => {
                 name="theme"
                 className="sr-only peer"
                 defaultChecked={theme === 'Light'}
+                disabled
               />
               <label
                 htmlFor={theme.toLowerCase()}
-                className="flex flex-col items-center p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 peer-checked:border-[#E83F87] peer-checked:bg-[#E83F87]/10 transition-colors duration-200"
+                className="flex flex-col items-center p-4 border border-gray-200 rounded-xl cursor-not-allowed bg-gray-50"
               >
                 <div className={`w-12 h-8 rounded mb-2 ${theme === 'Light' ? 'bg-white border-2 border-gray-200' : theme === 'Dark' ? 'bg-gray-800' : 'bg-gradient-to-r from-white to-gray-800'}`}></div>
-                <span className="text-sm font-medium text-gray-900">{theme}</span>
+                <span className="text-sm font-medium text-gray-500">{theme}</span>
               </label>
             </div>
           ))}
         </div>
+
+        <p className="text-sm text-gray-500 mt-4">
+          Dark mode and auto theme switching will be available in a future update.
+        </p>
       </div>
     </div>
   );
@@ -199,18 +273,26 @@ const SettingsPage = () => {
       </div>
 
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
-        <div className="p-4 bg-gray-50/50 rounded-xl">
+        <div className="flex items-center gap-3 mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Two-Factor Authentication</h3>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E83F87]/10 text-[#E83F87]">
+            Coming Soon
+          </span>
+        </div>
+        <div className="p-4 bg-gray-50/50 rounded-xl opacity-50 pointer-events-none">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium text-gray-900">SMS Authentication</h4>
-              <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
+              <h4 className="font-medium text-gray-500">SMS Authentication</h4>
+              <p className="text-sm text-gray-400">Add an extra layer of security to your account</p>
             </div>
-            <button className="px-4 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-colors duration-200">
+            <button className="px-4 py-2 bg-gray-300 text-gray-500 rounded-xl cursor-not-allowed" disabled>
               Enable
             </button>
           </div>
         </div>
+        <p className="text-sm text-gray-500 mt-4">
+          Two-factor authentication will be available in a future update.
+        </p>
       </div>
     </div>
   );
@@ -240,23 +322,21 @@ const SettingsPage = () => {
         <p className="text-gray-600 mt-1">Manage your account and application preferences</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {tabs.map((tab) => {
-              const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                  className={`w-full px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'bg-[#E83F87] text-white shadow-lg shadow-[#E83F87]/25'
-                      : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
+                      ? 'bg-[#E83F87] text-white shadow-sm'
+                      : 'text-gray-700 hover:bg-gray-100/50'
                   }`}
                 >
-                  <Icon className="w-5 h-5 mr-3" />
                   {tab.name}
                 </button>
               );
@@ -265,19 +345,9 @@ const SettingsPage = () => {
         </div>
 
         {/* Content */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-gray-200/50">
             {renderContent()}
-            
-            <div className="flex justify-end mt-8 pt-6 border-t border-gray-200/50">
-              <button
-                onClick={handleSave}
-                className="flex items-center px-6 py-2 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </button>
-            </div>
           </div>
         </div>
       </div>
