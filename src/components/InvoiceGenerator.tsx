@@ -98,9 +98,10 @@ interface InvoiceGeneratorProps {
   onClose: () => void;
   editingInvoice?: InvoiceData | null;
   previewMode?: boolean;
+  autoPrint?: boolean;
 }
 
-const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false }) => {
+const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false, autoPrint = false }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
   const { generateInvoiceNumber, createInvoice, updateInvoice, invoices } = useSupabase();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>(previewMode ? 'preview' : 'edit');
@@ -298,6 +299,26 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     }));
   }, [invoiceData.lineItems, invoiceData.taxRate, invoiceData.discountRate]);
 
+  // Handle auto-print when opened from quick action download
+  useEffect(() => {
+    if (autoPrint && viewMode === 'preview' && isOpen) {
+      // Small delay to ensure the preview content is rendered
+      const timer = setTimeout(() => {
+        // Set document title temporarily for PDF filename
+        const originalTitle = document.title;
+        document.title = `${invoiceData.invoiceNumber}`;
+
+        window.print();
+
+        // Restore original title after a short delay
+        setTimeout(() => {
+          document.title = originalTitle;
+        }, 1000);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [autoPrint, viewMode, isOpen, invoiceData.invoiceNumber]);
+
   const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
     setInvoiceData(prev => ({
       ...prev,
@@ -452,12 +473,33 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   };
 
   const handlePrint = () => {
+    // Set document title temporarily for PDF filename
+    const originalTitle = document.title;
+    document.title = `${invoiceData.invoiceNumber}`;
+
+    // Trigger the print dialog
     window.print();
+
+    // Restore original title after a short delay
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   };
 
   const handleDownloadPDF = () => {
-    // In a real app, this would generate a PDF
-    showSuccessMessage('PDF download started!');
+    // Set document title temporarily for PDF filename
+    const originalTitle = document.title;
+    document.title = `${invoiceData.invoiceNumber}`;
+
+    // Trigger the print dialog which allows saving as PDF
+    window.print();
+
+    // Restore original title after a short delay
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+
+    showSuccessMessage('PDF is generating...');
   };
 
   const handleSendEmail = () => {
@@ -516,10 +558,104 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
       <style dangerouslySetInnerHTML={{
         __html: `
           @media print {
+            @page {
+              margin: 0.5in;
+              size: letter;
+            }
+
             body * { visibility: hidden; }
             .invoice-preview, .invoice-preview * { visibility: visible; }
-            .invoice-preview { position: absolute; left: 0; top: 0; width: 100%; }
+            .invoice-preview {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100% !important;
+              max-width: none !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              font-size: 12px !important;
+              line-height: 1.3 !important;
+            }
             .no-print { display: none !important; }
+
+            /* Optimize header section */
+            .invoice-preview h1 { font-size: 20px !important; margin-bottom: 8px !important; }
+            .invoice-preview h2 { font-size: 24px !important; margin-bottom: 16px !important; }
+            .invoice-preview h3 { font-size: 14px !important; margin-bottom: 8px !important; }
+
+            /* Compact spacing for print */
+            .invoice-preview > div { padding: 0 !important; }
+            .invoice-preview .space-y-1 > * + * { margin-top: 2px !important; }
+            .invoice-preview .space-y-2 > * + * { margin-top: 4px !important; }
+            .invoice-preview .space-y-3 > * + * { margin-top: 6px !important; }
+            .invoice-preview .space-y-4 > * + * { margin-top: 8px !important; }
+
+            /* Margin and padding optimizations */
+            .invoice-preview .mb-2 { margin-bottom: 6px !important; }
+            .invoice-preview .mb-3 { margin-bottom: 8px !important; }
+            .invoice-preview .mb-4 { margin-bottom: 12px !important; }
+            .invoice-preview .mb-5 { margin-bottom: 16px !important; }
+            .invoice-preview .mb-6 { margin-bottom: 20px !important; }
+            .invoice-preview .mb-7 { margin-bottom: 24px !important; }
+            .invoice-preview .mb-8 { margin-bottom: 28px !important; }
+            .invoice-preview .mt-2 { margin-top: 6px !important; }
+            .invoice-preview .mt-4 { margin-top: 8px !important; }
+            .invoice-preview .mt-6 { margin-top: 12px !important; }
+            .invoice-preview .mt-8 { margin-top: 16px !important; }
+
+            .invoice-preview .p-4 { padding: 8px !important; }
+            .invoice-preview .p-6 { padding: 12px !important; }
+            .invoice-preview .p-8 { padding: 16px !important; }
+
+            /* Table optimizations */
+            .invoice-preview table { margin: 12px 0 !important; }
+            .invoice-preview th, .invoice-preview td {
+              padding: 6px 8px !important;
+              font-size: 11px !important;
+            }
+            .invoice-preview th { background: #f9fafb !important; }
+
+            /* Page break controls */
+            .invoice-preview table { page-break-inside: auto !important; }
+            .invoice-preview thead { display: table-header-group !important; }
+            .invoice-preview tbody { display: table-row-group !important; }
+            .invoice-preview tr { page-break-inside: avoid !important; }
+            .invoice-preview .bg-gray-50 { page-break-inside: avoid !important; }
+
+            /* Keep sections together */
+            .invoice-preview > div:first-child { page-break-after: avoid !important; }
+            .invoice-preview h3 { page-break-after: avoid !important; }
+
+            /* Totals section - keep together and near table */
+            .invoice-preview .text-right.space-y-3,
+            .invoice-preview .text-right.space-y-2 {
+              page-break-before: avoid !important;
+              page-break-inside: avoid !important;
+              margin-top: 8px !important;
+            }
+
+            /* Footer sections */
+            .invoice-preview .grid.grid-cols-2 {
+              display: grid !important;
+              grid-template-columns: 1fr 1fr !important;
+              gap: 16px !important;
+              page-break-inside: avoid !important;
+              margin-top: 20px !important;
+            }
+
+            /* If content is long, allow smart breaks */
+            .invoice-preview .space-y-6:last-child {
+              page-break-before: auto !important;
+            }
+
+            /* Text size adjustments */
+            .invoice-preview .text-sm { font-size: 10px !important; }
+            .invoice-preview .text-xs { font-size: 9px !important; }
+            .invoice-preview .text-lg { font-size: 13px !important; }
+            .invoice-preview .text-xl { font-size: 14px !important; }
+            .invoice-preview .text-2xl { font-size: 16px !important; }
+            .invoice-preview .text-3xl { font-size: 18px !important; }
+            .invoice-preview .text-4xl { font-size: 20px !important; }
           }
         `
       }} />

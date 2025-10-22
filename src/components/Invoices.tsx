@@ -27,6 +27,7 @@ const Invoices = () => {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<InvoiceData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [autoPrint, setAutoPrint] = useState(false);
 
   // Wrapper function to match the expected signature
   const updateInvoiceStatus = async (id: string, status: Invoice['status']) => {
@@ -190,24 +191,90 @@ const Invoices = () => {
 
   const generatePDF = async (invoice: Invoice) => {
     setLoading(invoice.id, 'download', true);
-    
+
     try {
-      // Create a new window with the invoice content
-      const printWindow = window.open('', '_blank');
-      const invoiceHTML = generateInvoiceHTML(invoice);
-      
-      printWindow.document.write(invoiceHTML);
-      printWindow.document.close();
-      
-      // Wait for content to load then print
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 500);
+      // Convert invoice to the format expected by InvoiceGenerator
+      const amount = invoice.amount || invoice.total || 0;
+      const convertedInvoice = {
+        id: invoice.id.toString(),
+        invoiceNumber: invoice.invoice_number,
+        issueDate: invoice.issue_date || new Date().toISOString().split('T')[0],
+        dueDate: invoice.due_date,
+        currency: invoice.currency || 'USD',
+
+        // Creator Info
+        creatorName: 'Sarah Chen',
+        creatorBusinessName: invoice.creator_business_name || 'Sarah Creates Studio',
+        creatorEmail: 'sarah@example.com',
+        creatorPhone: invoice.creator_phone || '+1 (555) 123-4567',
+        creatorAddress: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
+        creatorTaxId: invoice.creator_tax_id || '12-3456789',
+        creatorWebsite: invoice.creator_website || 'sarahcreates.com',
+        creatorInstagram: invoice.creator_social_handle || '@sarahcreates',
+        creatorYoutube: '@SarahCreatesContent',
+
+        // Client Info
+        clientName: invoice.contact_name || '',
+        clientCompany: invoice.client_company || invoice.client_name || '',
+        clientEmail: invoice.contact_email || '',
+        clientAddress: invoice.client_address || '',
+        clientPhone: invoice.client_phone || '',
+        clientContact: invoice.client_contact_person || '',
+        poNumber: invoice.po_number || '',
+
+        // Line Items
+        lineItems: invoice.line_items || [{
+          id: '1',
+          service: '',
+          description: invoice.deliverables || invoice.project || '',
+          quantity: 1,
+          rate: amount,
+          amount: amount
+        }],
+        subtotal: invoice.subtotal || amount,
+        taxRate: invoice.tax_rate || 0,
+        taxName: invoice.tax_name || '',
+        taxAmount: invoice.tax_amount || 0,
+        discountRate: invoice.discount_rate || 0,
+        discountAmount: invoice.discount_amount || 0,
+        total: amount,
+
+        // Payment & Terms
+        paymentTerms: invoice.payment_terms || 'net30',
+        paymentMethods: invoice.payment_methods || ['bank'],
+        paymentInstructions: invoice.payment_instructions || '',
+        notes: invoice.notes || '',
+
+        // Customization
+        customization: invoice.customization_settings || {
+          showBusinessName: true,
+          showPhone: true,
+          showAddress: true,
+          showTaxId: false,
+          showWebsite: true,
+          showInstagram: true,
+          showYoutube: true,
+          showClientAddress: false,
+          showClientPhone: false,
+          showContactPerson: true,
+          showTax: false,
+          showDiscount: false,
+          showSubtotal: true,
+          showPaymentMethods: true,
+          showPaymentInstructions: true,
+          showPaymentTerms: true,
+          showNotes: true,
+        },
+
+        status: invoice.status || 'draft'
       };
-      
-      showSuccessMessage('Invoice PDF generated successfully!');
+
+      // Set the invoice for preview and enable auto-print mode
+      setPreviewInvoice(convertedInvoice);
+      setAutoPrint(true);
+      setShowPreview(true);
+
+      showSuccessMessage('Opening invoice for exporting...');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
@@ -217,100 +284,310 @@ const Invoices = () => {
   };
 
   const generateInvoiceHTML = (invoice: Invoice) => {
-    const currentDate = formatDate(new Date().toISOString().split('T')[0]);
-    
+    // Check if this invoice has been saved with detailed data (from InvoiceGenerator)
+    const hasDetailedData = invoice.line_items && Array.isArray(invoice.line_items) && invoice.line_items.length > 0;
+
+    // Get customization settings or use defaults
+    const customization = invoice.customization_settings || {
+      showBusinessName: true,
+      showPhone: true,
+      showAddress: true,
+      showTaxId: false,
+      showWebsite: true,
+      showInstagram: true,
+      showYoutube: true,
+      showClientAddress: false,
+      showClientPhone: false,
+      showContactPerson: true,
+      showTax: false,
+      showDiscount: false,
+      showSubtotal: true,
+      showPaymentMethods: true,
+      showPaymentInstructions: true,
+      showPaymentTerms: true,
+      showNotes: true,
+    };
+
+    // Use line items if available, otherwise create default item from basic invoice data
+    const lineItems = hasDetailedData ? invoice.line_items : [{
+      id: '1',
+      service: invoice.project || `Project for ${invoice.client_name}`,
+      description: invoice.deliverables || `Professional services provided to ${invoice.client_name}`,
+      quantity: 1,
+      rate: invoice.amount || 0,
+      amount: invoice.amount || 0
+    }];
+
+    // Currency symbol - check invoice currency or default to USD
+    const currencySymbol = (invoice.currency === 'EUR' ? '€' :
+                           invoice.currency === 'GBP' ? '£' :
+                           '$');
+
+    // For backwards compatibility, create reasonable defaults from basic invoice data
+    const creatorInfo = {
+      businessName: invoice.creator_business_name || 'Sarah Creates Studio',
+      name: 'Sarah Chen',
+      email: 'sarah@example.com',
+      phone: invoice.creator_phone || '+1 (555) 123-4567',
+      address: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
+      website: invoice.creator_website || 'sarahcreates.com',
+      instagram: invoice.creator_social_handle || '@sarahcreates'
+    };
+
+    const clientInfo = {
+      company: invoice.client_company || invoice.client_name || 'Client',
+      contactName: invoice.contact_name || '',
+      email: invoice.contact_email || '',
+      address: invoice.client_address || '',
+      phone: invoice.client_phone || ''
+    };
+
+    const paymentInfo = {
+      terms: invoice.payment_terms || 'net30',
+      methods: invoice.payment_methods || ['bank'],
+      instructions: invoice.payment_instructions || '',
+      notes: invoice.notes || ''
+    };
+
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <title>Invoice ${invoice.invoice_number}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-          .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-          .logo { width: 60px; height: 60px; background: linear-gradient(135deg, #8B5CF6, #EC4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; }
-          .invoice-title { font-size: 36px; font-weight: bold; color: #1F2937; }
-          .invoice-details { background: #F9FAFB; padding: 20px; border-radius: 12px; font-weight: normal; }
-          .bill-to { margin: 40px 0; }
-          .section-title { font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #1F2937; }
-          .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-          .items-table th, .items-table td { padding: 12px; text-align: left; border-bottom: 1px solid #E5E7EB; }
-          .items-table th { background: #F9FAFB; font-weight: 600; }
-          .totals { margin-left: auto; width: 300px; }
-          .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-          .total-final { font-size: 20px; font-weight: bold; border-top: 2px solid #8B5CF6; padding-top: 12px; color: #8B5CF6; }
-          .footer { margin-top: 50px; padding-top: 30px; border-top: 1px solid #E5E7EB; }
-          @media print { body { margin: 0; } }
+          /* Base styles */
+          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; color: #1F2937; line-height: 1.4; background: white; }
+          .invoice-container { max-width: 800px; margin: 0 auto; }
+
+          /* Header section - optimized for single page */
+          .invoice-header { display: flex; justify-content: space-between; margin-bottom: 32px; align-items: start; }
+          .creator-info h1 { margin: 0 0 6px 0; font-size: 24px; font-weight: 700; color: #1F2937; }
+          .creator-info p { margin: 0 0 3px 0; color: #6B7280; font-size: 13px; }
+          .invoice-title { font-size: 36px; font-weight: 700; color: #8B5CF6; letter-spacing: -0.025em; }
+          .invoice-details { background: #F8FAFC; padding: 16px; border-radius: 12px; min-width: 260px; }
+          .invoice-details div { margin-bottom: 6px; font-size: 13px; }
+          .invoice-details strong { color: #374151; }
+
+          /* Bill to section - compact */
+          .bill-to { margin: 32px 0; }
+          .section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #1F2937; text-transform: uppercase; letter-spacing: 0.05em; }
+          .client-info { background: #F8FAFC; padding: 16px; border-radius: 12px; }
+          .client-info div { margin-bottom: 3px; font-size: 13px; }
+          .client-company { font-weight: 600; font-size: 16px; color: #1F2937; margin-bottom: 6px; }
+
+          /* Items table - optimized spacing */
+          .items-table { width: 100%; border-collapse: collapse; margin: 24px 0; page-break-inside: auto; }
+          .items-table thead { display: table-header-group; }
+          .items-table tbody { display: table-row-group; }
+          .items-table th { padding: 12px 8px; text-align: left; border-bottom: 2px solid #E5E7EB; background: #F9FAFB; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #6B7280; }
+          .items-table td { padding: 12px 8px; border-bottom: 1px solid #F3F4F6; vertical-align: top; }
+          .items-table tr { page-break-inside: avoid; }
+          .items-table tr:last-child td { border-bottom: none; }
+
+          /* Totals section */
+          .totals { margin-left: auto; width: 280px; margin-top: 20px; page-break-inside: avoid; }
+          .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+          .total-subtotal { border-bottom: 1px solid #E5E7EB; padding-bottom: 12px; margin-bottom: 12px; }
+          .total-final { font-size: 18px; font-weight: 700; border-top: 2px solid #8B5CF6; padding-top: 12px; color: #8B5CF6; }
+
+          /* Footer sections - two column layout to save space */
+          .footer { margin-top: 40px; page-break-inside: avoid; }
+          .footer-section { margin-bottom: 20px; }
+          .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+          .payment-methods { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+          .payment-method { background: #EEF2FF; color: #6366F1; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+
+          /* Notes section - can break to new page if needed */
+          .notes-section { margin-top: 24px; page-break-inside: avoid; }
+          .notes-large { page-break-before: auto; }
+
+          /* Print specific optimizations */
+          @media print {
+            @page {
+              margin: 0.5in;
+              size: letter;
+            }
+
+            body {
+              margin: 0;
+              padding: 0;
+              font-size: 12px;
+              line-height: 1.3;
+            }
+
+            .invoice-container {
+              max-width: none;
+              width: 100%;
+            }
+
+            /* Optimize header for print */
+            .invoice-header { margin-bottom: 24px; }
+            .creator-info h1 { font-size: 20px; }
+            .invoice-title { font-size: 28px; }
+            .invoice-details { padding: 12px; }
+
+            /* Optimize spacing for print */
+            .bill-to { margin: 20px 0; }
+            .client-info { padding: 12px; }
+            .items-table { margin: 16px 0; }
+            .items-table th, .items-table td { padding: 8px 6px; }
+            .totals { margin-top: 16px; width: 260px; }
+            .footer { margin-top: 24px; }
+            .footer-grid { gap: 16px; }
+
+            /* Page break controls */
+            .page-break-before { page-break-before: always; }
+            .page-break-after { page-break-after: always; }
+            .page-break-inside-avoid { page-break-inside: avoid; }
+            .page-break-auto { page-break-inside: auto; }
+
+            /* Keep important sections together */
+            .invoice-header { page-break-after: avoid; }
+            .bill-to { page-break-after: avoid; }
+            .items-table thead { page-break-after: avoid; }
+            .totals { page-break-before: avoid; page-break-inside: avoid; }
+            .footer-grid { page-break-inside: avoid; }
+
+            /* If notes are long, allow them to break to new page */
+            .notes-large {
+              page-break-before: auto;
+              margin-top: 32px;
+            }
+          }
         </style>
       </head>
       <body>
-        <div class="invoice-header">
-          <div>
-            <h1 style="margin: 15px 0 5px 0;">Sarah Chen</h1>
-            <p style="margin: 0; color: #6B7280;">sarah@example.com</p>
-            <p style="margin: 0; color: #6B7280;">+1 (555) 123-4567</p>
-            <p style="margin: 5px 0 0 0; color: #6B7280;">123 Creator St, Los Angeles, CA 90210</p>
-          </div>
-          <div style="text-align: right;">
-            <div class="invoice-title">INVOICE</div>
-            <div class="invoice-details">
-              <div style="margin-bottom: 8px;"><strong>Invoice #:&nbsp;</strong>${invoice.invoice_number}</div>
-              <div style="margin-bottom: 8px;"><strong>Issue Date:&nbsp;</strong>${new Date(invoice.issue_date || invoice.created_at).toLocaleDateString()}</div>
-              <div style="margin-bottom: 8px;"><strong>Due Date:&nbsp;</strong>${new Date(invoice.due_date).toLocaleDateString()}</div>
+        <div class="invoice-container">
+          <div class="invoice-header">
+            <div class="creator-info">
+              <h1>${creatorInfo.businessName}</h1>
+              <p><strong>${creatorInfo.name}</strong></p>
+              <p>${creatorInfo.email}</p>
+              ${customization.showPhone ? `<p>${creatorInfo.phone}</p>` : ''}
+              ${customization.showAddress ? `<p>${creatorInfo.address}</p>` : ''}
+              ${customization.showWebsite ? `<p>${creatorInfo.website}</p>` : ''}
+              ${customization.showInstagram ? `<p>${creatorInfo.instagram}</p>` : ''}
+            </div>
+            <div style="text-align: right;">
+              <div class="invoice-title">INVOICE</div>
+              <div class="invoice-details">
+                <div><strong>Invoice #:</strong> ${invoice.invoice_number}</div>
+                <div><strong>Issue Date:</strong> ${new Date(invoice.issue_date || invoice.created_at).toLocaleDateString()}</div>
+                <div><strong>Due Date:</strong> ${new Date(invoice.due_date).toLocaleDateString()}</div>
+                ${invoice.po_number ? `<div><strong>PO Number:</strong> ${invoice.po_number}</div>` : ''}
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div class="bill-to">
-          <div class="section-title">Bill To:</div>
-          <div style="background: #F9FAFB; padding: 20px; border-radius: 12px;">
-            <div style="font-weight: 600; margin-bottom: 5px;">${invoice.client_name}</div>
-            <div style="color: #6B7280;">${invoice.project}</div>
-          </div>
-        </div>
-        
-        <table class="items-table">
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th style="text-align: center;">Qty</th>
-              <th style="text-align: right;">Rate</th>
-              <th style="text-align: right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>${invoice.project}</td>
-              <td style="text-align: center;">1</td>
-              <td style="text-align: right;">$${invoice.amount.toLocaleString()}</td>
-              <td style="text-align: right; font-weight: 600;">$${invoice.amount.toLocaleString()}</td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <div class="totals">
-          <div class="total-row">
-            <span>Subtotal:</span>
-            <span>$${invoice.amount.toLocaleString()}</span>
-          </div>
-          <div class="total-row total-final">
-            <span>Total:</span>
-            <span>$${invoice.amount.toLocaleString()}</span>
-          </div>
-        </div>
-        
-        <div class="footer">
-          <div style="display: flex; justify-content: space-between;">
-            <div>
-              <div class="section-title">Payment Terms:</div>
-              <p style="color: #6B7280; margin: 0;">Payment is due within 30 days of invoice date.</p>
-            </div>
-            <div>
-              <div class="section-title">Thank You!</div>
-              <p style="color: #6B7280; margin: 0;">Thank you for choosing to work with me.</p>
+
+          <div class="bill-to">
+            <div class="section-title">Bill To</div>
+            <div class="client-info">
+              <div class="client-company">${clientInfo.company}</div>
+              ${clientInfo.contactName && customization.showContactPerson ? `<div><strong>Contact:</strong> ${clientInfo.contactName}</div>` : ''}
+              ${clientInfo.email ? `<div>${clientInfo.email}</div>` : ''}
+              ${clientInfo.address && customization.showClientAddress ? `<div>${clientInfo.address}</div>` : ''}
+              ${clientInfo.phone && customization.showClientPhone ? `<div>${clientInfo.phone}</div>` : ''}
             </div>
           </div>
-          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
-            <p style="margin: 0; font-size: 12px; color: #9CA3AF;">Signature: _________________________</p>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 50%;">Service & Description</th>
+                <th style="text-align: center; width: 10%;">Qty</th>
+                <th style="text-align: right; width: 20%;">Rate</th>
+                <th style="text-align: right; width: 20%;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lineItems.map(item => `
+                <tr>
+                  <td>
+                    <div style="font-weight: 600; margin-bottom: 4px;">${item.service || item.description}</div>
+                    ${item.service && item.description && item.service !== item.description ? `<div style="font-size: 12px; color: #6B7280;">${item.description}</div>` : ''}
+                  </td>
+                  <td style="text-align: center;">${item.quantity}</td>
+                  <td style="text-align: right;">${currencySymbol}${item.rate.toLocaleString()}</td>
+                  <td style="text-align: right; font-weight: 600;">${currencySymbol}${item.amount.toLocaleString()}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            ${customization.showSubtotal ? `
+              <div class="total-row total-subtotal">
+                <span>Subtotal:</span>
+                <span>${currencySymbol}${(invoice.subtotal || invoice.amount).toLocaleString()}</span>
+              </div>
+            ` : ''}
+            ${customization.showDiscount && invoice.discount_amount > 0 ? `
+              <div class="total-row">
+                <span>Discount (${invoice.discount_rate}%):</span>
+                <span>-${currencySymbol}${invoice.discount_amount.toLocaleString()}</span>
+              </div>
+            ` : ''}
+            ${customization.showTax && invoice.tax_amount > 0 ? `
+              <div class="total-row">
+                <span>${invoice.tax_name || 'Tax'} (${invoice.tax_rate}%):</span>
+                <span>${currencySymbol}${invoice.tax_amount.toLocaleString()}</span>
+              </div>
+            ` : ''}
+            <div class="total-row total-final">
+              <span>Total:</span>
+              <span>${currencySymbol}${invoice.amount.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <div class="footer-grid">
+              ${customization.showPaymentTerms ? `
+                <div class="footer-section">
+                  <div class="section-title">Payment Terms</div>
+                  <p style="color: #6B7280; margin: 0; font-size: 13px;">
+                    ${paymentInfo.terms === 'net30' ? 'Payment is due within 30 days of invoice date.' :
+                      paymentInfo.terms === 'net15' ? 'Payment is due within 15 days of invoice date.' :
+                      paymentInfo.terms === 'net7' ? 'Payment is due within 7 days of invoice date.' :
+                      paymentInfo.terms === 'due_on_receipt' ? 'Payment is due upon receipt of this invoice.' :
+                      'Payment terms as agreed upon.'}
+                  </p>
+                  ${customization.showPaymentMethods && paymentInfo.methods && paymentInfo.methods.length > 0 ? `
+                    <div style="margin-top: 8px;">
+                      <div style="font-size: 10px; color: #9CA3AF; margin-bottom: 4px;">ACCEPTED PAYMENT METHODS</div>
+                      <div class="payment-methods">
+                        ${paymentInfo.methods.map(method => `
+                          <span class="payment-method">
+                            ${method === 'bank' ? 'Bank Transfer' :
+                              method === 'paypal' ? 'PayPal' :
+                              method === 'stripe' ? 'Credit Card' :
+                              method === 'check' ? 'Check' :
+                              method.charAt(0).toUpperCase() + method.slice(1)}
+                          </span>
+                        `).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              ` : ''}
+              <div class="footer-section">
+                <div class="section-title">Thank You!</div>
+                <p style="color: #6B7280; margin: 0; font-size: 13px;">Thank you for choosing to work with me. I appreciate your business and look forward to continuing our partnership.</p>
+              </div>
+            </div>
+
+            ${customization.showPaymentInstructions && paymentInfo.instructions ? `
+              <div class="footer-section">
+                <div class="section-title">Payment Instructions</div>
+                <p style="color: #6B7280; margin: 0; font-size: 13px;">${paymentInfo.instructions}</p>
+              </div>
+            ` : ''}
+
+            ${customization.showNotes && paymentInfo.notes ? `
+              <div class="notes-section ${paymentInfo.notes.length > 200 ? 'notes-large' : ''}">
+                <div class="section-title">Notes</div>
+                <p style="color: #6B7280; margin: 0; font-size: 13px;">${paymentInfo.notes}</p>
+              </div>
+            ` : ''}
           </div>
         </div>
       </body>
@@ -779,9 +1056,13 @@ const Invoices = () => {
       {showPreview && previewInvoice && (
         <InvoiceGenerator
           isOpen={showPreview}
-          onClose={() => setShowPreview(false)}
+          onClose={() => {
+            setShowPreview(false);
+            setAutoPrint(false);
+          }}
           editingInvoice={previewInvoice}
           previewMode={true}
+          autoPrint={autoPrint}
         />
       )}
 
