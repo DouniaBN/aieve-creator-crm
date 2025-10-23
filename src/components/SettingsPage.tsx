@@ -334,7 +334,7 @@ const SettingsPage = () => {
         <p className="text-gray-600 mb-6">
           Our support team is here to help you get the most out of AIEVE.
           Whether you have questions about features, need technical assistance,
-          or want to provide feedback, we'd love to hear from you.
+          or want to provide feedback, we'd love to hear from you!
         </p>
       </div>
 
@@ -351,8 +351,8 @@ const SettingsPage = () => {
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
-          <div className="flex items-center gap-3">
-            <code className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-mono text-gray-800 flex-1">
+          <div className="flex items-center gap-3 w-fit">
+            <code className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-mono text-gray-800">
               team@aieve.co.uk
             </code>
             <button
