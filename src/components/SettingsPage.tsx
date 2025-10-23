@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, DollarSign, Palette, Bell, Shield, Save } from 'lucide-react';
+import { User, DollarSign, Palette, Bell, Shield, Save, HelpCircle } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 
 const SettingsPage = () => {
@@ -20,7 +20,8 @@ const SettingsPage = () => {
     { id: 'business', name: 'Business', icon: DollarSign },
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'appearance', name: 'Appearance', icon: Palette },
-    { id: 'security', name: 'Security', icon: Shield }
+    { id: 'security', name: 'Security', icon: Shield },
+    { id: 'support', name: 'Support', icon: HelpCircle }
   ];
 
   const handleSave = () => {
@@ -326,6 +327,60 @@ const SettingsPage = () => {
     </div>
   );
 
+  const renderSupportTab = () => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
+        <p className="text-gray-600 mb-6">
+          Our support team is here to help you get the most out of AIEVE.
+          Whether you have questions about features, need technical assistance,
+          or want to provide feedback, we'd love to hear from you.
+        </p>
+      </div>
+
+      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-[#E83F87] rounded-lg">
+            <HelpCircle className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h4 className="font-medium text-gray-900">Email Support</h4>
+            <p className="text-sm text-gray-600">Get direct help from our team</p>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+          <div className="flex items-center gap-3">
+            <code className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-mono text-gray-800 flex-1">
+              team@aieve.co.uk
+            </code>
+            <button
+              onClick={() => window.open('mailto:team@aieve.co.uk?subject=AIEVE Support Request', '_blank')}
+              className="px-4 py-2 bg-[#E83F87] text-white rounded-lg hover:bg-[#d63577] transition-colors duration-200 font-medium text-sm"
+            >
+              Email Support
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span>We typically respond within 24-48 hours</span>
+        </div>
+      </div>
+
+      <div className="bg-pink-50 border border-pink-200 rounded-xl p-4">
+        <h4 className="font-medium text-pink-900 mb-2">Quick Tips</h4>
+        <ul className="text-sm text-pink-800 space-y-1">
+          <li>• Include your account email when contacting support</li>
+          <li>• Describe the issue with as much detail as possible</li>
+          <li>• Mention which browser and device you're using</li>
+        </ul>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
@@ -338,6 +393,8 @@ const SettingsPage = () => {
         return renderAppearanceTab();
       case 'security':
         return renderSecurityTab();
+      case 'support':
+        return renderSupportTab();
       default:
         return renderProfileTab();
     }
