@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase, Project, Invoice, BrandDeal, ContentPost, Task, Notification } from '../lib/supabase'
+import { supabase, Project, Invoice, BrandDeal, ContentPost, Task, Notification, UserSettings } from '../lib/supabase'
 
 interface SupabaseContextType {
   user: User | null
@@ -16,6 +16,8 @@ interface SupabaseContextType {
   tasks: Task[]
   notifications: Notification[]
   unreadCount: number
+  userSettings: UserSettings | null
+  notificationsEnabled: boolean
   
   // Data operations
   fetchProjects: () => Promise<void>
@@ -24,6 +26,7 @@ interface SupabaseContextType {
   fetchContentPosts: () => Promise<void>
   fetchTasks: () => Promise<void>
   fetchNotifications: () => Promise<void>
+  fetchUserSettings: () => Promise<void>
   
   // CRUD operations
   createProject: (project: Omit<Project, 'id' | 'user_id' | 'created_at'>) => Promise<void>
@@ -54,6 +57,7 @@ interface SupabaseContextType {
   markAllNotificationsAsRead: () => Promise<void>
   clearAllNotifications: () => Promise<void>
   createTestNotification: () => Promise<void>
+  updateNotificationSettings: (enabled: boolean) => Promise<void>
 }
 
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined)
@@ -78,9 +82,11 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [contentPosts, setContentPosts] = useState<ContentPost[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
 
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length
+  const notificationsEnabled = userSettings?.notifications_enabled ?? true
 
   useEffect(() => {
     // Get initial session
@@ -197,6 +203,37 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.error('Error fetching notifications:', error)
     } else {
       setNotifications(data || [])
+    }
+  }, [user])
+
+  const fetchUserSettings = useCallback(async () => {
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No settings found, create default settings
+        const { data: newSettings, error: insertError } = await supabase
+          .from('user_settings')
+          .insert([{ user_id: user.id, notifications_enabled: true }])
+          .select()
+          .single()
+
+        if (insertError) {
+          console.error('Error creating user settings:', insertError)
+        } else {
+          setUserSettings(newSettings)
+        }
+      } else {
+        console.error('Error fetching user settings:', error)
+      }
+    } else {
+      setUserSettings(data)
     }
   }, [user])
 
@@ -677,6 +714,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const createNotification = async (notification: Omit<Notification, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) return
 
+    // Only create notifications if they are enabled
+    if (!notificationsEnabled) return
+
     const { error } = await supabase
       .from('notifications')
       .insert([{ ...notification, user_id: user.id }])
@@ -746,6 +786,23 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     })
   }
 
+  // Update notification settings
+  const updateNotificationSettings = async (enabled: boolean) => {
+    if (!user) return
+
+    const { error } = await supabase
+      .from('user_settings')
+      .update({ notifications_enabled: enabled })
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('Error updating notification settings:', error)
+      throw error
+    } else {
+      await fetchUserSettings()
+    }
+  }
+
   // Fetch data when user changes
   useEffect(() => {
     if (user) {
@@ -755,6 +812,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       fetchContentPosts()
       fetchTasks()
       fetchNotifications()
+      fetchUserSettings()
     } else {
       setProjects([])
       setInvoices([])
@@ -762,8 +820,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       setContentPosts([])
       setTasks([])
       setNotifications([])
+      setUserSettings(null)
     }
-  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks, fetchNotifications])
+  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks, fetchNotifications, fetchUserSettings])
 
   const value = {
     user,
@@ -777,12 +836,15 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     tasks,
     notifications,
     unreadCount,
+    userSettings,
+    notificationsEnabled,
     fetchProjects,
     fetchInvoices,
     fetchBrandDeals,
     fetchContentPosts,
     fetchTasks,
     fetchNotifications,
+    fetchUserSettings,
     createProject,
     updateProject,
     deleteProject,
@@ -805,6 +867,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     markAllNotificationsAsRead,
     clearAllNotifications,
     createTestNotification,
+    updateNotificationSettings,
   }
 
   return (

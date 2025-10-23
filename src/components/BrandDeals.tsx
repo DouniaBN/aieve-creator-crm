@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff, MessageSquare, Send, DollarSign, Edit3, CheckCircle, Sparkles, XCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { useAppContext } from '../contexts/AppContext';
 import StatusDropdown from './StatusDropdown';
 import { format } from 'date-fns';
 import { Calendar } from './ui/calendar';
@@ -10,6 +11,7 @@ import { cn } from '../lib/utils';
 
 const BrandDeals = () => {
   const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal, createInvoiceFromBrandDeal } = useSupabase();
+  const { showSuccessMessage } = useAppContext();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingDeal, setEditingDeal] = useState<any>(null);
@@ -157,6 +159,7 @@ const BrandDeals = () => {
     e.preventDefault();
     try {
       await createBrandDeal(newDeal);
+      showSuccessMessage(`Brand deal with ${newDeal.brand_name} created successfully!`);
       setShowModal(false);
       setNewDeal({
         brand_name: '',
@@ -171,21 +174,36 @@ const BrandDeals = () => {
       setFeeInput('');
     } catch (error) {
       console.error('Error creating brand deal:', error);
+      showSuccessMessage('Failed to create brand deal');
     }
   };
 
   const handleUpdateStatus = async (dealId: string, newStatus: string) => {
     try {
+      const deal = brandDeals.find(d => d.id === dealId);
       await updateBrandDeal(dealId, { status: newStatus as 'negotiation' | 'proposal_sent' | 'posted' | 'awaiting_payment' | 'revisions_needed' | 'approved' | 'completed' | 'cancelled' });
+
+      // Show success message for status update
+      const brandName = deal?.brand_name || 'Brand deal';
+      const statusMessages = {
+        negotiation: 'moved to negotiation',
+        proposal_sent: 'proposal sent',
+        posted: 'marked as posted',
+        awaiting_payment: 'awaiting payment',
+        revisions_needed: 'revisions needed',
+        approved: 'approved',
+        completed: 'completed',
+        cancelled: 'cancelled'
+      };
+      const message = statusMessages[newStatus as keyof typeof statusMessages] || 'status updated';
+      showSuccessMessage(`${brandName} ${message}!`);
 
       // Auto-create invoice when deal is completed or posted and has a fee
       if ((newStatus === 'completed' || newStatus === 'posted') && dealId) {
-        const deal = brandDeals.find(d => d.id === dealId);
-
         if (deal && deal.fee && deal.fee > 0) {
           try {
             await createInvoiceFromBrandDeal(deal);
-            // Success notification will be shown by the invoice creation
+            showSuccessMessage(`Invoice automatically created for ${brandName}!`);
           } catch (error) {
             console.error('Error auto-creating invoice:', error);
           }
@@ -193,6 +211,7 @@ const BrandDeals = () => {
       }
     } catch (error) {
       console.error('Error updating brand deal status:', error);
+      showSuccessMessage('Failed to update brand deal status');
     }
   };
 
@@ -306,11 +325,13 @@ const BrandDeals = () => {
         end_date: editingDeal.end_date
       });
 
+      showSuccessMessage(`${editingDeal.brand_name} deal updated successfully!`);
+
       // Auto-create invoice when deal is completed or posted and has a fee
       if ((editingDeal.status === 'completed' || editingDeal.status === 'posted') && editingDeal.fee && editingDeal.fee > 0) {
         try {
           await createInvoiceFromBrandDeal(editingDeal);
-          console.log(`Invoice automatically created for brand deal: ${editingDeal.brand_name}`);
+          showSuccessMessage(`Invoice automatically created for ${editingDeal.brand_name}!`);
         } catch (error) {
           console.error('Error auto-creating invoice:', error);
         }
@@ -321,6 +342,7 @@ const BrandDeals = () => {
       setEditFeeInput('');
     } catch (error) {
       console.error('Error updating brand deal:', error);
+      showSuccessMessage('Failed to update brand deal');
     }
   };
 

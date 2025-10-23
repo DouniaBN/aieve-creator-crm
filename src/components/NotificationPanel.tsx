@@ -12,8 +12,13 @@ const NotificationPanel = () => {
     unreadCount,
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    clearAllNotifications
+    clearAllNotifications,
+    notificationsEnabled
   } = useSupabase();
+
+  // If notifications are disabled, don't show any notifications or unread count
+  const displayNotifications = notificationsEnabled ? notifications : [];
+  const displayUnreadCount = notificationsEnabled ? unreadCount : 0;
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -117,10 +122,10 @@ const NotificationPanel = () => {
         className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200 relative"
       >
         <Bell className="w-5 h-5" />
-        {unreadCount > 0 && (
+        {displayUnreadCount > 0 && (
           <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#E83F87] rounded-full flex items-center justify-center">
             <span className="text-xs text-white font-medium">
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {displayUnreadCount > 9 ? '9+' : displayUnreadCount}
             </span>
           </div>
         )}
@@ -135,7 +140,7 @@ const NotificationPanel = () => {
               <div>
                 <h3 className="font-semibold text-gray-900">Notifications</h3>
                 <p className="text-sm text-gray-600">
-                  {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+                  {displayUnreadCount > 0 ? `${displayUnreadCount} unread` : notificationsEnabled ? 'All caught up!' : 'Notifications disabled'}
                 </p>
               </div>
               <button
@@ -148,10 +153,10 @@ const NotificationPanel = () => {
           </div>
 
           {/* Actions */}
-          {notifications.length > 0 && (
+          {displayNotifications.length > 0 && notificationsEnabled && (
             <div className="p-3 border-b border-gray-200/50 bg-gray-50/50">
               <div className="flex space-x-2">
-                {unreadCount > 0 && (
+                {displayUnreadCount > 0 && (
                   <button
                     onClick={markAllNotificationsAsRead}
                     className="flex items-center px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200"
@@ -173,15 +178,19 @@ const NotificationPanel = () => {
 
           {/* Notifications List */}
           <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {displayNotifications.length === 0 ? (
               <div className="p-8 text-center">
                 <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <h4 className="font-medium text-gray-900 mb-1">No notifications</h4>
-                <p className="text-sm text-gray-500">You're all caught up!</p>
+                <h4 className="font-medium text-gray-900 mb-1">
+                  {notificationsEnabled ? 'No notifications' : 'Notifications disabled'}
+                </h4>
+                <p className="text-sm text-gray-500">
+                  {notificationsEnabled ? "You're all caught up!" : 'Enable notifications in settings to see updates'}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200/50">
-                {notifications.map((notification) => (
+                {displayNotifications.map((notification) => (
                   <div
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
@@ -220,7 +229,7 @@ const NotificationPanel = () => {
           </div>
 
           {/* Footer */}
-          {notifications.length > 0 && (
+          {displayNotifications.length > 0 && notificationsEnabled && (
             <div className="p-3 border-t border-gray-200/50 bg-gray-50/50 text-center">
               <button className="text-xs text-[#1c2d5a] hover:text-purple-700 font-medium transition-colors duration-200">
                 View all activity

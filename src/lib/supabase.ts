@@ -117,3 +117,11 @@ export interface Notification {
   created_at: string
   updated_at: string
 }
+
+export interface UserSettings {
+  id: string
+  user_id: string
+  notifications_enabled: boolean
+  created_at: string
+  updated_at: string
+}

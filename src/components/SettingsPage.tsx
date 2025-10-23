@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { User, DollarSign, Palette, Bell, Shield, Save } from 'lucide-react';
+import { useSupabase } from '../contexts/SupabaseContext';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const { userSettings, notificationsEnabled, updateNotificationSettings } = useSupabase();
   const [profile, setProfile] = useState({
     name: 'Sarah Chen',
     email: 'sarah@example.com',
@@ -106,13 +108,21 @@ const SettingsPage = () => {
     </div>
   );
 
+  const handleNotificationToggle = async (enabled: boolean) => {
+    try {
+      await updateNotificationSettings(enabled);
+    } catch (error) {
+      console.error('Failed to update notification settings:', error);
+    }
+  };
+
   const renderNotificationsTab = () => (
     <div className="space-y-6">
       {/* In-App Notifications */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900">In-App Notifications</h3>
         {[
-          { id: 'dashboard-notifications', label: 'Dashboard Notifications', description: 'Show notifications in the bell icon on dashboard' }
+          { id: 'dashboard-notifications', label: 'Dashboard Notifications', description: 'Show notifications in the bell icon throughout the app' }
         ].map((notification) => (
           <div key={notification.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl">
             <div>
@@ -120,7 +130,12 @@ const SettingsPage = () => {
               <p className="text-sm text-gray-600">{notification.description}</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={notificationsEnabled}
+                onChange={(e) => handleNotificationToggle(e.target.checked)}
+              />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E83F87]"></div>
             </label>
           </div>
