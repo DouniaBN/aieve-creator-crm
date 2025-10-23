@@ -104,52 +104,36 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     setIsOpen(!isOpen);
   };
 
-  // Helper function to get status-specific hover classes
-  const getHoverColorClasses = (statusKey: string) => {
-    switch (statusKey) {
-      case 'draft':
-        return 'hover:bg-gray-100 hover:text-gray-800 hover:border-l-gray-400';
-      case 'sent':
-        return 'hover:bg-pink-50 hover:text-pink-800 hover:border-l-pink-400';
-      case 'paid':
-        return 'hover:bg-green-50 hover:text-green-800 hover:border-l-green-400';
-      case 'overdue':
-        return 'hover:bg-red-50 hover:text-red-800 hover:border-l-red-400';
-      default:
-        return 'hover:bg-gray-50 hover:text-gray-700 hover:border-l-gray-300';
+  // Helper function to extract color classes from config
+  const getColorFromConfig = (config: StatusOption, type: 'background' | 'text') => {
+    if (!config?.color) return type === 'background' ? 'bg-gray-200' : 'text-gray-600';
+
+    const colorClasses = config.color.split(' ');
+    if (type === 'background') {
+      const bgClass = colorClasses.find(cls => cls.startsWith('bg-'));
+      return bgClass || 'bg-gray-200';
+    } else {
+      const textClass = colorClasses.find(cls => cls.startsWith('text-'));
+      return textClass || 'text-gray-600';
     }
   };
 
-  // Helper function to get icon background color
-  const getIconBackgroundColor = (statusKey: string) => {
-    switch (statusKey) {
-      case 'draft':
-        return 'bg-gray-200';
-      case 'sent':
-        return 'bg-pink-200';
-      case 'paid':
-        return 'bg-green-200';
-      case 'overdue':
-        return 'bg-red-200';
-      default:
-        return 'bg-gray-200';
-    }
-  };
-
-  // Helper function to get icon color
-  const getIconColor = (statusKey: string) => {
-    switch (statusKey) {
-      case 'draft':
-        return 'text-gray-600';
-      case 'sent':
-        return 'text-pink-600';
-      case 'paid':
-        return 'text-green-600';
-      case 'overdue':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
+  // Helper function to get lighter version of background color for icon
+  const getLighterBgColor = (bgColor: string) => {
+    const colorMap: Record<string, string> = {
+      'bg-[#C4B5FD]': 'bg-[#E5E7EB]', // purple -> light gray for icon bg
+      'bg-[#FBCFE8]': 'bg-[#FCE7F3]', // pink -> lighter pink
+      'bg-[#FDE68A]': 'bg-[#FEF3C7]', // yellow -> lighter yellow
+      'bg-[#FDBA74]': 'bg-[#FED7AA]', // orange -> lighter orange
+      'bg-[#DBEAFE]': 'bg-[#EFF6FF]', // blue -> lighter blue
+      'bg-[#6EE7B7]': 'bg-[#D1FAE5]', // green -> lighter green
+      'bg-[#FCA5A5]': 'bg-[#FEE2E2]', // red -> lighter red
+      'bg-gray-100': 'bg-gray-200',
+      'bg-pink-100': 'bg-pink-200',
+      'bg-green-100': 'bg-green-200',
+      'bg-red-100': 'bg-red-200'
+    };
+    return colorMap[bgColor] || 'bg-gray-200';
   };
 
   return (
@@ -217,12 +201,12 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                       ? config.color
                       : 'text-gray-700 hover:bg-gray-50'
                     }
-                    ${getHoverColorClasses(key)}
+                    ${config.hoverColor || 'hover:bg-gray-50'}
                   `}
                 >
-                  <div className={`p-2 rounded-lg ${getIconBackgroundColor(key)}`}>
+                  <div className={`p-2 rounded-lg ${getLighterBgColor(getColorFromConfig(config, 'background'))}`}>
                     {Icon && (
-                      <Icon className={`w-4 h-4 ${getIconColor(key)} ${isSelected ? 'opacity-100' : 'opacity-80'}`} />
+                      <Icon className={`w-4 h-4 ${getColorFromConfig(config, 'text')} ${isSelected ? 'opacity-100' : 'opacity-80'}`} />
                     )}
                   </div>
                   <span className="flex-1 font-semibold">{config.label}</span>
