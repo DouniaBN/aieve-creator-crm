@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase, Project, Invoice, BrandDeal, ContentPost, Task, Notification, UserSettings } from '../lib/supabase'
+import { supabase, Project, Invoice, BrandDeal, ContentPost, Task, Notification, UserSettings, UserProfile } from '../lib/supabase'
 
 interface SupabaseContextType {
   user: User | null
@@ -17,6 +17,7 @@ interface SupabaseContextType {
   notifications: Notification[]
   unreadCount: number
   userSettings: UserSettings | null
+  userProfile: UserProfile | null
   notificationsEnabled: boolean
   
   // Data operations
@@ -27,6 +28,7 @@ interface SupabaseContextType {
   fetchTasks: () => Promise<void>
   fetchNotifications: () => Promise<void>
   fetchUserSettings: () => Promise<void>
+  fetchUserProfile: () => Promise<void>
   
   // CRUD operations
   createProject: (project: Omit<Project, 'id' | 'user_id' | 'created_at'>) => Promise<void>
@@ -58,6 +60,10 @@ interface SupabaseContextType {
   clearAllNotifications: () => Promise<void>
   createTestNotification: () => Promise<void>
   updateNotificationSettings: (enabled: boolean) => Promise<void>
+
+  // Profile operations
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
 }
 
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined)
@@ -83,6 +89,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [tasks, setTasks] = useState<Task[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   // Calculate unread count
   const unreadCount = notifications.filter(n => !n.read).length
@@ -234,6 +241,41 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     } else {
       setUserSettings(data)
+    }
+  }, [user])
+
+  const fetchUserProfile = useCallback(async () => {
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No profile found, create default profile
+        const { data: newProfile, error: insertError } = await supabase
+          .from('user_profiles')
+          .insert([{
+            user_id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+            currency: 'USD'
+          }])
+          .select()
+          .single()
+
+        if (insertError) {
+          console.error('Error creating user profile:', insertError)
+        } else {
+          setUserProfile(newProfile)
+        }
+      } else {
+        console.error('Error fetching user profile:', error)
+      }
+    } else {
+      setUserProfile(data)
     }
   }, [user])
 
@@ -803,6 +845,56 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }
 
+  // Update user profile
+  const updateUserProfile = async (updates: Partial<UserProfile>) => {
+    if (!user) return
+
+    // First try to update
+    const { error: updateError } = await supabase
+      .from('user_profiles')
+      .update(updates)
+      .eq('user_id', user.id)
+
+    if (updateError) {
+      // If update fails, try to upsert (insert or update)
+      const { error: upsertError } = await supabase
+        .from('user_profiles')
+        .upsert([{ user_id: user.id, ...updates }])
+
+      if (upsertError) {
+        console.error('Error upserting user profile:', upsertError)
+        throw upsertError
+      }
+    }
+
+    await fetchUserProfile()
+  }
+
+  // Change password
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user) return
+
+    // First verify current password by attempting to sign in
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: user.email!,
+      password: currentPassword
+    })
+
+    if (verifyError) {
+      throw new Error('Current password is incorrect')
+    }
+
+    // Update password
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    })
+
+    if (error) {
+      console.error('Error updating password:', error)
+      throw error
+    }
+  }
+
   // Fetch data when user changes
   useEffect(() => {
     if (user) {
@@ -813,6 +905,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       fetchTasks()
       fetchNotifications()
       fetchUserSettings()
+      fetchUserProfile()
     } else {
       setProjects([])
       setInvoices([])
@@ -821,8 +914,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       setTasks([])
       setNotifications([])
       setUserSettings(null)
+      setUserProfile(null)
     }
-  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks, fetchNotifications, fetchUserSettings])
+  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks, fetchNotifications, fetchUserSettings, fetchUserProfile])
 
   const value = {
     user,
@@ -837,6 +931,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     notifications,
     unreadCount,
     userSettings,
+    userProfile,
     notificationsEnabled,
     fetchProjects,
     fetchInvoices,
@@ -845,6 +940,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     fetchTasks,
     fetchNotifications,
     fetchUserSettings,
+    fetchUserProfile,
     createProject,
     updateProject,
     deleteProject,
@@ -868,6 +964,8 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     clearAllNotifications,
     createTestNotification,
     updateNotificationSettings,
+    updateUserProfile,
+    changePassword,
   }
 
   return (

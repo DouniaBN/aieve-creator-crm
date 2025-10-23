@@ -8,7 +8,7 @@ import Dashboard from './components/Dashboard';
 import Projects from './components/Projects';
 import BrandDeals from './components/BrandDeals';
 import Invoices from './components/Invoices';
-import SettingsPage from './components/SettingsPage';
+import SuperSimpleTest from './components/SuperSimpleTest';
 import SuccessMessage from './components/SuccessMessage';
 import logoImage from './assets/no-bg-logo.png';
 
@@ -50,6 +50,7 @@ function AppContent() {
   ];
 
   const renderContent = () => {
+    console.log('🔍 DEBUG: renderContent called with activeTab:', activeTab);
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard 
@@ -63,7 +64,8 @@ function AppContent() {
       case 'invoices':
         return <Invoices />;
       case 'settings':
-        return <SettingsPage />;
+        console.log('🎯 DEBUG: Settings case triggered!');
+        return <SuperSimpleTest />;
       default:
         return <Dashboard 
           onNavigateToCalendar={() => setActiveTab('projects')} 
@@ -130,6 +132,7 @@ function AppContent() {
               <div className="relative group">
                 <button
                   onClick={() => {
+                    console.log('🔧 DEBUG: Settings button clicked!');
                     setActiveTab('settings');
                     setSidebarOpen(false);
                   }}
