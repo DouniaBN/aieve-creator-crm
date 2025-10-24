@@ -260,10 +260,8 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('user_profiles')
           .insert([{
             user_id: user.id,
-            email: user.email || '',
             full_name: user.user_metadata?.full_name || (user.email && user.email.includes('@') ? user.email.split('@')[0] : '') || '',
-            currency: 'USD',
-            onboarding_complete: false
+            currency: 'USD'
           }])
           .select()
           .single()
@@ -851,17 +849,31 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return
 
-    // First try to update
+    console.log('Updating user profile with:', updates);
+
+    // Filter out any undefined values and fields that don't exist in database
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([key, value]) =>
+        value !== undefined &&
+        !['onboarding_complete', 'preferred_name', 'creator_type'].includes(key) // Skip new fields if they don't exist
+      )
+    );
+
+    console.log('Clean updates (existing fields only):', cleanUpdates);
+
+    // First try to update with only existing fields
     const { error: updateError } = await supabase
       .from('user_profiles')
-      .update(updates)
+      .update(cleanUpdates)
       .eq('user_id', user.id)
 
     if (updateError) {
+      console.error('Update error:', updateError);
+
       // If update fails, try to upsert (insert or update)
       const { error: upsertError } = await supabase
         .from('user_profiles')
-        .upsert([{ user_id: user.id, ...updates }])
+        .upsert([{ user_id: user.id, ...cleanUpdates }])
 
       if (upsertError) {
         console.error('Error upserting user profile:', upsertError)
@@ -869,6 +881,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     }
 
+    console.log('Profile update successful');
     await fetchUserProfile()
   }
 

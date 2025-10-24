@@ -4,7 +4,7 @@ import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
 import logoImage from '../assets/no-bg-logo.png'
 
 interface AuthProps {
-  onAuthSuccess: () => void
+  onAuthSuccess: (isNewUser: boolean) => void
 }
 
 const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
@@ -13,6 +13,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -23,13 +24,13 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
     try {
       if (isLogin) {
-        // Sign in
+        // Sign in - returning user
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        onAuthSuccess()
+        onAuthSuccess(false) // false = not a new user
       } else {
         // Sign up
         if (password !== confirmPassword) {
@@ -43,7 +44,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
         // If user is immediately confirmed (e.g., in development)
         if (data.user && data.session) {
-          onAuthSuccess()
+          onAuthSuccess(true) // true = new user
         } else {
           setError('Check your email for the confirmation link!')
         }
@@ -127,14 +128,21 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
                   placeholder="Confirm your password"
                   required
                   minLength={8}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
           )}

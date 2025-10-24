@@ -40,11 +40,16 @@ function AppContent() {
 
   // Show auth screen if not logged in
   if (!user) {
-    return <Auth onAuthSuccess={() => setShowOnboarding(true)} />;
+    return <Auth onAuthSuccess={(isNewUser: boolean) => {
+      if (isNewUser) {
+        setShowOnboarding(true);
+      }
+    }} />;
   }
 
-  // Show onboarding if user hasn't completed it or if we're explicitly showing it
-  if (showOnboarding || (userProfile && !userProfile.onboarding_complete)) {
+  // Show onboarding if we're explicitly showing it
+  // For now, we'll rely on the showOnboarding state until database migration
+  if (showOnboarding) {
     return (
       <Onboarding
         onComplete={() => {

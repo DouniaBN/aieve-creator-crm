@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, User, Users, Video, Instagram, Play, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Users, CheckCircle } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import logoImage from '../assets/no-bg-logo.png';
 
@@ -16,11 +16,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   // Form data
   const [formData, setFormData] = useState({
     preferred_name: '',
-    creator_type: '' as 'ugc_creator' | 'content_creator' | 'both' | '',
-    main_platform: '' as 'instagram' | 'tiktok' | 'youtube' | 'other' | ''
+    creator_type: '' as 'ugc_creator' | 'content_creator' | 'both' | ''
   });
 
-  const totalSteps = 3;
+  const totalSteps = 2;
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -39,18 +38,24 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setError('');
 
     try {
-      // Update user profile with onboarding data
-      await updateUserProfile({
+      console.log('Starting onboarding completion...', {
         preferred_name: formData.preferred_name,
         creator_type: formData.creator_type,
-        main_platform: formData.main_platform,
-        onboarding_complete: true,
-        email: user?.email || ''
+        user_email: user?.email
       });
+
+      // For now, just update the full_name field that exists in the database
+      // This will be replaced when you run the database migration
+      await updateUserProfile({
+        full_name: formData.preferred_name
+      });
+
+      console.log('Profile updated successfully');
 
       // Complete onboarding
       onComplete();
     } catch (error: unknown) {
+      console.error('Onboarding error:', error);
       setError(error instanceof Error ? error.message : 'Failed to complete onboarding');
     } finally {
       setLoading(false);
@@ -63,8 +68,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         return formData.preferred_name.trim().length > 0;
       case 2:
         return formData.creator_type !== '';
-      case 3:
-        return true; // Platform is optional
       default:
         return false;
     }
@@ -73,11 +76,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="w-16 h-16 bg-[#E83F87]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <User className="w-8 h-8 text-[#E83F87]" />
+        <div className="w-16 h-16 bg-[#1c2d5a]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <User className="w-8 h-8 text-[#1c2d5a]" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">What's your preferred name?</h2>
-        <p className="text-gray-600">This is how we'll address you throughout AIEVE</p>
+        <p className="text-gray-600">This is how AIEVE will address you</p>
       </div>
 
       <div className="space-y-4">
@@ -98,8 +101,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="w-16 h-16 bg-[#E83F87]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users className="w-8 h-8 text-[#E83F87]" />
+        <div className="w-16 h-16 bg-[#1c2d5a]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Users className="w-8 h-8 text-[#1c2d5a]" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Which best describes you?</h2>
         <p className="text-gray-600">Help us customize your experience</p>
@@ -135,50 +138,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     </div>
   );
 
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-[#E83F87]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Video className="w-8 h-8 text-[#E83F87]" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">What's your main platform?</h2>
-        <p className="text-gray-600">Optional - you can always change this later</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { value: 'instagram', label: 'Instagram', icon: Instagram },
-          { value: 'tiktok', label: 'TikTok', icon: Video },
-          { value: 'youtube', label: 'YouTube', icon: Play },
-          { value: 'other', label: 'Other', icon: Users }
-        ].map((platform) => {
-          const IconComponent = platform.icon;
-          return (
-            <button
-              key={platform.value}
-              onClick={() => setFormData({ ...formData, main_platform: platform.value as 'instagram' | 'tiktok' | 'youtube' | 'other' })}
-              className={`p-4 border-2 rounded-xl transition-all duration-200 hover:border-[#E83F87]/50 ${
-                formData.main_platform === platform.value
-                  ? 'border-[#E83F87] bg-[#E83F87]/5'
-                  : 'border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex flex-col items-center space-y-2">
-                <IconComponent className="w-6 h-6 text-gray-600" />
-                <span className="font-medium text-gray-900">{platform.label}</span>
-                {formData.main_platform === platform.value && (
-                  <CheckCircle className="w-4 h-4 text-[#E83F87]" />
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-pink-50 to-pink-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-neutral-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -212,7 +174,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <div className="transition-all duration-300">
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
           </div>
         </div>
 
