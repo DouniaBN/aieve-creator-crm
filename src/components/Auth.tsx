@@ -100,7 +100,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
                 placeholder="Enter your password"
                 required
-                minLength={6}
+                minLength={8}
               />
               <button
                 type="button"
@@ -127,7 +127,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
                   placeholder="Confirm your password"
                   required
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
             </div>

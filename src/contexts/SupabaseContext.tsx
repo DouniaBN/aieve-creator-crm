@@ -260,7 +260,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('user_profiles')
           .insert([{
             user_id: user.id,
-            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+            full_name: user.user_metadata?.full_name || (user.email && user.email.includes('@') ? user.email.split('@')[0] : '') || '',
             currency: 'USD'
           }])
           .select()
@@ -339,7 +339,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       await fetchInvoices()
 
       // Create notification for invoice creation
-      if (data && data[0]) {
+      if (data && data.length > 0 && data[0]?.id) {
         await createNotification({
           type: 'invoice_created',
           title: 'Invoice Created',
@@ -528,7 +528,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       await fetchBrandDeals()
 
       // Create notification for brand deal creation
-      if (data && data[0]) {
+      if (data && data.length > 0 && data[0]?.id) {
         await createNotification({
           type: 'brand_deal_updated',
           title: 'Brand Deal Created',
@@ -622,7 +622,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       await fetchContentPosts()
 
       // Create notification for content post creation
-      if (data && data[0]) {
+      if (data && data.length > 0 && data[0]?.id) {
         const notificationType = post.status === 'scheduled' ? 'content_scheduled' : 'content_updated'
         const message = post.status === 'scheduled'
           ? `"${post.title}" has been scheduled for ${post.platform}.`
@@ -874,39 +874,43 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const changePassword = async (currentPassword: string, newPassword: string) => {
     if (!user) return
 
-    // First verify current password by attempting to sign in
-    const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email: user.email!,
-      password: currentPassword
-    })
-
-    if (verifyError) {
-      throw new Error('Current password is incorrect')
-    }
-
-    // Update password
+    // Supabase Auth automatically verifies the current session before allowing password updates
+    // No need to re-authenticate as the user is already signed in
     const { error } = await supabase.auth.updateUser({
       password: newPassword
     })
 
     if (error) {
+      // Handle specific error cases
+      if (error.message.includes('same as the old password')) {
+        throw new Error('New password must be different from your current password')
+      }
+      if (error.message.includes('password')) {
+        throw new Error('Password update failed. Please ensure you meet the requirements.')
+      }
       console.error('Error updating password:', error)
-      throw error
+      throw new Error(error.message || 'Failed to update password')
     }
   }
 
   // Fetch data when user changes
   useEffect(() => {
     if (user) {
-      fetchProjects()
-      fetchInvoices()
-      fetchBrandDeals()
-      fetchContentPosts()
-      fetchTasks()
-      fetchNotifications()
-      fetchUserSettings()
-      fetchUserProfile()
+      // Fetch all data in parallel when user is available
+      Promise.all([
+        fetchProjects(),
+        fetchInvoices(),
+        fetchBrandDeals(),
+        fetchContentPosts(),
+        fetchTasks(),
+        fetchNotifications(),
+        fetchUserSettings(),
+        fetchUserProfile()
+      ]).catch(error => {
+        console.error('Error fetching user data:', error)
+      })
     } else {
+      // Clear all data when user is null
       setProjects([])
       setInvoices([])
       setBrandDeals([])
@@ -916,7 +920,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       setUserSettings(null)
       setUserProfile(null)
     }
-  }, [user, fetchProjects, fetchInvoices, fetchBrandDeals, fetchContentPosts, fetchTasks, fetchNotifications, fetchUserSettings, fetchUserProfile])
+  }, [user]) // Only depend on user, not the fetch functions
 
   const value = {
     user,

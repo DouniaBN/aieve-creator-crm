@@ -51,8 +51,8 @@ const SettingsPage = () => {
     setPasswordSuccess('');
 
     // Basic validation
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      setPasswordError('All fields are required');
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordError('Both password fields are required');
       return;
     }
 
@@ -61,20 +61,15 @@ const SettingsPage = () => {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters long');
-      return;
-    }
-
-    if (passwordForm.currentPassword === passwordForm.newPassword) {
-      setPasswordError('New password must be different from current password');
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long');
       return;
     }
 
     setPasswordLoading(true);
 
     try {
-      await changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+      await changePassword('', passwordForm.newPassword);
       setPasswordSuccess('Password updated successfully!');
       setPasswordForm({
         currentPassword: '',

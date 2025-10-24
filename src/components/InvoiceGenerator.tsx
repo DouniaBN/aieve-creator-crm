@@ -555,8 +555,8 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
   const InvoicePreview = () => (
     <div className="bg-white rounded-xl shadow-lg invoice-preview">
       {/* Print Styles */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
+      <style>
+        {`
           @media print {
             @page {
               margin: 0.5in;
@@ -657,8 +657,8 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
             .invoice-preview .text-3xl { font-size: 18px !important; }
             .invoice-preview .text-4xl { font-size: 20px !important; }
           }
-        `
-      }} />
+        `}
+      </style>
 
       {/* Invoice Content */}
       <div className="invoice-preview max-w-4xl mx-auto p-8 print:p-0">
