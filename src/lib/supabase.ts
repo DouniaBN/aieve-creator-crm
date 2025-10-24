@@ -129,12 +129,20 @@ export interface UserSettings {
 export interface UserProfile {
   id: string
   user_id: string
+  email: string
   full_name?: string
   phone?: string
   website?: string
   bio?: string
   business_address?: string
   currency: string
+
+  // Onboarding fields
+  onboarding_complete: boolean
+  preferred_name?: string
+  creator_type?: 'ugc_creator' | 'content_creator' | 'both'
+  main_platform?: 'instagram' | 'tiktok' | 'youtube' | 'other'
+
   created_at: string
   updated_at: string
 }

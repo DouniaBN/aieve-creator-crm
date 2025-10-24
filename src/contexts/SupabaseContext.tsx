@@ -260,8 +260,10 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
           .from('user_profiles')
           .insert([{
             user_id: user.id,
+            email: user.email || '',
             full_name: user.user_metadata?.full_name || (user.email && user.email.includes('@') ? user.email.split('@')[0] : '') || '',
-            currency: 'USD'
+            currency: 'USD',
+            onboarding_complete: false
           }])
           .select()
           .single()

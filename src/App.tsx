@@ -4,6 +4,7 @@ import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import NotificationPanel from './components/NotificationPanel';
 import Auth from './components/Auth';
+import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
 import Projects from './components/Projects';
 import BrandDeals from './components/BrandDeals';
@@ -13,9 +14,10 @@ import SuccessMessage from './components/SuccessMessage';
 import logoImage from './assets/no-bg-logo.png';
 
 function AppContent() {
-  const { user, loading, signOut } = useSupabase();
+  const { user, loading, signOut, userProfile } = useSupabase();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { successMessage, showSuccessMessage } = useAppContext();
 
   // Show loading spinner while checking auth
@@ -38,7 +40,19 @@ function AppContent() {
 
   // Show auth screen if not logged in
   if (!user) {
-    return <Auth onAuthSuccess={() => {}} />;
+    return <Auth onAuthSuccess={() => setShowOnboarding(true)} />;
+  }
+
+  // Show onboarding if user hasn't completed it or if we're explicitly showing it
+  if (showOnboarding || (userProfile && !userProfile.onboarding_complete)) {
+    return (
+      <Onboarding
+        onComplete={() => {
+          setShowOnboarding(false);
+          showSuccessMessage(`Welcome aboard, ${userProfile?.preferred_name || 'there'}! 🎉`);
+        }}
+      />
+    );
   }
 
   const navigation = [

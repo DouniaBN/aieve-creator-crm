@@ -35,12 +35,18 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match')
         }
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         })
         if (error) throw error
-        setError('Check your email for the confirmation link!')
+
+        // If user is immediately confirmed (e.g., in development)
+        if (data.user && data.session) {
+          onAuthSuccess()
+        } else {
+          setError('Check your email for the confirmation link!')
+        }
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -79,7 +85,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
                 placeholder="Enter your email"
                 required
               />
@@ -97,7 +103,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
                 placeholder="Enter your password"
                 required
                 minLength={8}
@@ -124,7 +130,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-colors duration-200"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
                   placeholder="Confirm your password"
                   required
                   minLength={8}
@@ -144,7 +150,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center px-4 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#d63577] transition-all duration-200 shadow-lg shadow-[#E83F87]/25 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader className="w-5 h-5 animate-spin" />
@@ -166,7 +172,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 setPassword('')
                 setConfirmPassword('')
               }}
-              className="text-[#1c2d5a] hover:text-purple-700 font-medium transition-colors duration-200"
+              className="text-[#1c2d5a] hover:text-[#E83F87] font-medium transition-colors duration-200"
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>
