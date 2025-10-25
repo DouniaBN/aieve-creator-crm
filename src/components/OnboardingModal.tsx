@@ -36,7 +36,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
             <div className="text-xl font-semibold text-[#1c2d5a] leading-relaxed">
               <div className="flex items-center justify-center gap-2">
                 <span>Hey! I'm Aieve, your admin BFF</span>
-                <Sparkles className="w-5 h-5 text-[#E83F87]" />
+                <Sparkles className="w-5 h-5 text-[#1c2d5a]" />
               </div>
               <div className="mt-3">Let's take a quick tour...</div>
             </div>
