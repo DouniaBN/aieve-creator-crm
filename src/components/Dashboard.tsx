@@ -225,7 +225,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5">
+      <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-200/50 -mt-5" data-tour="dashboard">
         <div className="flex items-center gap-1.5 mb-2">
           <h1 className="text-2xl font-bold text-[#1c2d5a]">{greetingData.text}, Sarah</h1>
           <greetingData.icon className="w-5 h-5 text-[#1c2d5a]" />

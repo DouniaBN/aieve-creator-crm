@@ -4,6 +4,8 @@ import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import NotificationPanel from './components/NotificationPanel';
 import Auth from './components/Auth';
+import OnboardingModal from './components/OnboardingModal';
+import ShepherdTour from './components/ShepherdTour';
 import Onboarding from './components/Onboarding';
 import Dashboard from './components/Dashboard';
 import Projects from './components/Projects';
@@ -17,7 +19,9 @@ function AppContent() {
   const { user, loading, signOut, userProfile } = useSupabase();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [showShepherdTour, setShowShepherdTour] = useState(false);
+  const [showFullOnboarding, setShowFullOnboarding] = useState(false);
   const { successMessage, showSuccessMessage } = useAppContext();
 
   // Show loading spinner while checking auth
@@ -41,19 +45,17 @@ function AppContent() {
   // Show auth screen if not logged in
   if (!user) {
     return <Auth onAuthSuccess={(isNewUser: boolean) => {
-      if (isNewUser) {
-        setShowOnboarding(true);
-      }
+      // For testing: show onboarding modal for both new users AND existing users
+      setShowOnboardingModal(true);
     }} />;
   }
 
-  // Show onboarding if we're explicitly showing it
-  // For now, we'll rely on the showOnboarding state until database migration
-  if (showOnboarding) {
+  // Show full onboarding flow if user chose to continue from modal
+  if (showFullOnboarding) {
     return (
       <Onboarding
         onComplete={() => {
-          setShowOnboarding(false);
+          setShowFullOnboarding(false);
           showSuccessMessage(`Welcome aboard, ${userProfile?.preferred_name || 'there'}! 🎉`);
         }}
       />
@@ -61,10 +63,10 @@ function AppContent() {
   }
 
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'projects', name: 'Calendar', icon: Calendar },
-    { id: 'brand-deals', name: 'Brand Deals', icon: DollarSign },
-    { id: 'invoices', name: 'Invoices', icon: FileText },
+    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, tourId: 'dashboard' },
+    { id: 'projects', name: 'Calendar', icon: Calendar, tourId: 'calendar' },
+    { id: 'brand-deals', name: 'Brand Deals', icon: DollarSign, tourId: 'brand-deals' },
+    { id: 'invoices', name: 'Invoices', icon: FileText, tourId: 'invoices' },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
@@ -133,6 +135,7 @@ function AppContent() {
                           ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
                           : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                       }`}
+                      data-tour={item.tourId || undefined}
                     >
                       <Icon className="w-5 h-5 mr-3" />
                       {item.name}
@@ -206,9 +209,36 @@ function AppContent() {
         </main>
       </div>
       
-      <SuccessMessage 
-        message={successMessage} 
-        onClose={() => showSuccessMessage('')} 
+      <SuccessMessage
+        message={successMessage}
+        onClose={() => showSuccessMessage('')}
+      />
+
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={() => setShowOnboardingModal(false)}
+        onSkipDemo={() => {
+          setShowOnboardingModal(false);
+          showSuccessMessage('Welcome to AIEVE! 🎉');
+        }}
+        onContinue={() => {
+          setShowOnboardingModal(false);
+          setShowShepherdTour(true);
+        }}
+      />
+
+      {/* Shepherd Tour */}
+      <ShepherdTour
+        isActive={showShepherdTour}
+        onComplete={() => {
+          setShowShepherdTour(false);
+          showSuccessMessage('Welcome to AIEVE! Ready to get organized? 🎉');
+        }}
+        onSkip={() => {
+          setShowShepherdTour(false);
+          showSuccessMessage('Welcome to AIEVE! 🎉');
+        }}
       />
     </div>
   );
