@@ -239,6 +239,7 @@ function AppContent() {
           setShowShepherdTour(false);
           showSuccessMessage('Welcome to AIEVE! 🎉');
         }}
+        setActiveTab={setActiveTab}
       />
     </div>
   );

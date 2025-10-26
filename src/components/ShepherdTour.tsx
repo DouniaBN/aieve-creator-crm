@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import Shepherd from 'shepherd.js'
 import 'shepherd.js/dist/css/shepherd.css'
 import '../styles/shepherd-theme.css'
@@ -7,11 +7,18 @@ interface ShepherdTourProps {
   isActive: boolean
   onComplete: () => void
   onSkip: () => void
+  setActiveTab: (tab: string) => void
 }
 
-const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSkip }) => {
+const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSkip, setActiveTab }) => {
+  const setActiveTabRef = useRef(setActiveTab)
+  setActiveTabRef.current = setActiveTab
+
   useEffect(() => {
+    console.log('ShepherdTour useEffect called, isActive:', isActive)
     if (!isActive) return
+
+    console.log('Creating Shepherd tour...')
 
     // Initialize Shepherd tour
     const tour = new Shepherd.Tour({
@@ -39,12 +46,18 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
       buttons: [
         {
           text: 'Skip Tour',
-          action: () => tour.cancel(),
+          action: () => {
+            console.log('Skip Tour clicked')
+            tour.cancel()
+          },
           classes: 'shepherd-button-text-only'
         },
         {
           text: 'Next',
-          action: () => tour.next(),
+          action: () => {
+            console.log('Next clicked from step 1')
+            tour.next()
+          },
           classes: 'shepherd-button-primary'
         }
       ]
@@ -58,15 +71,26 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         element: '[data-tour="calendar"]',
         on: 'right'
       },
+      when: {
+        show: () => {
+          setActiveTabRef.current('projects') // Use 'projects' as that's the actual tab ID for calendar
+        }
+      },
       buttons: [
         {
           text: 'Back',
-          action: () => tour.back(),
+          action: () => {
+            setActiveTabRef.current('dashboard')
+            tour.back()
+          },
           classes: 'shepherd-button-text-only'
         },
         {
           text: 'Next',
-          action: () => tour.next(),
+          action: () => {
+            console.log('Next clicked from step 2')
+            tour.next()
+          },
           classes: 'shepherd-button-primary'
         }
       ]
@@ -80,15 +104,27 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         element: '[data-tour="brand-deals"]',
         on: 'right'
       },
+      when: {
+        show: () => {
+          console.log('Showing step 3 - Brand Deals')
+          setActiveTabRef.current('brand-deals')
+        }
+      },
       buttons: [
         {
           text: 'Back',
-          action: () => tour.back(),
+          action: () => {
+            setActiveTabRef.current('projects')
+            tour.back()
+          },
           classes: 'shepherd-button-text-only'
         },
         {
           text: 'Next',
-          action: () => tour.next(),
+          action: () => {
+            console.log('Next clicked from step 3')
+            tour.next()
+          },
           classes: 'shepherd-button-primary'
         }
       ]
@@ -102,15 +138,27 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         element: '[data-tour="invoices"]',
         on: 'right'
       },
+      when: {
+        show: () => {
+          console.log('Showing step 4 - Invoices')
+          setActiveTabRef.current('invoices')
+        }
+      },
       buttons: [
         {
           text: 'Back',
-          action: () => tour.back(),
+          action: () => {
+            setActiveTabRef.current('brand-deals')
+            tour.back()
+          },
           classes: 'shepherd-button-text-only'
         },
         {
           text: 'Done',
-          action: () => tour.complete(),
+          action: () => {
+            setActiveTabRef.current('dashboard')
+            tour.complete()
+          },
           classes: 'shepherd-button-primary'
         }
       ]
@@ -118,11 +166,26 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Event handlers
     tour.on('complete', () => {
+      console.log('Tour completed')
       // Show celebration modal
       showCelebrationModal()
       onComplete()
     })
     tour.on('cancel', onSkip)
+
+    // Debug event handlers
+    tour.on('show', (event) => {
+      console.log('Showing step:', event.step?.options?.title)
+    })
+    tour.on('hide', (event) => {
+      console.log('Hiding step:', event.step?.options?.title)
+    })
+
+    // Debug: Log tour steps
+    console.log('Tour has', tour.steps.length, 'steps')
+    tour.steps.forEach((step, index) => {
+      console.log(`Step ${index + 1}:`, step.options.title)
+    })
 
     // Start the tour
     tour.start()
@@ -133,7 +196,7 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         tour.cancel()
       }
     }
-  }, [isActive, onComplete, onSkip])
+  }, [isActive])
 
   const showCelebrationModal = () => {
     // Create celebration modal
