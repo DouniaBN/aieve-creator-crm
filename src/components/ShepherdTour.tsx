@@ -20,7 +20,7 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         classes: 'shepherd-theme-aieve',
         scrollTo: { behavior: 'smooth', block: 'center' },
         cancelIcon: {
-          enabled: true,
+          enabled: false,
         },
         highlightClass: 'shepherd-highlight',
         modalOverlayOpeningPadding: 8,
@@ -30,8 +30,8 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Step 1: Dashboard Overview
     tour.addStep({
-      title: '<div class="shepherd-step-header">Step 1 of 4</div>Dashboard Overview',
-      text: 'Welcome to your command center! Here you can see all your projects, upcoming deadlines, daily to-dos and revenue at a glance.',
+      title: 'Dashboard Overview',
+      text: '<div class="shepherd-step-indicator">Step 1 of 4</div><div class="shepherd-step-description">Welcome to your command center! Here you can see all your projects, upcoming deadlines, daily to-dos and revenue at a glance.</div>',
       attachTo: {
         element: '[data-tour="dashboard"]',
         on: 'bottom'
@@ -40,7 +40,7 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Skip Tour',
           action: () => tour.cancel(),
-          classes: 'shepherd-button-secondary'
+          classes: 'shepherd-button-text-only'
         },
         {
           text: 'Next',
@@ -52,8 +52,8 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Step 2: Content Calendar
     tour.addStep({
-      title: '<div class="shepherd-step-header">Step 2 of 4</div>Content Calendar',
-      text: 'Plan your content like a pro. Never miss a deadline and stay consistent across all platforms.',
+      title: 'Content Calendar',
+      text: '<div class="shepherd-step-indicator">Step 2 of 4</div><div class="shepherd-step-description">Plan your content like a pro. Never miss a deadline and stay consistent across all platforms.</div>',
       attachTo: {
         element: '[data-tour="calendar"]',
         on: 'right'
@@ -62,7 +62,7 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Back',
           action: () => tour.back(),
-          classes: 'shepherd-button-secondary'
+          classes: 'shepherd-button-text-only'
         },
         {
           text: 'Next',
@@ -74,8 +74,8 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Step 3: Brand Deals
     tour.addStep({
-      title: '<div class="shepherd-step-header">Step 3 of 4</div>Brand Deals',
-      text: 'Track all your brand partnerships here. Add new deals, update statuses, and never lose track of a collaboration again.',
+      title: 'Brand Deals',
+      text: '<div class="shepherd-step-indicator">Step 3 of 4</div><div class="shepherd-step-description">Track all your brand partnerships here. Add new deals, update statuses, and never lose track of a collaboration again.</div>',
       attachTo: {
         element: '[data-tour="brand-deals"]',
         on: 'right'
@@ -84,7 +84,7 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Back',
           action: () => tour.back(),
-          classes: 'shepherd-button-secondary'
+          classes: 'shepherd-button-text-only'
         },
         {
           text: 'Next',
@@ -96,8 +96,8 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Step 4: Invoices
     tour.addStep({
-      title: '<div class="shepherd-step-header">Step 4 of 4</div>Invoices',
-      text: 'Generate professional invoices in seconds. Keep track of payments and get paid faster!',
+      title: 'Invoices',
+      text: '<div class="shepherd-step-indicator">Step 4 of 4</div><div class="shepherd-step-description">Generate professional invoices in seconds. Keep track of payments and get paid faster!</div>',
       attachTo: {
         element: '[data-tour="invoices"]',
         on: 'right'
@@ -106,7 +106,7 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Back',
           action: () => tour.back(),
-          classes: 'shepherd-button-secondary'
+          classes: 'shepherd-button-text-only'
         },
         {
           text: 'Done',
