@@ -160,6 +160,7 @@ function AppContent() {
                       ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
                       : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                   }`}
+                  data-tour="settings"
                 >
                   <Settings className="w-5 h-5" />
                 </button>
