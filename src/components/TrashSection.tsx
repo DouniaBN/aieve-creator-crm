@@ -1,6 +1,8 @@
 import React from 'react';
 import { RotateCcw, Trash, AlertTriangle, Calendar, DollarSign, FileText } from 'lucide-react';
 import { Invoice } from '../lib/supabase';
+import { useSupabase } from '../contexts/SupabaseContext';
+import { formatCurrency } from '../utils/currency';
 
 interface TrashedInvoice extends Invoice {
   deletedAt: string;
@@ -19,6 +21,7 @@ const TrashSection: React.FC<TrashSectionProps> = ({
   onPermanentDelete,
   onEmptyTrash
 }) => {
+  const { userProfile } = useSupabase();
   if (trashedInvoices.length === 0) {
     return (
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-gray-200/50">
@@ -80,7 +83,7 @@ const TrashSection: React.FC<TrashSectionProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-                    <span className="font-semibold text-gray-900">${invoice.amount.toLocaleString()}</span>
+                    <span className="font-semibold text-gray-900">{formatCurrency(invoice.amount, userProfile?.currency || 'USD')}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

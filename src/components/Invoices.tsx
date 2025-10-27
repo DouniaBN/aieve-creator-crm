@@ -8,9 +8,10 @@ import InvoiceGenerator from './InvoiceGenerator';
 import InvoiceDrafts from './InvoiceDrafts';
 import TrashSection from './TrashSection';
 import { InvoiceData } from './InvoiceGenerator';
+import { getCurrencySymbol, formatCurrency } from '../utils/currency';
 
 const Invoices = () => {
-  const { invoices, updateInvoice, deleteInvoice, createInvoice } = useSupabase();
+  const { invoices, updateInvoice, deleteInvoice, createInvoice, userProfile } = useSupabase();
   const { addNotification, showSuccessMessage } = useAppContext();
 
   // Format date from YYYY-MM-DD to DD/MM/YYYY
@@ -318,10 +319,8 @@ const Invoices = () => {
       amount: invoice.amount || 0
     }];
 
-    // Currency symbol - check invoice currency or default to USD
-    const currencySymbol = (invoice.currency === 'EUR' ? '€' :
-                           invoice.currency === 'GBP' ? '£' :
-                           '$');
+    // Currency symbol - use utility function
+    const currencySymbol = getCurrencySymbol(invoice.currency || 'USD');
 
     // For backwards compatibility, create reasonable defaults from basic invoice data
     const creatorInfo = {
@@ -805,7 +804,7 @@ const Invoices = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Paid</p>
-              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">${totalPaid.toLocaleString()}</p>
+              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">{formatCurrency(totalPaid, userProfile?.currency || 'USD')}</p>
               <p className="text-[10px] text-green-600">completed payments</p>
             </div>
             <div className="rounded-lg p-1.5">
@@ -818,7 +817,7 @@ const Invoices = () => {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Outstanding</p>
-              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">${totalOutstanding.toLocaleString()}</p>
+              <p className="text-4xl font-bold text-[#1c2d5a] mb-1">{formatCurrency(totalOutstanding, userProfile?.currency || 'USD')}</p>
               <p className="text-[10px] text-orange-600">pending payment</p>
             </div>
             <div className="rounded-lg p-1.5">
@@ -950,7 +949,7 @@ const Invoices = () => {
                         {invoice.client_name}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-base font-semibold text-gray-900">
-                        ${invoice.amount.toLocaleString()}
+                        {formatCurrency(invoice.amount, invoice.currency || 'USD')}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-base text-gray-900">
                         {formatDate(invoice.due_date)}

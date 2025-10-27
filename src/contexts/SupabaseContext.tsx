@@ -255,14 +255,14 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     if (error) {
       if (error.code === 'PGRST116') {
-        // No profile found, create default profile
+        // No profile found, create default profile using upsert to prevent duplicates
         const { data: newProfile, error: insertError } = await supabase
           .from('user_profiles')
-          .insert([{
+          .upsert([{
             user_id: user.id,
             full_name: user.user_metadata?.full_name || (user.email && user.email.includes('@') ? user.email.split('@')[0] : '') || '',
             currency: 'USD'
-          }])
+          }], { onConflict: 'user_id' })
           .select()
           .single()
 
@@ -327,9 +327,31 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const createInvoice = async (invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return
 
+    // Auto-populate creator fields from user profile if not provided
+    const enrichedInvoice = { ...invoice };
+
+    if (userProfile) {
+      // Only set fields if they weren't already provided in the invoice
+      if (!enrichedInvoice.creator_business_name && userProfile.full_name) {
+        enrichedInvoice.creator_business_name = userProfile.full_name;
+      }
+      if (!enrichedInvoice.creator_phone && userProfile.phone) {
+        enrichedInvoice.creator_phone = userProfile.phone;
+      }
+      if (!enrichedInvoice.creator_address && userProfile.business_address) {
+        enrichedInvoice.creator_address = userProfile.business_address;
+      }
+      if (!enrichedInvoice.creator_website && userProfile.website) {
+        enrichedInvoice.creator_website = userProfile.website;
+      }
+      if (!enrichedInvoice.currency && userProfile.currency) {
+        enrichedInvoice.currency = userProfile.currency;
+      }
+    }
+
     const { data, error } = await supabase
       .from('invoices')
-      .insert([{ ...invoice, user_id: user.id }])
+      .insert([{ ...enrichedInvoice, user_id: user.id }])
       .select()
 
     if (error) {
@@ -845,6 +867,50 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }
 
+  // Update all existing invoices with new profile data
+  const syncProfileToInvoices = async (profileUpdates: Partial<UserProfile>) => {
+    if (!user) return;
+
+    // Map profile fields to invoice fields
+    const invoiceUpdates: Partial<Invoice> = {};
+
+    if (profileUpdates.full_name !== undefined) {
+      invoiceUpdates.creator_business_name = profileUpdates.full_name;
+    }
+    if (profileUpdates.phone !== undefined) {
+      invoiceUpdates.creator_phone = profileUpdates.phone;
+    }
+    if (profileUpdates.business_address !== undefined) {
+      invoiceUpdates.creator_address = profileUpdates.business_address;
+    }
+    if (profileUpdates.website !== undefined) {
+      invoiceUpdates.creator_website = profileUpdates.website;
+    }
+    if (profileUpdates.currency !== undefined) {
+      invoiceUpdates.currency = profileUpdates.currency;
+    }
+
+    // Only update invoices if there are relevant changes
+    if (Object.keys(invoiceUpdates).length > 0) {
+      console.log('Syncing profile changes to invoices:', invoiceUpdates);
+
+      const { data, error } = await supabase
+        .from('invoices')
+        .update(invoiceUpdates)
+        .eq('user_id', user.id)
+        .select('id, creator_business_name, creator_phone, creator_address, creator_website, currency');
+
+      if (error) {
+        console.error('Error syncing profile to invoices:', error);
+      } else {
+        console.log('Successfully synced profile changes to invoices:', data);
+        console.log(`Updated ${data?.length || 0} invoices with new profile data`);
+        // Refresh invoices to reflect changes
+        await fetchInvoices();
+      }
+    }
+  };
+
   // Update user profile
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return
@@ -852,37 +918,61 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     console.log('Updating user profile with:', updates);
 
     // Filter out any undefined values and fields that don't exist in database
+    console.log('Before filtering - all updates:', updates);
     const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([key, value]) =>
-        value !== undefined &&
-        !['onboarding_complete', 'preferred_name', 'creator_type'].includes(key) // Skip new fields if they don't exist
-      )
+      Object.entries(updates).filter(([key, value]) => {
+        const isUndefined = value === undefined;
+        const isExcludedField = ['onboarding_complete', 'preferred_name', 'creator_type'].includes(key);
+        console.log(`Field ${key}: value="${value}", isUndefined=${isUndefined}, isExcluded=${isExcludedField}`);
+        return !isUndefined && !isExcludedField;
+      })
     );
 
     console.log('Clean updates (existing fields only):', cleanUpdates);
 
     // First try to update with only existing fields
-    const { error: updateError } = await supabase
+    console.log('Attempting database update with user_id:', user.id);
+    const { data: updateData, error: updateError } = await supabase
       .from('user_profiles')
       .update(cleanUpdates)
       .eq('user_id', user.id)
+      .select('*')  // Return the updated row
 
     if (updateError) {
       console.error('Update error:', updateError);
 
       // If update fails, try to upsert (insert or update)
-      const { error: upsertError } = await supabase
+      console.log('Attempting upsert as fallback...');
+      const { data: upsertData, error: upsertError } = await supabase
         .from('user_profiles')
         .upsert([{ user_id: user.id, ...cleanUpdates }])
+        .select('*')
 
       if (upsertError) {
         console.error('Error upserting user profile:', upsertError)
         throw upsertError
+      } else {
+        console.log('Upsert successful, returned data:', upsertData);
       }
+    } else {
+      console.log('Update successful, returned data:', updateData);
     }
 
     console.log('Profile update successful');
-    await fetchUserProfile()
+    try {
+      await fetchUserProfile();
+    } catch (profileError) {
+      console.warn('Could not fetch updated profile, but update was successful:', profileError);
+      // Update local userProfile state with the clean updates
+      if (userProfile) {
+        setUserProfile({ ...userProfile, ...cleanUpdates });
+      }
+    }
+
+    // Sync relevant profile changes to all existing invoices
+    await syncProfileToInvoices(cleanUpdates);
+
+    console.log('Profile update and sync completed successfully');
   }
 
   // Change password

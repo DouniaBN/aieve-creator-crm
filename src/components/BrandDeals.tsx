@@ -8,9 +8,10 @@ import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
+import { formatCurrency, getCurrencySymbol } from '../utils/currency';
 
 const BrandDeals = () => {
-  const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal, createInvoiceFromBrandDeal } = useSupabase();
+  const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal, createInvoiceFromBrandDeal, userProfile } = useSupabase();
   const { showSuccessMessage } = useAppContext();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -36,7 +37,7 @@ const BrandDeals = () => {
   const [editFeeInput, setEditFeeInput] = useState('');
 
   // Currency formatting functions
-  const formatCurrency = (value: string) => {
+  const formatInputCurrency = (value: string) => {
     // Remove all non-numeric characters except decimal point
     const numericValue = value.replace(/[^\d.]/g, '');
 
@@ -304,7 +305,7 @@ const BrandDeals = () => {
   const handleRowClick = (deal: any) => {
     setEditingDeal({ ...deal });
     // Format the fee for display in the edit input
-    const formattedFee = deal.fee ? formatCurrency(deal.fee.toString()) : '';
+    const formattedFee = deal.fee ? formatInputCurrency(deal.fee.toString()) : '';
     setEditFeeInput(formattedFee);
     setShowEditModal(true);
   };
@@ -417,7 +418,7 @@ const BrandDeals = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500">Total Deals Value</p>
-              <p className="text-2xl font-bold text-[#1c2d5a]">${totalDealsValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-[#1c2d5a]">{formatCurrency(totalDealsValue, userProfile?.currency || 'USD')}</p>
             </div>
             <DollarSign className="w-8 h-8 text-[#FF6FAE] opacity-20" />
           </div>
@@ -427,7 +428,7 @@ const BrandDeals = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500">Completed This Month</p>
-              <p className="text-2xl font-bold text-[#1c2d5a]">${completedThisMonth.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-[#1c2d5a]">{formatCurrency(completedThisMonth, userProfile?.currency || 'USD')}</p>
             </div>
             <CheckCircle className="w-8 h-8 text-[#6EE7B7] opacity-20" />
           </div>
@@ -495,7 +496,7 @@ const BrandDeals = () => {
 
               {/* Fee */}
               <div className="col-span-1">
-                <div className="text-lg font-semibold text-[#1c2d5a]">${deal.fee.toLocaleString()}</div>
+                <div className="text-lg font-semibold text-[#1c2d5a]">{formatCurrency(deal.fee, userProfile?.currency || 'USD')}</div>
               </div>
 
               {/* Status */}
@@ -661,13 +662,13 @@ const BrandDeals = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Fee</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 text-base">$</span>
+                      <span className="text-gray-500 text-base">{getCurrencySymbol(userProfile?.currency || 'USD')}</span>
                     </div>
                     <input
                       type="text"
                       value={feeInput}
                       onChange={(e) => {
-                        const formatted = formatCurrency(e.target.value);
+                        const formatted = formatInputCurrency(e.target.value);
                         setFeeInput(formatted);
                         setNewDeal({ ...newDeal, fee: parseCurrencyToNumber(formatted) });
                       }}
@@ -833,13 +834,13 @@ const BrandDeals = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Fee</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 text-base">$</span>
+                      <span className="text-gray-500 text-base">{getCurrencySymbol(userProfile?.currency || 'USD')}</span>
                     </div>
                     <input
                       type="text"
                       value={editFeeInput}
                       onChange={(e) => {
-                        const formatted = formatCurrency(e.target.value);
+                        const formatted = formatInputCurrency(e.target.value);
                         setEditFeeInput(formatted);
                         setEditingDeal({ ...editingDeal, fee: parseCurrencyToNumber(formatted) });
                       }}

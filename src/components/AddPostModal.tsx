@@ -8,6 +8,7 @@ import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
+import { formatCurrency } from '../utils/currency';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -54,7 +55,7 @@ interface AddPostModalProps {
 }
 
 const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDate, onPostAdded }) => {
-  const { createContentPost, fetchContentPosts, brandDeals, fetchBrandDeals } = useSupabase();
+  const { createContentPost, fetchContentPosts, brandDeals, fetchBrandDeals, userProfile } = useSupabase();
   const { showSuccessMessage } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [linkToBrandDeal, setLinkToBrandDeal] = useState(false);
@@ -279,7 +280,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
                     <option value="">Choose a brand deal...</option>
                     {availableBrandDeals.map((deal) => (
                       <option key={deal.id} value={deal.id}>
-                        {deal.brand_name} - ${deal.fee?.toLocaleString() || 0}
+                        {deal.brand_name} - {formatCurrency(deal.fee || 0, userProfile?.currency || 'USD')}
                       </option>
                     ))}
                   </select>
@@ -296,7 +297,7 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Fee:</span>
-                        <span className="text-gray-700 ml-2">${selectedDeal.fee?.toLocaleString() || 0}</span>
+                        <span className="text-gray-700 ml-2">{formatCurrency(selectedDeal.fee || 0, userProfile?.currency || 'USD')}</span>
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Status:</span>

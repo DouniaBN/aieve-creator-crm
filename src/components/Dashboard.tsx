@@ -3,6 +3,7 @@ import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube
 import { useSupabase } from '../contexts/SupabaseContext';
 import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
+import { formatCurrency } from '../utils/currency';
 
 interface DashboardProps {
   onNavigateToCalendar?: () => void;
@@ -10,7 +11,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateToInvoices }) => {
-  const { projects, invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask } = useSupabase();
+  const { projects, invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask, userProfile } = useSupabase();
   const [newTaskText, setNewTaskText] = useState('');
 
   // Memoize date calculations to prevent recreating on every render
@@ -75,7 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       .filter(inv => inv && inv.status === 'overdue')
       .map(inv => ({
         client: inv.client_name || 'Unknown Client',
-        amount: `$${(inv.amount || 0).toLocaleString()}`,
+        amount: formatCurrency(inv.amount || 0, userProfile?.currency || 'USD'),
         days: Math.floor((new Date().getTime() - new Date(inv.due_date || new Date()).getTime()) / (1000 * 60 * 60 * 24))
       }));
 
@@ -109,7 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     },
     {
       title: 'Total Revenue',
-      value: '$5,550',
+      value: formatCurrency(calculations.totalRevenue, userProfile?.currency || 'USD'),
       change: '+15% this month',
       icon: DollarSign,
       borderColor: 'border-l-emerald-300',
@@ -118,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     },
     {
       title: 'Overdue Invoices',
-      value: '3',
+      value: calculations.overdueCount.toString(),
       change: 'need attention',
       icon: AlertCircle,
       borderColor: 'border-l-[#fc5353]',

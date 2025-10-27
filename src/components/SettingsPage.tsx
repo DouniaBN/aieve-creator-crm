@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, DollarSign, Palette, Bell, Shield, Save, HelpCircle, Eye, EyeOff } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { useAppContext } from '../contexts/AppContext';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  const { userSettings, notificationsEnabled, updateNotificationSettings, changePassword } = useSupabase();
+  const { userProfile, updateUserProfile, userSettings, notificationsEnabled, updateNotificationSettings, changePassword } = useSupabase();
+  const { showSuccessMessage } = useAppContext();
 
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
@@ -22,15 +24,19 @@ const SettingsPage = () => {
     newPassword: false,
     confirmPassword: false
   });
+  // Initialize profile state from userProfile data
   const [profile, setProfile] = useState({
-    name: 'Sarah Chen',
-    email: 'sarah@example.com',
-    phone: '+1 (555) 123-4567',
-    website: 'sarahcreates.com',
-    bio: 'Content creator specializing in lifestyle, beauty, and wellness',
-    address: '123 Creator St, Los Angeles, CA 90210',
-    currency: 'USD'
+    name: userProfile?.full_name || '',
+    email: userProfile?.email || '',
+    phone: userProfile?.phone || '',
+    website: userProfile?.website || '',
+    bio: userProfile?.bio || '',
+    address: userProfile?.business_address || '',
+    currency: userProfile?.currency || 'USD'
   });
+
+  // Track if we're in the middle of saving to prevent form reset
+  const [isSaving, setIsSaving] = useState(false);
 
   const tabs = [
     { id: 'profile', name: 'Profile', icon: User },
@@ -41,8 +47,40 @@ const SettingsPage = () => {
     { id: 'support', name: 'Support', icon: HelpCircle }
   ];
 
-  const handleSave = () => {
-    alert('Settings saved successfully!');
+  // Update local state when userProfile changes (but not during saves)
+  useEffect(() => {
+    if (userProfile && !isSaving) {
+      setProfile({
+        name: userProfile.full_name || '',
+        email: userProfile.email || '',
+        phone: userProfile.phone || '',
+        website: userProfile.website || '',
+        bio: userProfile.bio || '',
+        address: userProfile.business_address || '',
+        currency: userProfile.currency || 'USD'
+      });
+    }
+  }, [userProfile, isSaving]);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      await updateUserProfile({
+        full_name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        website: profile.website,
+        bio: profile.bio,
+        business_address: profile.address,
+        currency: profile.currency
+      });
+      showSuccessMessage('Settings saved successfully! Invoice data has been automatically updated.');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showSuccessMessage(`Error saving settings: ${error.message || 'Please try again.'}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -128,9 +166,10 @@ const SettingsPage = () => {
       <div className="pt-6 border-t border-gray-200">
         <button
           onClick={handleSave}
-          className="px-4 py-1.5 bg-[#E83F87] text-white rounded-lg hover:bg-[#d63577] transition-colors duration-200 font-medium text-sm"
+          disabled={isSaving}
+          className="px-4 py-1.5 bg-[#E83F87] text-white rounded-lg hover:bg-[#d63577] transition-colors duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Update Profile
+          {isSaving ? 'Updating...' : 'Update Profile'}
         </button>
       </div>
     </div>
@@ -174,9 +213,10 @@ const SettingsPage = () => {
       <div className="pt-6 border-t border-gray-200">
         <button
           onClick={handleSave}
-          className="px-4 py-1.5 bg-[#E83F87] text-white rounded-lg hover:bg-[#d63577] transition-colors duration-200 font-medium text-sm"
+          disabled={isSaving}
+          className="px-4 py-1.5 bg-[#E83F87] text-white rounded-lg hover:bg-[#d63577] transition-colors duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Update Business Settings
+          {isSaving ? 'Updating...' : 'Update Business Settings'}
         </button>
       </div>
     </div>
