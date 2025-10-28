@@ -9,13 +9,14 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { formatCurrency, getCurrencySymbol } from '../utils/currency';
+import { BrandDeal } from '../lib/supabase';
 
 const BrandDeals = () => {
   const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal, createInvoiceFromBrandDeal, userProfile } = useSupabase();
   const { showSuccessMessage } = useAppContext();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingDeal, setEditingDeal] = useState<any>(null);
+  const [editingDeal, setEditingDeal] = useState<BrandDeal | null>(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -302,7 +303,7 @@ const BrandDeals = () => {
     return { days: diffDays, text, color };
   };
 
-  const handleRowClick = (deal: any) => {
+  const handleRowClick = (deal: BrandDeal) => {
     setEditingDeal({ ...deal });
     // Format the fee for display in the edit input
     const formattedFee = deal.fee ? formatInputCurrency(deal.fee.toString()) : '';

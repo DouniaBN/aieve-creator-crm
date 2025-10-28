@@ -892,7 +892,6 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     // Only update invoices if there are relevant changes
     if (Object.keys(invoiceUpdates).length > 0) {
-      console.log('Syncing profile changes to invoices:', invoiceUpdates);
 
       const { data, error } = await supabase
         .from('invoices')
@@ -903,8 +902,6 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (error) {
         console.error('Error syncing profile to invoices:', error);
       } else {
-        console.log('Successfully synced profile changes to invoices:', data);
-        console.log(`Updated ${data?.length || 0} invoices with new profile data`);
         // Refresh invoices to reflect changes
         await fetchInvoices();
       }
@@ -915,23 +912,18 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const updateUserProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return
 
-    console.log('Updating user profile with:', updates);
 
     // Filter out any undefined values and fields that don't exist in database
-    console.log('Before filtering - all updates:', updates);
     const cleanUpdates = Object.fromEntries(
       Object.entries(updates).filter(([key, value]) => {
         const isUndefined = value === undefined;
         const isExcludedField = ['onboarding_complete', 'preferred_name', 'creator_type'].includes(key);
-        console.log(`Field ${key}: value="${value}", isUndefined=${isUndefined}, isExcluded=${isExcludedField}`);
         return !isUndefined && !isExcludedField;
       })
     );
 
-    console.log('Clean updates (existing fields only):', cleanUpdates);
 
     // First try to update with only existing fields
-    console.log('Attempting database update with user_id:', user.id);
     const { data: updateData, error: updateError } = await supabase
       .from('user_profiles')
       .update(cleanUpdates)
@@ -942,7 +934,6 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.error('Update error:', updateError);
 
       // If update fails, try to upsert (insert or update)
-      console.log('Attempting upsert as fallback...');
       const { data: upsertData, error: upsertError } = await supabase
         .from('user_profiles')
         .upsert([{ user_id: user.id, ...cleanUpdates }])
@@ -951,14 +942,9 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (upsertError) {
         console.error('Error upserting user profile:', upsertError)
         throw upsertError
-      } else {
-        console.log('Upsert successful, returned data:', upsertData);
       }
-    } else {
-      console.log('Update successful, returned data:', updateData);
     }
 
-    console.log('Profile update successful');
     try {
       await fetchUserProfile();
     } catch (profileError) {
@@ -972,7 +958,6 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Sync relevant profile changes to all existing invoices
     await syncProfileToInvoices(cleanUpdates);
 
-    console.log('Profile update and sync completed successfully');
   }
 
   // Change password

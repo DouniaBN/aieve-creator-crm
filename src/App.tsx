@@ -44,7 +44,7 @@ function AppContent() {
 
   // Show auth screen if not logged in
   if (!user) {
-    return <Auth onAuthSuccess={(isNewUser: boolean) => {
+    return <Auth onAuthSuccess={(_isNewUser: boolean) => {
       // For testing: show onboarding modal for both new users AND existing users
       setShowOnboardingModal(true);
     }} />;

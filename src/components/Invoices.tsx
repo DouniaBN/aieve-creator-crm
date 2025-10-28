@@ -76,9 +76,6 @@ const Invoices = () => {
     },
   };
 
-  // Debug logging
-  console.log('Invoices page data:', invoices);
-  console.log('Overdue invoices in Invoices page:', invoices.filter(inv => inv.status === 'overdue'));
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesStatus = filterStatus === 'all' || invoice.status === filterStatus;

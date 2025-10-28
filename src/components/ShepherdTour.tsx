@@ -15,10 +15,8 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
   setActiveTabRef.current = setActiveTab
 
   useEffect(() => {
-    console.log('ShepherdTour useEffect called, isActive:', isActive)
     if (!isActive) return
 
-    console.log('Creating Shepherd tour...')
 
     // Initialize Shepherd tour
     const tour = new Shepherd.Tour({
@@ -47,7 +45,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Skip Tour',
           action: () => {
-            console.log('Skip Tour clicked')
             tour.cancel()
           },
           classes: 'shepherd-button-text-only'
@@ -55,7 +52,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Next',
           action: () => {
-            console.log('Next clicked from step 1')
             tour.next()
           },
           classes: 'shepherd-button-primary'
@@ -88,7 +84,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Next',
           action: () => {
-            console.log('Next clicked from step 2')
             tour.next()
           },
           classes: 'shepherd-button-primary'
@@ -106,7 +101,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
       },
       when: {
         show: () => {
-          console.log('Showing step 3 - Brand Deals')
           setActiveTabRef.current('brand-deals')
         }
       },
@@ -122,7 +116,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Next',
           action: () => {
-            console.log('Next clicked from step 3')
             tour.next()
           },
           classes: 'shepherd-button-primary'
@@ -140,7 +133,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
       },
       when: {
         show: () => {
-          console.log('Showing step 4 - Invoices')
           setActiveTabRef.current('invoices')
         }
       },
@@ -156,7 +148,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
         {
           text: 'Next',
           action: () => {
-            console.log('Next clicked from step 4')
             tour.next()
           },
           classes: 'shepherd-button-primary'
@@ -174,7 +165,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
       },
       when: {
         show: () => {
-          console.log('Showing step 5 - Settings')
           setActiveTabRef.current('settings')
         }
       },
@@ -200,7 +190,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Event handlers
     tour.on('complete', () => {
-      console.log('Tour completed')
       // Show celebration modal
       showCelebrationModal()
       onComplete()
@@ -209,17 +198,11 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
 
     // Debug event handlers
     tour.on('show', (event) => {
-      console.log('Showing step:', event.step?.options?.title)
     })
     tour.on('hide', (event) => {
-      console.log('Hiding step:', event.step?.options?.title)
     })
 
     // Debug: Log tour steps
-    console.log('Tour has', tour.steps.length, 'steps')
-    tour.steps.forEach((step, index) => {
-      console.log(`Step ${index + 1}:`, step.options.title)
-    })
 
     // Start the tour
     tour.start()

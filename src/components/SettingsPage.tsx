@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, DollarSign, Palette, Bell, Shield, Save, HelpCircle, Eye, EyeOff } from 'lucide-react';
+import { User, DollarSign, Palette, Bell, Shield, HelpCircle, Eye, EyeOff } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';
 
@@ -114,8 +114,8 @@ const SettingsPage = () => {
         newPassword: '',
         confirmPassword: ''
       });
-    } catch (error: any) {
-      setPasswordError(error.message || 'Failed to update password');
+    } catch (error) {
+      setPasswordError((error as Error).message || 'Failed to update password');
     } finally {
       setPasswordLoading(false);
     }

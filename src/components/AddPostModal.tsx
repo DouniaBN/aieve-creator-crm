@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar as CalendarIcon, Globe, Mail, FileText, Instagram, Youtube, Linkedin } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Mail, FileText, Instagram, Youtube, Linkedin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';

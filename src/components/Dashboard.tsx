@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, DollarSign, Clock, CheckCircle, Handshake, Instagram, Youtube, Mail, Globe, FileText, Linkedin, Plus, X, Users, AlertCircle, Clapperboard, Moon, Sun, Sunrise } from 'lucide-react';
+import { Calendar, DollarSign, CheckCircle, Instagram, Youtube, Mail, FileText, Linkedin, Plus, X, Users, AlertCircle, Clapperboard, Moon, Sun, Sunrise } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { Checkbox } from './ui/checkbox';
 import { Input } from './ui/input';
@@ -11,36 +11,42 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateToInvoices }) => {
-  const { projects, invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask, userProfile } = useSupabase();
+  const { invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask, userProfile } = useSupabase();
   const [newTaskText, setNewTaskText] = useState('');
 
-  // Memoize date calculations to prevent recreating on every render
+  // Memoize date calculations to recalculate daily
   const dateRanges = useMemo(() => {
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     const todaysDate = today.toISOString().split('T')[0];
-    
+
     return { today, startOfWeek, endOfWeek, startOfMonth, endOfMonth, todaysDate };
-  }, []); // Empty dependency - only calculate once per day (could be optimized further)
+  }, [new Date().toDateString()]); // Recalculate when the date changes
 
   // Memoize expensive calculations that depend on data
   const calculations = useMemo(() => {
     const { startOfWeek, endOfWeek, startOfMonth, endOfMonth, todaysDate } = dateRanges;
-    
+
+    // Previous month date range
+    const startOfPreviousMonth = new Date(startOfMonth);
+    startOfPreviousMonth.setMonth(startOfMonth.getMonth() - 1);
+    const endOfPreviousMonth = new Date(startOfMonth);
+    endOfPreviousMonth.setDate(0); // Last day of previous month
+
     // Active brand deals this week
     const activeBrandDealsThisWeek = (brandDeals || []).filter(deal => {
       if (!deal || deal.status === 'cancelled') return false;
       const dealStartDate = deal.start_date ? new Date(deal.start_date) : null;
       const dealEndDate = deal.end_date ? new Date(deal.end_date) : null;
-      
-      return dealStartDate && 
-             dealStartDate <= endOfWeek && 
+
+      return dealStartDate &&
+             dealStartDate <= endOfWeek &&
              (!dealEndDate || dealEndDate >= startOfWeek);
     }).length;
 
@@ -58,15 +64,48 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       return postDate === todaysDate;
     }).slice(0, 4);
 
-    // Revenue calculations
+    // Revenue calculations - current month
+    const currentMonthRevenue = (invoices || [])
+      .filter(inv => {
+        if (!inv || inv.status !== 'paid' || !inv.paid_date) return false;
+        const paidDate = new Date(inv.paid_date);
+        return paidDate >= startOfMonth && paidDate <= endOfMonth;
+      })
+      .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+    // Revenue calculations - previous month
+    const previousMonthRevenue = (invoices || [])
+      .filter(inv => {
+        if (!inv || inv.status !== 'paid' || !inv.paid_date) return false;
+        const paidDate = new Date(inv.paid_date);
+        return paidDate >= startOfPreviousMonth && paidDate <= endOfPreviousMonth;
+      })
+      .reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+    // Total revenue (all time)
     const totalRevenue = (invoices || [])
       .filter(inv => inv && inv.status === 'paid')
       .reduce((sum, inv) => sum + (inv.amount || 0), 0);
-    
+
+    // Calculate revenue change percentage
+    let revenueChangeText = 'this month';
+    if (previousMonthRevenue > 0) {
+      const changePercent = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100;
+      if (changePercent > 0) {
+        revenueChangeText = `+${Math.round(changePercent)}% this month`;
+      } else if (changePercent < 0) {
+        revenueChangeText = `${Math.round(changePercent)}% this month`;
+      } else {
+        revenueChangeText = 'No change this month';
+      }
+    } else if (currentMonthRevenue > 0) {
+      revenueChangeText = 'New revenue this month';
+    }
+
     const pendingAmount = (invoices || [])
       .filter(inv => inv && (inv.status === 'sent' || inv.status === 'overdue'))
       .reduce((sum, inv) => sum + (inv.amount || 0), 0);
-    
+
     const pendingCount = (invoices || [])
       .filter(inv => inv && (inv.status === 'sent' || inv.status === 'overdue'))
       .length;
@@ -90,6 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
       contentPostsThisMonth,
       todaysPosts,
       totalRevenue,
+      revenueChangeText,
       pendingAmount,
       pendingCount,
       overdue,
@@ -111,7 +151,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
     {
       title: 'Total Revenue',
       value: formatCurrency(calculations.totalRevenue, userProfile?.currency || 'USD'),
-      change: '+15% this month',
+      change: calculations.revenueChangeText,
       icon: DollarSign,
       borderColor: 'border-l-emerald-300',
       iconBg: 'bg-emerald-50',
@@ -240,7 +280,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateT
           const Icon = stat.icon;
           const getChangeColor = () => {
             if (stat.title === 'Overdue Invoices') return 'text-[#fc5353]';
-            if (stat.change.includes('+') || stat.change.includes('15%')) return 'text-green-600';
+            if (stat.change.includes('+')) return 'text-green-600';
+            if (stat.change.includes('-') && !stat.change.includes('need attention')) return 'text-red-600';
             return 'text-gray-400';
           };
 
