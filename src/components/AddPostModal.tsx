@@ -12,7 +12,6 @@ import { formatCurrency } from '../utils/currency';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
 
 // Custom X Icon component
 const XIcon = () => (

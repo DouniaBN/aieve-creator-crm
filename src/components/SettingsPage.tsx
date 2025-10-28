@@ -5,7 +5,7 @@ import { useAppContext } from '../contexts/AppContext';
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  const { userProfile, updateUserProfile, userSettings, notificationsEnabled, updateNotificationSettings, changePassword } = useSupabase();
+  const { userProfile, updateUserProfile, notificationsEnabled, updateNotificationSettings, changePassword } = useSupabase();
   const { showSuccessMessage } = useAppContext();
 
   // Password form state

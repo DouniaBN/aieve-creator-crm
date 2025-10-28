@@ -10,6 +10,35 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Database types
+export interface LineItem {
+  id: string
+  service: string
+  description: string
+  quantity: number
+  rate: number
+  amount: number
+}
+
+export interface InvoiceCustomization {
+  showBusinessName: boolean
+  showPhone: boolean
+  showAddress: boolean
+  showTaxId: boolean
+  showWebsite: boolean
+  showInstagram: boolean
+  showYoutube: boolean
+  showClientAddress: boolean
+  showClientPhone: boolean
+  showContactPerson: boolean
+  showTax: boolean
+  showDiscount: boolean
+  showSubtotal: boolean
+  showPaymentMethods: boolean
+  showPaymentInstructions: boolean
+  showPaymentTerms: boolean
+  showNotes: boolean
+}
+
 export interface Project {
   id: string
   user_id: string
@@ -49,7 +78,7 @@ export interface Invoice {
   creator_social_handle?: string
 
   // Financial Details
-  line_items?: any[]
+  line_items?: LineItem[]
   subtotal?: number
   tax_rate?: number
   tax_name?: string
@@ -65,7 +94,7 @@ export interface Invoice {
   notes?: string
 
   // Settings
-  customization_settings?: any
+  customization_settings?: InvoiceCustomization
 
   status: 'draft' | 'sent' | 'paid' | 'overdue'
   created_at: string

@@ -196,11 +196,6 @@ const ShepherdTour: React.FC<ShepherdTourProps> = ({ isActive, onComplete, onSki
     })
     tour.on('cancel', onSkip)
 
-    // Debug event handlers
-    tour.on('show', (event) => {
-    })
-    tour.on('hide', (event) => {
-    })
 
     // Debug: Log tour steps
 

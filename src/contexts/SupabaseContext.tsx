@@ -893,7 +893,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Only update invoices if there are relevant changes
     if (Object.keys(invoiceUpdates).length > 0) {
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('invoices')
         .update(invoiceUpdates)
         .eq('user_id', user.id)
@@ -924,7 +924,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
 
     // First try to update with only existing fields
-    const { data: updateData, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from('user_profiles')
       .update(cleanUpdates)
       .eq('user_id', user.id)
@@ -934,7 +934,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.error('Update error:', updateError);
 
       // If update fails, try to upsert (insert or update)
-      const { data: upsertData, error: upsertError } = await supabase
+      const { error: upsertError } = await supabase
         .from('user_profiles')
         .upsert([{ user_id: user.id, ...cleanUpdates }])
         .select('*')

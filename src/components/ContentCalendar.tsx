@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Instagram, Youtube, Mail, Globe, FileText, Linkedin, ChevronLeft, ChevronRight, X, Clock, Calendar as CalendarIcon, User, Edit2, Save, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Instagram, Youtube, Mail, FileText, Linkedin, ChevronLeft, ChevronRight, X, Clock, Calendar as CalendarIcon, User, Edit2, Save, Trash2, DollarSign } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { ContentPost } from '../lib/supabase';
 import { Card, CardContent } from './ui/card';
@@ -11,7 +11,7 @@ import { cn } from '../lib/utils';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { format, isSameDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths } from 'date-fns';
 
 // Custom X Icon component
@@ -157,9 +157,6 @@ const ContentCalendar: React.FC<ContentCalendarProps> = ({ onAddPost }) => {
     setCurrentDate(addMonths(currentDate, 1));
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
 
   // Modal functions
   const openPostModal = (post: ContentPost) => {

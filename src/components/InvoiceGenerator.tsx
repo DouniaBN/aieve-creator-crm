@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Download, Calculator, User, Building, FileText, DollarSign, Eye, Printer, Mail, Link, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon, CreditCard, Banknote } from 'lucide-react';
+import { X, Plus, Trash2, Download, Building, FileText, DollarSign, Printer, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon, CreditCard, Banknote } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { format } from 'date-fns';
@@ -121,39 +121,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     { code: 'DKK', symbol: 'kr', name: 'Danish Krone' }
   ];
 
-  const taxRates = {
-    'US': 8.5,
-    'UK': 20,
-    'EU': 21,
-    'CA': 13,
-    'AU': 10,
-    'JP': 10,
-    'CH': 7.7,
-    'SE': 25,
-    'NO': 25,
-    'DK': 25
-  };
 
-  const contentCreatorServices = [
-    'Instagram Post',
-    'Instagram Story',
-    'Instagram Reel',
-    'YouTube Video',
-    'TikTok Video',
-    'Blog Post',
-    'Product Photography',
-    'Brand Photography',
-    'Video Editing',
-    'Content Strategy',
-    'Social Media Management',
-    'Influencer Campaign',
-    'Brand Partnership',
-    'Usage Rights License',
-    'Revision Fee',
-    'Rush Fee',
-    'Travel Expenses',
-    'Equipment Rental'
-  ];
 
   // Default customization settings
   const defaultCustomization: InvoiceCustomization = {
@@ -502,18 +470,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     showSuccessMessage('PDF is generating...');
   };
 
-  const handleSendEmail = () => {
-    // In a real app, this would open email client or send via API
-    const subject = `Invoice ${invoiceData.invoiceNumber} from ${invoiceData.creatorName}`;
-    const body = `Please find attached invoice ${invoiceData.invoiceNumber} for ${selectedCurrency?.symbol}${invoiceData.total.toFixed(2)}.`;
-    window.open(`mailto:${invoiceData.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
-  };
 
-  const handleCopyLink = () => {
-    // In a real app, this would generate a shareable link
-    navigator.clipboard.writeText(`https://invoice.app/view/${invoiceData.invoiceNumber}`);
-    showSuccessMessage('Invoice link copied to clipboard!');
-  };
 
   const selectedCurrency = currencies.find(c => c.code === invoiceData.currency);
 
