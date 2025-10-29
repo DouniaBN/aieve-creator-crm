@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Download, Building, FileText, DollarSign, Printer, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon, CreditCard, Banknote } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useSupabase } from '../contexts/SupabaseContext';
+import { usePostHog } from './PostHogProvider';
 import { format } from 'date-fns';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -104,6 +105,7 @@ interface InvoiceGeneratorProps {
 const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false, autoPrint = false }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
   const { generateInvoiceNumber, createInvoice, updateInvoice, invoices } = useSupabase();
+  const { track } = usePostHog();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>(previewMode ? 'preview' : 'edit');
   const [showTax, setShowTax] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
@@ -383,6 +385,14 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     } else {
       // Create new invoice
       await createInvoice(dbInvoice);
+
+      // Track invoice creation event
+      track('invoice_created', {
+        amount: invoiceData.total,
+        currency: invoiceData.currency,
+        status: status,
+        line_items_count: invoiceData.lineItems.length
+      });
     }
   };
 
@@ -409,28 +419,6 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     }
   };
 
-  const handleGenerate = async () => {
-    try {
-      await saveOrUpdateInvoice('sent');
-
-      setInvoiceData(prev => ({ ...prev, status: 'sent' }));
-
-      // Add notification for invoice creation
-      addNotification({
-        type: 'invoice_created',
-        title: 'Invoice Created',
-        message: `Invoice ${invoiceData.invoiceNumber} has been created for ${invoiceData.clientCompany || invoiceData.clientName || 'client'}`,
-        relatedId: parseInt(invoiceData.id || '0'),
-        relatedType: 'invoice'
-      });
-
-      showSuccessMessage('Invoice generated successfully!');
-      onClose();
-    } catch (error) {
-      console.error('Error creating invoice:', error);
-      showSuccessMessage('Error creating invoice. Please try again.');
-    }
-  };
 
   const handlePreview = () => {
     setViewMode('preview');
@@ -1591,15 +1579,9 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
               </button>
               <button
                 onClick={handlePreview}
-                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200"
+                className="px-6 py-2 bg-[#1c2d5a] text-white rounded-xl hover:bg-[#152441] transition-colors duration-200"
               >
                 Preview Invoice
-              </button>
-              <button
-                onClick={handleGenerate}
-                className="px-6 py-2 bg-gradient-to-r from-[#E83F87] to-[#d63577] text-white rounded-xl hover:from-[#d63577] hover:to-[#c12a64] transition-all duration-200 shadow-lg"
-              >
-                Generate Invoice
               </button>
             </div>
           </div>

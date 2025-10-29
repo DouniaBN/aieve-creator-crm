@@ -3,6 +3,7 @@ import { X, Calendar as CalendarIcon, Mail, FileText, Instagram, Youtube, Linked
 import { format } from 'date-fns';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';
+import { usePostHog } from './PostHogProvider';
 import { ContentPost } from '../lib/supabase';
 import { Calendar } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -56,6 +57,7 @@ interface AddPostModalProps {
 const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDate, onPostAdded }) => {
   const { createContentPost, fetchContentPosts, brandDeals, fetchBrandDeals, userProfile } = useSupabase();
   const { showSuccessMessage } = useAppContext();
+  const { track } = usePostHog();
   const [loading, setLoading] = useState(false);
   const [linkToBrandDeal, setLinkToBrandDeal] = useState(false);
   const [selectedBrandDeal, setSelectedBrandDeal] = useState<string>('');
@@ -168,10 +170,18 @@ const AddPostModal: React.FC<AddPostModalProps> = ({ isOpen, onClose, initialDat
         };
         await createContentPost(postData);
       }
-      
+
+      // Track post creation event
+      track('post_created', {
+        post_type: formData.platforms.join(', '),
+        platform_count: formData.platforms.length,
+        status: formData.status,
+        has_brand_deal: linkToBrandDeal && selectedBrandDeal ? true : false
+      });
+
       // Show success message and close modal
       showSuccessMessage(`Successfully created ${formData.platforms.length} post${formData.platforms.length > 1 ? 's' : ''} for ${formData.title}`);
-      
+
       // Force refresh of content posts to update calendar
       await fetchContentPosts();
       

@@ -2,12 +2,14 @@ import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
 import logoImage from '../assets/no-bg-logo.png'
+import { usePostHog } from './PostHogProvider'
 
 interface AuthProps {
   onAuthSuccess: (isNewUser: boolean) => void
 }
 
 const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
+  const { track } = usePostHog()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,6 +32,10 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
           password,
         })
         if (error) throw error
+
+        // Track successful login
+        track('user_logged_in')
+
         onAuthSuccess(false) // false = not a new user
       } else {
         // Sign up
@@ -44,6 +50,11 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
         // If user is immediately confirmed (e.g., in development)
         if (data.user && data.session) {
+          // Track successful signup
+          track('user_signed_up', {
+            segment: 'creator'
+          })
+
           onAuthSuccess(true) // true = new user
         } else {
           setError('Check your email for the confirmation link!')

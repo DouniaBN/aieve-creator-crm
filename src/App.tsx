@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign } from 'lucide-react';
+import { initPostHog, posthog } from './lib/posthog';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
+import { PostHogProvider } from './components/PostHogProvider';
 import NotificationPanel from './components/NotificationPanel';
 import Auth from './components/Auth';
 import OnboardingModal from './components/OnboardingModal';
@@ -247,10 +249,16 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    initPostHog();
+  }, []);
+
   return (
     <SupabaseProvider>
       <AppProvider>
-        <AppContent />
+        <PostHogProvider>
+          <AppContent />
+        </PostHogProvider>
       </AppProvider>
     </SupabaseProvider>
   );
