@@ -117,15 +117,15 @@ const Invoices = () => {
       currency: invoice.currency || 'USD',
 
       // Creator Info
-      creatorName: 'Sarah Chen',
-      creatorBusinessName: invoice.creator_business_name || 'Sarah Creates Studio',
-      creatorEmail: 'sarah@example.com',
-      creatorPhone: invoice.creator_phone || '+1 (555) 123-4567',
-      creatorAddress: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
-      creatorTaxId: invoice.creator_tax_id || '12-3456789',
-      creatorWebsite: invoice.creator_website || 'sarahcreates.com',
-      creatorInstagram: invoice.creator_social_handle || '@sarahcreates',
-      creatorYoutube: '@SarahCreatesContent',
+      creatorName: userProfile?.preferred_name || '',
+      creatorBusinessName: invoice.creator_business_name || userProfile?.business_name || '',
+      creatorEmail: userProfile?.email || '',
+      creatorPhone: invoice.creator_phone || userProfile?.phone || '',
+      creatorAddress: invoice.creator_address || userProfile?.address || '',
+      creatorTaxId: invoice.creator_tax_id || userProfile?.tax_id || '',
+      creatorWebsite: invoice.creator_website || userProfile?.website || '',
+      creatorInstagram: invoice.creator_social_handle || userProfile?.instagram_handle || '',
+      creatorYoutube: userProfile?.youtube_handle || '',
 
       // Client Info
       clientName: invoice.contact_name || '',
@@ -201,15 +201,15 @@ const Invoices = () => {
         currency: invoice.currency || 'USD',
 
         // Creator Info
-        creatorName: 'Sarah Chen',
-        creatorBusinessName: invoice.creator_business_name || 'Sarah Creates Studio',
-        creatorEmail: 'sarah@example.com',
-        creatorPhone: invoice.creator_phone || '+1 (555) 123-4567',
-        creatorAddress: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
-        creatorTaxId: invoice.creator_tax_id || '12-3456789',
-        creatorWebsite: invoice.creator_website || 'sarahcreates.com',
-        creatorInstagram: invoice.creator_social_handle || '@sarahcreates',
-        creatorYoutube: '@SarahCreatesContent',
+        creatorName: userProfile?.preferred_name || '',
+        creatorBusinessName: invoice.creator_business_name || userProfile?.business_name || '',
+        creatorEmail: userProfile?.email || '',
+        creatorPhone: invoice.creator_phone || userProfile?.phone || '',
+        creatorAddress: invoice.creator_address || userProfile?.address || '',
+        creatorTaxId: invoice.creator_tax_id || userProfile?.tax_id || '',
+        creatorWebsite: invoice.creator_website || userProfile?.website || '',
+        creatorInstagram: invoice.creator_social_handle || userProfile?.instagram_handle || '',
+        creatorYoutube: userProfile?.youtube_handle || '',
 
         // Client Info
         clientName: invoice.contact_name || '',
@@ -300,15 +300,15 @@ const Invoices = () => {
         currency: invoice.currency || 'USD',
 
         // Creator Info (load from database or defaults)
-        creatorName: 'Sarah Chen', // Static name
-        creatorBusinessName: invoice.creator_business_name || 'Sarah Creates Studio',
-        creatorEmail: 'sarah@example.com', // Static email
-        creatorPhone: invoice.creator_phone || '+1 (555) 123-4567',
-        creatorAddress: invoice.creator_address || '123 Creator St, Los Angeles, CA 90210',
-        creatorTaxId: invoice.creator_tax_id || '12-3456789',
-        creatorWebsite: invoice.creator_website || 'sarahcreates.com',
-        creatorInstagram: invoice.creator_social_handle || '@sarahcreates',
-        creatorYoutube: '@SarahCreatesContent',
+        creatorName: userProfile?.preferred_name || '',
+        creatorBusinessName: invoice.creator_business_name || userProfile?.business_name || '',
+        creatorEmail: userProfile?.email || '',
+        creatorPhone: invoice.creator_phone || userProfile?.phone || '',
+        creatorAddress: invoice.creator_address || userProfile?.address || '',
+        creatorTaxId: invoice.creator_tax_id || userProfile?.tax_id || '',
+        creatorWebsite: invoice.creator_website || userProfile?.website || '',
+        creatorInstagram: invoice.creator_social_handle || userProfile?.instagram_handle || '',
+        creatorYoutube: userProfile?.youtube_handle || '',
 
         // Client Info
         clientName: invoice.contact_name || '',

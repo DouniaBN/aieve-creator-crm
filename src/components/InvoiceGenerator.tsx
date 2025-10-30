@@ -104,7 +104,7 @@ interface InvoiceGeneratorProps {
 
 const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false, autoPrint = false }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
-  const { generateInvoiceNumber, createInvoice, updateInvoice, invoices } = useSupabase();
+  const { generateInvoiceNumber, createInvoice, updateInvoice, invoices, userProfile } = useSupabase();
   const { track } = usePostHog();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>(previewMode ? 'preview' : 'edit');
   const [showTax, setShowTax] = useState(false);
@@ -158,18 +158,18 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     invoiceNumber: 'INV-001',
     issueDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    currency: 'USD',
+    currency: userProfile?.currency || 'USD',
 
-    // Creator Info (pre-filled with default data)
-    creatorName: 'Sarah Chen',
-    creatorBusinessName: 'Sarah Creates Studio',
-    creatorEmail: 'sarah@example.com',
-    creatorPhone: '+1 (555) 123-4567',
-    creatorAddress: '123 Creator St, Los Angeles, CA 90210',
-    creatorTaxId: '12-3456789',
-    creatorWebsite: 'sarahcreates.com',
-    creatorInstagram: '@sarahcreates',
-    creatorYoutube: '@SarahCreatesContent',
+    // Creator Info (pre-filled with user data)
+    creatorName: userProfile?.preferred_name || '',
+    creatorBusinessName: userProfile?.business_name || '',
+    creatorEmail: userProfile?.email || '',
+    creatorPhone: userProfile?.phone || '',
+    creatorAddress: userProfile?.address || '',
+    creatorTaxId: userProfile?.tax_id || '',
+    creatorWebsite: userProfile?.website || '',
+    creatorInstagram: userProfile?.instagram_handle || '',
+    creatorYoutube: userProfile?.youtube_handle || '',
 
     // Client Info
     clientName: '',

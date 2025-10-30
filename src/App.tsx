@@ -4,6 +4,7 @@ import { initPostHog, posthog } from './lib/posthog';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { PostHogProvider } from './components/PostHogProvider';
+import MobileBlocker from './components/MobileBlocker';
 import NotificationPanel from './components/NotificationPanel';
 import Auth from './components/Auth';
 import OnboardingModal from './components/OnboardingModal';
@@ -254,13 +255,15 @@ function App() {
   }, []);
 
   return (
-    <SupabaseProvider>
-      <AppProvider>
-        <PostHogProvider>
-          <AppContent />
-        </PostHogProvider>
-      </AppProvider>
-    </SupabaseProvider>
+    <MobileBlocker>
+      <SupabaseProvider>
+        <AppProvider>
+          <PostHogProvider>
+            <AppContent />
+          </PostHogProvider>
+        </AppProvider>
+      </SupabaseProvider>
+    </MobileBlocker>
   );
 }
 
