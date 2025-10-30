@@ -188,9 +188,9 @@ function AppContent() {
       </div>
 
       {/* Main Content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 h-screen flex flex-col">
         {/* Header */}
-        <div className="lg:hidden sticky top-0 z-30 p-4" style={{ backgroundColor: '#FAFAFA' }}>
+        <div className="lg:hidden sticky top-0 z-30 p-4 flex-shrink-0" style={{ backgroundColor: '#FAFAFA' }}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200"
@@ -200,15 +200,15 @@ function AppContent() {
         </div>
 
         {activeTab !== 'projects' && activeTab !== 'brand-deals' && activeTab !== 'invoices' && activeTab !== 'settings' && (
-          <div className="hidden lg:block sticky top-0 z-30 px-4 py-2" style={{ backgroundColor: '#FAFAFA' }}>
+          <div className="hidden lg:block sticky top-0 z-30 px-4 py-2 flex-shrink-0" style={{ backgroundColor: '#FAFAFA' }}>
             <div className="flex justify-end">
               <NotificationPanel />
             </div>
           </div>
         )}
 
-        {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-4">
+        {/* Page Content - Scrollable */}
+        <main className="p-4 sm:p-6 lg:p-4 flex-1 overflow-y-auto">
           {renderContent()}
         </main>
       </div>
