@@ -339,16 +339,6 @@ const BrandDeals = () => {
 
       showSuccessMessage(`${editingDeal.brand_name} deal updated successfully!`);
 
-      // Auto-create invoice when deal is completed or posted and has a fee
-      if ((editingDeal.status === 'completed' || editingDeal.status === 'posted') && editingDeal.fee && editingDeal.fee > 0) {
-        try {
-          await createInvoiceFromBrandDeal(editingDeal);
-          showSuccessMessage(`Invoice automatically created for ${editingDeal.brand_name}!`);
-        } catch (error) {
-          console.error('Error auto-creating invoice:', error);
-        }
-      }
-
       setShowEditModal(false);
       setEditingDeal(null);
       setEditFeeInput('');
