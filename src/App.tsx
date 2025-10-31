@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign } from 'lucide-react';
+import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { initPostHog, posthog } from './lib/posthog';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
@@ -22,6 +22,7 @@ function AppContent() {
   const { user, loading, signOut, userProfile } = useSupabase();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showShepherdTour, setShowShepherdTour] = useState(false);
   const [showFullOnboarding, setShowFullOnboarding] = useState(false);
@@ -107,15 +108,27 @@ function AppContent() {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-lg shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`fixed inset-y-0 left-0 z-50 ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white/80 backdrop-blur-lg shadow-xl transform transition-all duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 pb-4">
-            <img 
-              src={logoImage} 
-              alt="AIEVE Logo" 
-              className="h-10 w-auto"
-            />
+          {/* Logo and Collapse Toggle */}
+          <div className="p-6 pb-4 flex items-center justify-between">
+            {!sidebarCollapsed && (
+              <img
+                src={logoImage}
+                alt="AIEVE Logo"
+                className="h-10 w-auto"
+              />
+            )}
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200"
+            >
+              {sidebarCollapsed ? (
+                <ChevronRight className="w-5 h-5" />
+              ) : (
+                <ChevronLeft className="w-5 h-5" />
+              )}
+            </button>
           </div>
           
           {/* Divider */}
@@ -128,21 +141,32 @@ function AppContent() {
                 const Icon = item.icon;
                 return (
                   <li key={item.id}>
-                    <button
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setSidebarOpen(false);
-                      }}
-                      className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                        activeTab === item.id
-                          ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
-                          : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
-                      }`}
-                      data-tour={item.tourId || undefined}
-                    >
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </button>
+                    <div className="relative group">
+                      <button
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center ${
+                          sidebarCollapsed ? 'justify-center px-4 py-3' : 'px-4 py-3'
+                        } rounded-xl transition-all duration-200 ${
+                          activeTab === item.id
+                            ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
+                            : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
+                        }`}
+                        data-tour={item.tourId || undefined}
+                      >
+                        <Icon className={`w-5 h-5 ${sidebarCollapsed ? 'flex-shrink-0' : 'mr-3 flex-shrink-0'}`} />
+                        {!sidebarCollapsed && item.name}
+                      </button>
+
+                      {/* Tooltip for collapsed state */}
+                      {sidebarCollapsed && (
+                        <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                          {item.name}
+                        </div>
+                      )}
+                    </div>
                   </li>
                 );
               })}
@@ -151,7 +175,7 @@ function AppContent() {
 
           {/* Settings and Logout */}
           <div className="p-4">
-            <div className="flex justify-between">
+            <div className={`flex ${sidebarCollapsed ? 'flex-col space-y-2' : 'justify-between'}`}>
               <div className="relative group">
                 <button
                   onClick={() => {
@@ -167,7 +191,7 @@ function AppContent() {
                 >
                   <Settings className="w-5 h-5" />
                 </button>
-                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                   Settings
                 </div>
               </div>
@@ -178,7 +202,7 @@ function AppContent() {
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
-                <div className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                   Log out
                 </div>
               </div>
@@ -188,7 +212,7 @@ function AppContent() {
       </div>
 
       {/* Main Content */}
-      <div className="lg:pl-64 h-screen flex flex-col">
+      <div className={`${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'} h-screen flex flex-col transition-all duration-300`}>
         {/* Header */}
         <div className="lg:hidden sticky top-0 z-30 p-4 flex-shrink-0" style={{ backgroundColor: '#FAFAFA' }}>
           <button
