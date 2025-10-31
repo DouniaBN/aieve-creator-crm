@@ -134,7 +134,6 @@ const SettingsPage = () => {
             className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#E83F87]/20 focus:border-[#E83F87] transition-colors duration-200"
             value={profile.preferred_name}
             onChange={(e) => setProfile({ ...profile, preferred_name: e.target.value })}
-            placeholder="How you'd like to be addressed"
           />
           <p className="text-xs text-gray-500 mt-1">This will appear in your dashboard greeting</p>
         </div>

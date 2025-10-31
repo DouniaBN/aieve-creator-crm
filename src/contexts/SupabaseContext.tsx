@@ -927,7 +927,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     const cleanUpdates = Object.fromEntries(
       Object.entries(updates).filter(([key, value]) => {
         const isUndefined = value === undefined;
-        const isExcludedField = ['onboarding_complete', 'preferred_name', 'creator_type'].includes(key);
+        const isExcludedField = ['onboarding_complete', 'creator_type'].includes(key);
         return !isUndefined && !isExcludedField;
       })
     );

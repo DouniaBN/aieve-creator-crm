@@ -18,6 +18,8 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetSuccess, setResetSuccess] = useState('')
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,6 +66,28 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Please enter your email address first')
+      return
+    }
+
+    setResetLoading(true)
+    setError('')
+    setResetSuccess('')
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      if (error) throw error
+
+      setResetSuccess('Password reset email sent! Check your inbox.')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'An error occurred')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -165,6 +189,13 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             </div>
           )}
 
+          {/* Success Message */}
+          {resetSuccess && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
+              <p className="text-sm text-green-600">{resetSuccess}</p>
+            </div>
+          )}
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -181,6 +212,20 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             )}
           </button>
 
+          {/* Forgot Password Link (only show in login mode) */}
+          {isLogin && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetLoading}
+                className="text-sm text-gray-600 hover:text-[#E83F87] transition-colors duration-200 disabled:opacity-50"
+              >
+                {resetLoading ? 'Sending email...' : 'Forgot your password?'}
+              </button>
+            </div>
+          )}
+
           {/* Toggle Auth Mode */}
           <div className="text-center">
             <button
@@ -188,6 +233,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               onClick={() => {
                 setIsLogin(!isLogin)
                 setError('')
+                setResetSuccess('')
                 setPassword('')
                 setConfirmPassword('')
               }}
