@@ -22,6 +22,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/supabase-js": "^2.56.0",
+    "@types/react-router-dom": "^5.3.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
@@ -33,6 +34,7 @@
     "react-big-calendar": "^1.19.4",
     "react-day-picker": "^9.11.0",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.9.5",
     "shepherd.js": "^14.5.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7"

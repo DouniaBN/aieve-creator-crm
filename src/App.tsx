@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
-import { initPostHog, posthog } from './lib/posthog';
+import { initPostHog } from './lib/posthog';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { PostHogProvider } from './components/PostHogProvider';
 import MobileBlocker from './components/MobileBlocker';
 import NotificationPanel from './components/NotificationPanel';
-import Auth from './components/Auth';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import OnboardingModal from './components/OnboardingModal';
 import ShepherdTour from './components/ShepherdTour';
 import Onboarding from './components/Onboarding';
@@ -20,13 +22,14 @@ import logoImage from './assets/no-bg-logo.png';
 
 function AppContent() {
   const { user, loading, signOut, userProfile } = useSupabase();
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showShepherdTour, setShowShepherdTour] = useState(false);
   const [showFullOnboarding, setShowFullOnboarding] = useState(false);
   const { successMessage, showSuccessMessage } = useAppContext();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -46,12 +49,14 @@ function AppContent() {
     );
   }
 
-  // Show auth screen if not logged in
-  if (!user) {
-    return <Auth onAuthSuccess={(_isNewUser: boolean) => {
-      // For testing: show onboarding modal for both new users AND existing users
-      setShowOnboardingModal(true);
-    }} />;
+  // Redirect to login if not authenticated and trying to access protected routes
+  if (!user && !['/login', '/signup'].includes(location.pathname)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to dashboard if authenticated and trying to access auth routes
+  if (user && ['/login', '/signup', '/'].includes(location.pathname)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Show full onboarding flow if user chose to continue from modal
@@ -67,41 +72,33 @@ function AppContent() {
   }
 
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard, tourId: 'dashboard' },
-    { id: 'projects', name: 'Calendar', icon: Calendar, tourId: 'calendar' },
-    { id: 'brand-deals', name: 'Brand Deals', icon: DollarSign, tourId: 'brand-deals' },
-    { id: 'invoices', name: 'Invoices', icon: FileText, tourId: 'invoices' },
-    { id: 'settings', name: 'Settings', icon: Settings },
+    { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard, tourId: 'dashboard' },
+    { path: '/calendar', name: 'Calendar', icon: Calendar, tourId: 'calendar' },
+    { path: '/brand-deals', name: 'Brand Deals', icon: DollarSign, tourId: 'brand-deals' },
+    { path: '/invoices', name: 'Invoices', icon: FileText, tourId: 'invoices' },
+    { path: '/settings', name: 'Settings', icon: Settings },
   ];
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <Dashboard 
-          onNavigateToCalendar={() => setActiveTab('projects')} 
-          onNavigateToInvoices={() => setActiveTab('invoices')}
-        />;
-      case 'projects':
-        return <Projects />;
-      case 'brand-deals':
-        return <BrandDeals />;
-      case 'invoices':
-        return <Invoices />;
-      case 'settings':
-        return <SettingsPage />;
-      default:
-        return <Dashboard 
-          onNavigateToCalendar={() => setActiveTab('projects')} 
-          onNavigateToInvoices={() => setActiveTab('invoices')}
-        />;
-    }
+  const handleAuthSuccess = () => {
+    setShowOnboardingModal(true);
+    navigate('/dashboard');
   };
+
+  // Handle auth routes
+  if (['/login', '/signup'].includes(location.pathname)) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login onAuthSuccess={handleAuthSuccess} />} />
+        <Route path="/signup" element={<Signup onAuthSuccess={handleAuthSuccess} />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAFAFA' }}>
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -130,27 +127,26 @@ function AppContent() {
               )}
             </button>
           </div>
-          
+
           {/* Divider */}
           <div className="border-b border-gray-200/50 mx-6"></div>
 
           {/* Navigation */}
           <nav className="flex-1 p-6 pt-6">
             <ul className="space-y-2">
-              {navigation.filter(item => item.id !== 'settings').map((item) => {
+              {navigation.filter(item => item.path !== '/settings').map((item) => {
                 const Icon = item.icon;
+                const isActive = location.pathname === item.path;
                 return (
-                  <li key={item.id}>
+                  <li key={item.path}>
                     <div className="relative group">
-                      <button
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setSidebarOpen(false);
-                        }}
+                      <Link
+                        to={item.path}
+                        onClick={() => setSidebarOpen(false)}
                         className={`w-full flex items-center ${
                           sidebarCollapsed ? 'justify-center px-4 py-3' : 'px-4 py-3'
                         } rounded-xl transition-all duration-200 ${
-                          activeTab === item.id
+                          isActive
                             ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
                             : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                         }`}
@@ -158,7 +154,7 @@ function AppContent() {
                       >
                         <Icon className={`w-5 h-5 ${sidebarCollapsed ? 'flex-shrink-0' : 'mr-3 flex-shrink-0'}`} />
                         {!sidebarCollapsed && item.name}
-                      </button>
+                      </Link>
 
                       {/* Tooltip for collapsed state */}
                       {sidebarCollapsed && (
@@ -177,20 +173,18 @@ function AppContent() {
           <div className="p-4">
             <div className={`flex ${sidebarCollapsed ? 'flex-col space-y-2' : 'justify-between'}`}>
               <div className="relative group">
-                <button
-                  onClick={() => {
-                    setActiveTab('settings');
-                    setSidebarOpen(false);
-                  }}
+                <Link
+                  to="/settings"
+                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center justify-center p-3 rounded-xl transition-all duration-200 ${
-                    activeTab === 'settings'
+                    location.pathname === '/settings'
                       ? 'bg-[#E83F87] text-white shadow-lg shadow-pink-300/25'
                       : 'text-gray-700 hover:bg-gray-100/50 hover:shadow-sm'
                   }`}
                   data-tour="settings"
                 >
                   <Settings className="w-5 h-5" />
-                </button>
+                </Link>
                 <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                   Settings
                 </div>
@@ -223,7 +217,7 @@ function AppContent() {
           </button>
         </div>
 
-        {activeTab !== 'projects' && activeTab !== 'brand-deals' && activeTab !== 'invoices' && activeTab !== 'settings' && (
+        {!['/calendar', '/brand-deals', '/invoices', '/settings'].includes(location.pathname) && (
           <div className="hidden lg:block sticky top-0 z-30 px-4 py-2 flex-shrink-0" style={{ backgroundColor: '#FAFAFA' }}>
             <div className="flex justify-end">
               <NotificationPanel />
@@ -233,10 +227,22 @@ function AppContent() {
 
         {/* Page Content - Scrollable */}
         <main className="p-4 sm:p-6 lg:p-4 flex-1 overflow-y-auto">
-          {renderContent()}
+          <Routes>
+            <Route path="/dashboard" element={
+              <Dashboard
+                onNavigateToCalendar={() => navigate('/calendar')}
+                onNavigateToInvoices={() => navigate('/invoices')}
+              />
+            } />
+            <Route path="/calendar" element={<Projects />} />
+            <Route path="/brand-deals" element={<BrandDeals />} />
+            <Route path="/invoices" element={<Invoices />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
         </main>
       </div>
-      
+
       <SuccessMessage
         message={successMessage}
         onClose={() => showSuccessMessage('')}
@@ -267,7 +273,16 @@ function AppContent() {
           setShowShepherdTour(false);
           showSuccessMessage('Welcome to AIEVE! 🎉');
         }}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab: string) => {
+          const pathMap: { [key: string]: string } = {
+            'dashboard': '/dashboard',
+            'projects': '/calendar',
+            'brand-deals': '/brand-deals',
+            'invoices': '/invoices',
+            'settings': '/settings'
+          };
+          navigate(pathMap[tab] || '/dashboard');
+        }}
       />
     </div>
   );
@@ -283,7 +298,9 @@ function App() {
       <SupabaseProvider>
         <AppProvider>
           <PostHogProvider>
-            <AppContent />
+            <Router>
+              <AppContent />
+            </Router>
           </PostHogProvider>
         </AppProvider>
       </SupabaseProvider>
