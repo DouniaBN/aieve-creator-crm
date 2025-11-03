@@ -21,9 +21,6 @@ export const isEmailConfirmationRoute = (): boolean => {
   const hash = window.location.hash;
   const search = window.location.search;
 
-  console.log('confirmationUtils - checking hash:', hash);
-  console.log('confirmationUtils - checking search:', search);
-
   // Parse both hash and query parameters
   const hashParams = hash ? parseHashParams(hash) : {};
   const searchParams = search ? parseSearchParams(search) : {};
@@ -31,14 +28,9 @@ export const isEmailConfirmationRoute = (): boolean => {
   // Combine both sets of parameters
   const params = { ...hashParams, ...searchParams };
 
-  console.log('confirmationUtils - combined params:', params);
-
   // Check for Supabase confirmation parameters
   const hasConfirmationType = params.type && ['signup', 'recovery', 'invite', 'email_change'].includes(params.type);
   const hasConfirmationToken = !!(params.confirmation_token || params.recovery_token || params.invite_token || params.access_token);
-
-  console.log('confirmationUtils - hasConfirmationType:', hasConfirmationType);
-  console.log('confirmationUtils - hasConfirmationToken:', hasConfirmationToken);
 
   return hasConfirmationType && hasConfirmationToken;
 };

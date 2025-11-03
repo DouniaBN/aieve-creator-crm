@@ -13,6 +13,7 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   const [isConfirmationRoute, setIsConfirmationRoute] = useState(false);
   const [confirmationType, setConfirmationType] = useState<string | null>(null);
   const [confirmationCompleted, setConfirmationCompleted] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -24,13 +25,16 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
       const hash = window.location.hash;
       const search = window.location.search;
 
-      // Debug logging
-      console.log('MobileBlocker - Current URL:', currentUrl);
-      console.log('MobileBlocker - Hash:', hash);
-      console.log('MobileBlocker - Search params:', search);
-
       const isConfirming = isEmailConfirmationRoute();
-      console.log('MobileBlocker - Is confirmation route:', isConfirming);
+
+      // Store debug info for visual display
+      setDebugInfo({
+        currentUrl,
+        hash,
+        search,
+        isConfirming,
+        timestamp: new Date().toISOString()
+      });
 
       setIsConfirmationRoute(isConfirming);
       if (isConfirming) {
@@ -93,6 +97,18 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-100 overflow-y-auto p-4 pt-8">
+        {/* Debug Info Overlay */}
+        {debugInfo && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-xs">
+            <strong>DEBUG INFO:</strong>
+            <br />URL: {debugInfo.currentUrl}
+            <br />Hash: {debugInfo.hash || 'none'}
+            <br />Search: {debugInfo.search || 'none'}
+            <br />Is Confirmation: {debugInfo.isConfirming ? 'YES' : 'NO'}
+            <br />Time: {debugInfo.timestamp}
+          </div>
+        )}
+
         <div className="flex justify-center">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           {/* Logo */}
