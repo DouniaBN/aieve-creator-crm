@@ -11,7 +11,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onNavigateToCalendar, onNavigateToInvoices }) => {
-  const { invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask, userProfile, user } = useSupabase();
+  const { invoices, contentPosts, brandDeals, tasks, createTask, updateTask, deleteTask, userProfile } = useSupabase();
   const [newTaskText, setNewTaskText] = useState('');
 
   // Memoize date calculations to recalculate daily

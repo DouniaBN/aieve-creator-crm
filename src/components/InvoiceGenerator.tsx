@@ -102,7 +102,7 @@ interface InvoiceGeneratorProps {
 }
 
 const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false, autoPrint = false }) => {
-  const { showSuccessMessage, addNotification } = useAppContext();
+  const { showSuccessMessage } = useAppContext();
   const { generateInvoiceNumber, createInvoice, updateInvoice, invoices, userProfile } = useSupabase();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>(previewMode ? 'preview' : 'edit');
   const [showTax, setShowTax] = useState(false);

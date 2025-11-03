@@ -12,6 +12,7 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [isConfirmationRoute, setIsConfirmationRoute] = useState(false);
   const [confirmationType, setConfirmationType] = useState<string | null>(null);
+  const [confirmationCompleted, setConfirmationCompleted] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -42,9 +43,39 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
     };
   }, []);
 
-  // If on mobile and it's an email confirmation route, show the confirmation success page
+  // Handle confirmation completion detection
+  useEffect(() => {
+    if (isConfirmationRoute && isMobile) {
+      // Give Supabase time to process the confirmation
+      const confirmationTimer = setTimeout(() => {
+        setConfirmationCompleted(true);
+      }, 3000); // 3 seconds should be enough for processing
+
+      // Also listen for hash changes (Supabase often clears hash after processing)
+      const checkHashClear = () => {
+        if (!window.location.hash || window.location.hash === '#') {
+          setConfirmationCompleted(true);
+        }
+      };
+
+      // Check periodically if hash was cleared
+      const hashCheckInterval = setInterval(checkHashClear, 500);
+
+      return () => {
+        clearTimeout(confirmationTimer);
+        clearInterval(hashCheckInterval);
+      };
+    }
+  }, [isConfirmationRoute, isMobile]);
+
+  // If mobile + confirmation route: show app first (for processing), then success screen
   if (isMobile && isConfirmationRoute) {
-    return <EmailConfirmationSuccess type={confirmationType || undefined} />;
+    if (confirmationCompleted) {
+      return <EmailConfirmationSuccess type={confirmationType || undefined} />;
+    } else {
+      // Let the app load normally so Supabase can process the confirmation
+      return <>{children}</>;
+    }
   }
 
   // If on mobile and NOT a confirmation route, show the desktop-only block
