@@ -45,6 +45,18 @@ export const isEmailConfirmationRoute = (): boolean => {
   const isRootWithHash = window.location.pathname === '/' && window.location.hash === '#';
   const hasNoSearchParams = !search;
 
+  // Debug: Store detection results for debugging
+  if (typeof window !== 'undefined') {
+    (window as any).confirmationDebug = {
+      isMobile,
+      pathname: window.location.pathname,
+      hash: window.location.hash,
+      isRootWithHash,
+      hasNoSearchParams,
+      wouldTrigger: isMobile && isRootWithHash && hasNoSearchParams
+    };
+  }
+
   if (isMobile && isRootWithHash && hasNoSearchParams) {
     // This is likely a confirmation link that had its parameters stripped
     return true;
