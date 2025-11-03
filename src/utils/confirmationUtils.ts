@@ -39,28 +39,17 @@ export const isEmailConfirmationRoute = (): boolean => {
     return true;
   }
 
-  // TEMPORARY FIX: For now, assume mobile visits to root with # are confirmation attempts
-  // This is a workaround since Supabase seems to strip parameters before we can detect them
+  // Enhanced detection: Handle mobile confirmation links where Supabase strips parameters
+  // When Supabase processes confirmations, it redirects to the root URL
   const isMobile = window.innerWidth < 1280;
   // Check if URL ends with /# OR if we're at root with empty hash (browser normalizes # to empty)
   const isRootWithHash = window.location.pathname === '/' &&
     (window.location.hash === '#' || window.location.hash === '' || window.location.href.endsWith('/#'));
   const hasNoSearchParams = !search;
 
-  // Debug: Store detection results for debugging
-  if (typeof window !== 'undefined') {
-    (window as any).confirmationDebug = {
-      isMobile,
-      pathname: window.location.pathname,
-      hash: window.location.hash,
-      isRootWithHash,
-      hasNoSearchParams,
-      wouldTrigger: isMobile && isRootWithHash && hasNoSearchParams
-    };
-  }
 
   if (isMobile && isRootWithHash && hasNoSearchParams) {
-    // This is likely a confirmation link that had its parameters stripped
+    // Mobile user visiting root URL - likely from confirmation email
     return true;
   }
 

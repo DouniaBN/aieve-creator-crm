@@ -13,7 +13,6 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   const [isConfirmationRoute, setIsConfirmationRoute] = useState(false);
   const [confirmationType, setConfirmationType] = useState<string | null>(null);
   const [confirmationCompleted, setConfirmationCompleted] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -21,24 +20,7 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
     };
 
     const checkConfirmationRoute = () => {
-      const currentUrl = window.location.href;
-      const hash = window.location.hash;
-      const search = window.location.search;
-
       const isConfirming = isEmailConfirmationRoute();
-
-      // Store debug info for visual display
-      setDebugInfo({
-        currentUrl,
-        hash,
-        search,
-        isConfirming,
-        isMobile: window.innerWidth < 1280,
-        pathname: window.location.pathname,
-        fullHash: window.location.hash,
-        timestamp: new Date().toISOString()
-      });
-
       setIsConfirmationRoute(isConfirming);
       if (isConfirming) {
         setConfirmationType(getConfirmationType());
@@ -100,21 +82,6 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-100 overflow-y-auto p-4 pt-8">
-        {/* Debug Info Overlay */}
-        {debugInfo && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-xs">
-            <strong>DEBUG INFO:</strong>
-            <br />URL: {debugInfo.currentUrl}
-            <br />Pathname: {debugInfo.pathname}
-            <br />Hash: {debugInfo.hash || 'none'}
-            <br />Full Hash: {debugInfo.fullHash || 'none'}
-            <br />Search: {debugInfo.search || 'none'}
-            <br />Is Mobile: {debugInfo.isMobile ? 'YES' : 'NO'}
-            <br />Is Confirmation: {debugInfo.isConfirming ? 'YES' : 'NO'}
-            <br />Time: {debugInfo.timestamp}
-          </div>
-        )}
-
         <div className="flex justify-center">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           {/* Logo */}
