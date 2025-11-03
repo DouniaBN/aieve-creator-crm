@@ -3,14 +3,12 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
 import logoImage from '../assets/no-bg-logo.png'
-import { usePostHog } from './PostHogProvider'
 
 interface SignupProps {
   onAuthSuccess: (isNewUser: boolean) => void
 }
 
 const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
-  const { track } = usePostHog()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -40,9 +38,6 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
 
       // If user is immediately confirmed (e.g., in development)
       if (data.user && data.session) {
-        track('user_signed_up', {
-          segment: 'creator'
-        })
         onAuthSuccess(true)
       } else {
         setError('Check your email for the confirmation link!')

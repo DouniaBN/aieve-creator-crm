@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Download, Building, FileText, DollarSign, Printer, ArrowLeft, Calendar, Building2, Calendar as CalendarIcon, CreditCard, Banknote } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
 import { useSupabase } from '../contexts/SupabaseContext';
-import { usePostHog } from './PostHogProvider';
 import { format } from 'date-fns';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -105,7 +104,6 @@ interface InvoiceGeneratorProps {
 const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, editingInvoice, previewMode = false, autoPrint = false }) => {
   const { showSuccessMessage, addNotification } = useAppContext();
   const { generateInvoiceNumber, createInvoice, updateInvoice, invoices, userProfile } = useSupabase();
-  const { track } = usePostHog();
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>(previewMode ? 'preview' : 'edit');
   const [showTax, setShowTax] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
@@ -385,14 +383,6 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     } else {
       // Create new invoice
       await createInvoice(dbInvoice);
-
-      // Track invoice creation event
-      track('invoice_created', {
-        amount: invoiceData.total,
-        currency: invoiceData.currency,
-        status: status,
-        line_items_count: invoiceData.lineItems.length
-      });
     }
   };
 

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
-import { initPostHog } from './lib/posthog';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
-import { PostHogProvider } from './components/PostHogProvider';
 import MobileBlocker from './components/MobileBlocker';
 import NotificationPanel from './components/NotificationPanel';
 import Login from './components/Login';
@@ -289,19 +287,13 @@ function AppContent() {
 }
 
 function App() {
-  useEffect(() => {
-    initPostHog();
-  }, []);
-
   return (
     <MobileBlocker>
       <SupabaseProvider>
         <AppProvider>
-          <PostHogProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </PostHogProvider>
+          <Router>
+            <AppContent />
+          </Router>
         </AppProvider>
       </SupabaseProvider>
     </MobileBlocker>

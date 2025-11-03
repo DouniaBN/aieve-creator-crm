@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase, Project, Invoice, BrandDeal, ContentPost, Task, Notification, UserSettings, UserProfile } from '../lib/supabase'
-import { posthog } from '../lib/posthog'
 
 interface SupabaseContextType {
   user: User | null
@@ -113,13 +112,7 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       setLoading(false)
 
       // PostHog integration
-      if (event === 'SIGNED_IN' && session?.user) {
-        posthog.identify(session.user.id, {
-          email: session.user.email,
-        })
-      } else if (event === 'SIGNED_OUT') {
-        posthog.reset()
-      }
+      // Authentication event handling
     })
 
     return () => subscription.unsubscribe()

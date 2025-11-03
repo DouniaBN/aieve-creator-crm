@@ -3,14 +3,12 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
 import logoImage from '../assets/no-bg-logo.png'
-import { usePostHog } from './PostHogProvider'
 
 interface LoginProps {
   onAuthSuccess: (isNewUser: boolean) => void
 }
 
 const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
-  const { track } = usePostHog()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -31,7 +29,6 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
       })
       if (error) throw error
 
-      track('user_logged_in')
       onAuthSuccess(false)
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')

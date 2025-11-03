@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Filter, Search, Eye, MoreHorizontal, Copy, EyeOff, MessageSquare, Send, DollarSign, Edit3, CheckCircle, Sparkles, XCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { useSupabase } from '../contexts/SupabaseContext';
 import { useAppContext } from '../contexts/AppContext';
-import { usePostHog } from './PostHogProvider';
 import StatusDropdown from './StatusDropdown';
 import { format } from 'date-fns';
 import { Calendar } from './ui/calendar';
@@ -15,7 +14,6 @@ import { BrandDeal } from '../lib/supabase';
 const BrandDeals = () => {
   const { brandDeals, updateBrandDeal, createBrandDeal, deleteBrandDeal, createInvoiceFromBrandDeal, userProfile } = useSupabase();
   const { showSuccessMessage } = useAppContext();
-  const { track } = usePostHog();
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingDeal, setEditingDeal] = useState<BrandDeal | null>(null);
@@ -163,13 +161,6 @@ const BrandDeals = () => {
     e.preventDefault();
     try {
       await createBrandDeal(newDeal);
-
-      // Track brand deal creation event
-      track('brand_added', {
-        brand_name: newDeal.brand_name,
-        fee: newDeal.fee,
-        status: newDeal.status
-      });
 
       showSuccessMessage(`Brand deal with ${newDeal.brand_name} created successfully!`);
       setShowModal(false);
