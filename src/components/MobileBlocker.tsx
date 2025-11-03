@@ -1,6 +1,8 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 import logoImage from '../assets/no-bg-logo.png';
+import { isEmailConfirmationRoute, getConfirmationType } from '../utils/confirmationUtils';
+import EmailConfirmationSuccess from './EmailConfirmationSuccess';
 
 interface MobileBlockerProps {
   children: ReactNode;
@@ -8,23 +10,44 @@ interface MobileBlockerProps {
 
 const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const [isConfirmationRoute, setIsConfirmationRoute] = useState(false);
+  const [confirmationType, setConfirmationType] = useState<string | null>(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 1280);
     };
 
+    const checkConfirmationRoute = () => {
+      const isConfirming = isEmailConfirmationRoute();
+      setIsConfirmationRoute(isConfirming);
+      if (isConfirming) {
+        setConfirmationType(getConfirmationType());
+      }
+    };
+
     // Check on mount
     checkScreenSize();
+    checkConfirmationRoute();
 
     // Listen for window resize
     window.addEventListener('resize', checkScreenSize);
 
+    // Listen for hash changes (for confirmation tokens)
+    window.addEventListener('hashchange', checkConfirmationRoute);
+
     return () => {
       window.removeEventListener('resize', checkScreenSize);
+      window.removeEventListener('hashchange', checkConfirmationRoute);
     };
   }, []);
 
+  // If on mobile and it's an email confirmation route, show the confirmation success page
+  if (isMobile && isConfirmationRoute) {
+    return <EmailConfirmationSuccess type={confirmationType || undefined} />;
+  }
+
+  // If on mobile and NOT a confirmation route, show the desktop-only block
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-100 overflow-y-auto p-4 pt-8">
