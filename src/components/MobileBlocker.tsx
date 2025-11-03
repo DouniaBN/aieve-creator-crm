@@ -20,7 +20,18 @@ const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
     };
 
     const checkConfirmationRoute = () => {
+      const currentUrl = window.location.href;
+      const hash = window.location.hash;
+      const search = window.location.search;
+
+      // Debug logging
+      console.log('MobileBlocker - Current URL:', currentUrl);
+      console.log('MobileBlocker - Hash:', hash);
+      console.log('MobileBlocker - Search params:', search);
+
       const isConfirming = isEmailConfirmationRoute();
+      console.log('MobileBlocker - Is confirmation route:', isConfirming);
+
       setIsConfirmationRoute(isConfirming);
       if (isConfirming) {
         setConfirmationType(getConfirmationType());
