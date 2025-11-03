@@ -16,6 +16,7 @@ export interface ConfirmationParams {
  * Checks if the current URL contains Supabase email confirmation parameters
  * These can appear as hash fragments like #type=signup&confirmation_token=...
  * or as query parameters like ?type=signup&confirmation_token=...
+ * Also handles cases where parameters were cleared after processing
  */
 export const isEmailConfirmationRoute = (): boolean => {
   const hash = window.location.hash;
@@ -32,7 +33,24 @@ export const isEmailConfirmationRoute = (): boolean => {
   const hasConfirmationType = params.type && ['signup', 'recovery', 'invite', 'email_change'].includes(params.type);
   const hasConfirmationToken = !!(params.confirmation_token || params.recovery_token || params.invite_token || params.access_token);
 
-  return hasConfirmationType && hasConfirmationToken;
+  // If we found confirmation parameters, mark this session
+  if (hasConfirmationType && hasConfirmationToken) {
+    sessionStorage.setItem('supabase_confirmation_detected', 'true');
+    return true;
+  }
+
+  // TEMPORARY FIX: For now, assume mobile visits to root with # are confirmation attempts
+  // This is a workaround since Supabase seems to strip parameters before we can detect them
+  const isMobile = window.innerWidth < 1280;
+  const isRootWithHash = window.location.pathname === '/' && window.location.hash === '#';
+  const hasNoSearchParams = !search;
+
+  if (isMobile && isRootWithHash && hasNoSearchParams) {
+    // This is likely a confirmation link that had its parameters stripped
+    return true;
+  }
+
+  return false;
 };
 
 /**
