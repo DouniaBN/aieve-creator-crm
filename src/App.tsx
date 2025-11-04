@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, LayoutDashboard, Calendar, FileText, Settings, LogOut, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SupabaseProvider, useSupabase } from './contexts/SupabaseContext';
@@ -25,9 +25,34 @@ function AppContent() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showShepherdTour, setShowShepherdTour] = useState(false);
   const [showFullOnboarding, setShowFullOnboarding] = useState(false);
+  const [wasJustSignedUp, setWasJustSignedUp] = useState(false);
   const { successMessage, showSuccessMessage } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Handle auth state changes for new users (email confirmation flow)
+  useEffect(() => {
+    // Check if user just became authenticated and was previously on signup/login
+    if (user && !loading) {
+      const wasOnAuthPage = sessionStorage.getItem('was_on_auth_page') === 'true';
+      const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true';
+
+      if (wasOnAuthPage && !hasSeenOnboarding) {
+        // User just confirmed email or logged in for first time
+        sessionStorage.removeItem('was_on_auth_page');
+        sessionStorage.setItem('has_seen_onboarding', 'true');
+        setShowOnboardingModal(true);
+        setWasJustSignedUp(true);
+      }
+    }
+  }, [user, loading]);
+
+  // Track when user is on auth pages
+  useEffect(() => {
+    if (['/login', '/signup'].includes(location.pathname)) {
+      sessionStorage.setItem('was_on_auth_page', 'true');
+    }
+  }, [location.pathname]);
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -77,8 +102,12 @@ function AppContent() {
     { path: '/settings', name: 'Settings', icon: Settings },
   ];
 
-  const handleAuthSuccess = () => {
-    setShowOnboardingModal(true);
+  const handleAuthSuccess = (isNewUser: boolean = true) => {
+    if (isNewUser) {
+      // Mark as having been on auth page for email confirmation flow
+      sessionStorage.setItem('was_on_auth_page', 'true');
+      setShowOnboardingModal(true);
+    }
     navigate('/dashboard');
   };
 
