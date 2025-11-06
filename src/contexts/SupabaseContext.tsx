@@ -39,7 +39,7 @@ interface SupabaseContextType {
   updateInvoice: (id: string, updates: Partial<Invoice>) => Promise<void>
   deleteInvoice: (id: string) => Promise<void>
   createInvoiceFromBrandDeal: (brandDeal: BrandDeal) => Promise<void>
-  generateInvoiceNumber: () => Promise<string>
+  generateInvoiceNumber: (forceUnique?: boolean) => Promise<string>
 
   createBrandDeal: (deal: Omit<BrandDeal, 'id' | 'user_id' | 'created_at'>) => Promise<void>
   updateBrandDeal: (id: string, updates: Partial<BrandDeal>) => Promise<void>
@@ -406,6 +406,23 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const createInvoice = async (invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at'>) => {
     if (!user) return
 
+    console.log('Creating invoice with invoice number:', invoice.invoice_number)
+
+    // Check for recent duplicate invoices (same client, amount within last 30 seconds)
+    const thirtySecondsAgo = new Date(Date.now() - 30000).toISOString();
+    const { data: recentInvoices } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('client_name', invoice.client_name)
+      .eq('amount', invoice.amount)
+      .gte('created_at', thirtySecondsAgo);
+
+    if (recentInvoices && recentInvoices.length > 0) {
+      console.warn('Duplicate invoice detected - skipping creation');
+      return;
+    }
+
     // Auto-populate creator fields from user profile if not provided
     const enrichedInvoice = { ...invoice };
 
@@ -428,27 +445,53 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     }
 
-    const { data, error } = await supabase
-      .from('invoices')
-      .insert([{ ...enrichedInvoice, user_id: user.id }])
-      .select()
+    // Ensure we have a unique invoice number
+    if (!enrichedInvoice.invoice_number) {
+      enrichedInvoice.invoice_number = await generateInvoiceNumber();
+    }
 
-    if (error) {
-      console.error('Error creating invoice:', error)
-      throw error
-    } else {
-      await fetchInvoices()
+    // Retry mechanism for duplicate invoice numbers
+    let attempts = 0;
+    const maxAttempts = 3;
 
-      // Create notification for invoice creation
-      if (data && data.length > 0 && data[0]?.id) {
-        await createNotification({
-          type: 'invoice_created',
-          title: 'Invoice Created',
-          message: `Invoice ${invoice.invoice_number} for ${invoice.client_name} has been created.`,
-          read: false,
-          related_id: parseInt(data[0].id),
-          related_type: 'invoice'
-        })
+    while (attempts < maxAttempts) {
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert([{ ...enrichedInvoice, user_id: user.id }])
+        .select()
+
+      if (error) {
+        // Check if it's a duplicate invoice number error
+        if (error.code === '23505' && error.message.includes('invoices_invoice_number_key')) {
+          attempts++;
+          console.warn(`Duplicate invoice number detected, attempt ${attempts}/${maxAttempts}`)
+
+          if (attempts < maxAttempts) {
+            // Generate a new invoice number with forced uniqueness
+            enrichedInvoice.invoice_number = await generateInvoiceNumber(true);
+            continue;
+          } else {
+            console.error('Failed to generate unique invoice number after max attempts')
+          }
+        }
+
+        console.error('Error creating invoice:', error)
+        throw error
+      } else {
+        await fetchInvoices()
+
+        // Create notification for invoice creation
+        if (data && data.length > 0 && data[0]?.id) {
+          await createNotification({
+            type: 'invoice_created',
+            title: 'Invoice Created',
+            message: `Invoice ${enrichedInvoice.invoice_number} for ${invoice.client_name} has been created.`,
+            read: false,
+            related_id: parseInt(data[0].id),
+            related_type: 'invoice'
+          })
+        }
+        return; // Successfully created, exit the function
       }
     }
   }
@@ -525,8 +568,19 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   }
 
   // Generate sequential invoice number
-  const generateInvoiceNumber = async (): Promise<string> => {
+  const generateInvoiceNumber = async (forceUnique: boolean = false): Promise<string> => {
     if (!user) return 'INV-001'
+
+    // If this is a retry due to duplicates, force unique timestamp-based number
+    if (forceUnique) {
+      const now = Date.now()
+      const nanos = performance.now().toString().replace('.', '')
+      const bigRandom = Math.floor(Math.random() * 1000000).toString().padStart(6, '0')
+      const userSuffix = user.id.replace(/-/g, '').slice(-8) // Use more of user ID
+      const uniqueNumber = `INV-${now}-${nanos}-${bigRandom}-${userSuffix}`
+      console.log('Generated ultra-unique invoice number:', uniqueNumber)
+      return uniqueNumber
+    }
 
     try {
       // Get all existing invoice numbers to find the highest sequential one
@@ -537,9 +591,12 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (error) {
         console.error('Error fetching latest invoice:', error)
-        // Generate a timestamp-based fallback to avoid duplicates
-        const timestamp = Date.now().toString().slice(-6)
-        return `INV-${timestamp}`
+        // Generate a unique fallback using timestamp + random + microseconds
+        const now = Date.now()
+        const timestamp = now.toString().slice(-6)
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+        const microseconds = (performance.now() % 1000).toFixed(0).padStart(3, '0')
+        return `INV-${timestamp}-${random}-${microseconds}`
       }
 
     const existingNumbers = new Set<string>()
@@ -577,9 +634,12 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     return candidateNumber
     } catch (error) {
       console.error('Unexpected error generating invoice number:', error)
-      // Ultimate fallback with timestamp to ensure uniqueness
-      const timestamp = Date.now().toString().slice(-6)
-      return `INV-${timestamp}`
+      // Ultimate fallback with timestamp + random + microseconds to ensure uniqueness
+      const now = Date.now()
+      const timestamp = now.toString().slice(-6)
+      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
+      const microseconds = (performance.now() % 1000).toFixed(0).padStart(3, '0')
+      return `INV-${timestamp}-${random}-${microseconds}`
     }
   }
 
