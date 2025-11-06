@@ -528,16 +528,19 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const generateInvoiceNumber = async (): Promise<string> => {
     if (!user) return 'INV-001'
 
-    // Get all existing invoice numbers to find the highest sequential one
-    const { data, error } = await supabase
-      .from('invoices')
-      .select('invoice_number')
-      .eq('user_id', user.id)
+    try {
+      // Get all existing invoice numbers to find the highest sequential one
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('user_id', user.id)
 
-    if (error) {
-      console.error('Error fetching latest invoice:', error)
-      return 'INV-001' // Fallback to first invoice
-    }
+      if (error) {
+        console.error('Error fetching latest invoice:', error)
+        // Generate a timestamp-based fallback to avoid duplicates
+        const timestamp = Date.now().toString().slice(-6)
+        return `INV-${timestamp}`
+      }
 
     const existingNumbers = new Set<string>()
     let highestSequentialNumber = 0
@@ -572,6 +575,12 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
 
     return candidateNumber
+    } catch (error) {
+      console.error('Unexpected error generating invoice number:', error)
+      // Ultimate fallback with timestamp to ensure uniqueness
+      const timestamp = Date.now().toString().slice(-6)
+      return `INV-${timestamp}`
+    }
   }
 
   // Create invoice from brand deal
