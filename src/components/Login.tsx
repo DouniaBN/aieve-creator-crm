@@ -23,14 +23,8 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
       try {
         const { data: { user }, error } = await supabase.auth.getUser()
         if (user && !error) {
-          const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true'
-          if (!hasSeenOnboarding) {
-            // User hasn't completed onboarding
-            onAuthSuccess(true) // Treat as new user for onboarding
-          } else {
-            // User has completed onboarding, go to dashboard
-            onAuthSuccess(false)
-          }
+          // If user is already logged in, treat as returning user (no onboarding)
+          onAuthSuccess(false)
         }
       } catch (error) {
         console.error('Error checking user:', error)
@@ -52,16 +46,8 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
       })
       if (error) throw error
 
-      // Check if user needs onboarding
-      const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true'
-
-      if (!hasSeenOnboarding) {
-        // Mark that user was on auth page for onboarding trigger
-        sessionStorage.setItem('was_on_auth_page', 'true')
-        onAuthSuccess(true) // New user - trigger onboarding
-      } else {
-        onAuthSuccess(false) // Existing user - go to dashboard
-      }
+      // Login always means returning user - no onboarding needed
+      onAuthSuccess(false)
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {

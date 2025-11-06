@@ -36,6 +36,8 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
 
       // Since email verification is disabled, user should be immediately signed in
       if (data.user) {
+        // Mark that user was on auth page to trigger onboarding
+        sessionStorage.setItem('was_on_auth_page', 'true')
         onAuthSuccess(true)
       } else {
         throw new Error('Account creation failed')
