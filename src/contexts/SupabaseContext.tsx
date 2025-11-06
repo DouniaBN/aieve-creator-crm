@@ -445,9 +445,12 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     }
 
-    // Ensure we have a unique invoice number
-    if (!enrichedInvoice.invoice_number) {
+    // Only generate invoice number if not provided by user
+    if (!enrichedInvoice.invoice_number || enrichedInvoice.invoice_number.trim() === '') {
       enrichedInvoice.invoice_number = await generateInvoiceNumber();
+      console.log('Auto-generated invoice number:', enrichedInvoice.invoice_number);
+    } else {
+      console.log('Using user-provided invoice number:', enrichedInvoice.invoice_number);
     }
 
     // Retry mechanism for duplicate invoice numbers
@@ -571,75 +574,58 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const generateInvoiceNumber = async (forceUnique: boolean = false): Promise<string> => {
     if (!user) return 'INV-001'
 
-    // If this is a retry due to duplicates, force unique timestamp-based number
+    // If this is a retry due to duplicates, use a simpler timestamp approach
     if (forceUnique) {
-      const now = Date.now()
-      const nanos = performance.now().toString().replace('.', '')
-      const bigRandom = Math.floor(Math.random() * 1000000).toString().padStart(6, '0')
-      const userSuffix = user.id.replace(/-/g, '').slice(-8) // Use more of user ID
-      const uniqueNumber = `INV-${now}-${nanos}-${bigRandom}-${userSuffix}`
-      console.log('Generated ultra-unique invoice number:', uniqueNumber)
+      const timestamp = Date.now().toString().slice(-8)
+      const uniqueNumber = `INV-${timestamp}`
+      console.log('Generated fallback invoice number:', uniqueNumber)
       return uniqueNumber
     }
 
     try {
-      // Get all existing invoice numbers to find the highest sequential one
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('invoice_number')
-        .eq('user_id', user.id)
+      // Simple approach: just find the next available sequential number
+      let candidateNumber = 1;
 
-      if (error) {
-        console.error('Error fetching latest invoice:', error)
-        // Generate a unique fallback using timestamp + random + microseconds
-        const now = Date.now()
-        const timestamp = now.toString().slice(-6)
-        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-        const microseconds = (performance.now() % 1000).toFixed(0).padStart(3, '0')
-        return `INV-${timestamp}-${random}-${microseconds}`
-      }
+      while (candidateNumber <= 9999) {
+        const testNumber = `INV-${candidateNumber.toString().padStart(3, '0')}`;
 
-    const existingNumbers = new Set<string>()
-    let highestSequentialNumber = 0
+        // Check if this number already exists
+        const { data, error } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('invoice_number', testNumber)
+          .limit(1);
 
-    if (data && data.length > 0) {
-      for (const invoice of data) {
-        if (invoice.invoice_number) {
-          const invoiceNumber = invoice.invoice_number
-          existingNumbers.add(invoiceNumber)
-
-          // Only process properly formatted sequential numbers (INV-001 to INV-999)
-          const match = invoiceNumber.match(/^INV-?(\d{1,3})$/)
-          if (match) {
-            const number = parseInt(match[1])
-            if (number > highestSequentialNumber) {
-              highestSequentialNumber = number
-            }
-          }
-          // Ignore timestamp-based invoice numbers
+        if (error) {
+          console.error('Error checking invoice number:', error)
+          // Fall back to timestamp if database error
+          const timestamp = Date.now().toString().slice(-8)
+          return `INV-${timestamp}`
         }
+
+        console.log(`Checking ${testNumber}: found ${data?.length || 0} existing invoices`)
+
+        // If no existing invoice with this number, use it
+        if (!data || data.length === 0) {
+          console.log('Generated sequential invoice number:', testNumber)
+          return testNumber;
+        }
+
+        candidateNumber++;
       }
-    }
 
-    // Generate next sequential number that doesn't exist
-    let nextNumber = Math.max(1, highestSequentialNumber + 1)
-    let candidateNumber = `INV-${nextNumber.toString().padStart(3, '0')}`
+      // If we've exhausted sequential numbers, use timestamp
+      const timestamp = Date.now().toString().slice(-8)
+      const fallbackNumber = `INV-${timestamp}`
+      console.log('Generated timestamp fallback:', fallbackNumber)
+      return fallbackNumber;
 
-    // Ensure the generated number is truly unique
-    while (existingNumbers.has(candidateNumber)) {
-      nextNumber++
-      candidateNumber = `INV-${nextNumber.toString().padStart(3, '0')}`
-    }
-
-    return candidateNumber
     } catch (error) {
       console.error('Unexpected error generating invoice number:', error)
-      // Ultimate fallback with timestamp + random + microseconds to ensure uniqueness
-      const now = Date.now()
-      const timestamp = now.toString().slice(-6)
-      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0')
-      const microseconds = (performance.now() % 1000).toFixed(0).padStart(3, '0')
-      return `INV-${timestamp}-${random}-${microseconds}`
+      // Ultimate fallback with timestamp
+      const timestamp = Date.now().toString().slice(-8)
+      return `INV-${timestamp}`
     }
   }
 

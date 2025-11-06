@@ -220,10 +220,10 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     }
   }, [editingInvoice]);
 
-  // Generate sequential invoice number for new invoices
+  // Generate sequential invoice number for new invoices (only if using default)
   useEffect(() => {
     const generateNewInvoiceNumber = async () => {
-      if (isOpen && !editingInvoice) {
+      if (isOpen && !editingInvoice && invoiceData.invoiceNumber === 'INV-001') {
         try {
           const newNumber = await generateInvoiceNumber();
           setInvoiceData(prev => ({ ...prev, invoiceNumber: newNumber }));
@@ -234,7 +234,7 @@ const InvoiceGenerator: React.FC<InvoiceGeneratorProps> = ({ isOpen, onClose, ed
     };
 
     generateNewInvoiceNumber();
-  }, [isOpen, editingInvoice, generateInvoiceNumber]);
+  }, [isOpen, editingInvoice, generateInvoiceNumber, invoiceData.invoiceNumber]);
 
   // Handle keyboard shortcuts for preview modal
   useEffect(() => {
