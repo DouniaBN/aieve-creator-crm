@@ -33,21 +33,21 @@ function AppContent() {
 
   // Handle auth state changes for new users
   useEffect(() => {
-    // Check if user just became authenticated and was previously on signup/login
-    if (user && !loading) {
+    // Check if user just became authenticated and needs onboarding
+    if (user && !loading && userProfile !== null) {
       const wasOnAuthPage = sessionStorage.getItem('was_on_auth_page') === 'true';
-      const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true';
 
-      // If user was on auth page and hasn't seen onboarding
-      if (wasOnAuthPage && !hasSeenOnboarding) {
-        // User just signed up or logged in for first time
+      // Use database field as source of truth for onboarding completion
+      const hasCompletedOnboarding = userProfile?.onboarding_complete === true;
+
+      // Only show onboarding for users who just signed up AND haven't completed onboarding
+      if (wasOnAuthPage && !hasCompletedOnboarding) {
         sessionStorage.removeItem('was_on_auth_page');
-        sessionStorage.setItem('has_seen_onboarding', 'true');
         setShowOnboardingModal(true);
         setWasJustSignedUp(true);
       }
     }
-  }, [user, loading]);
+  }, [user, loading, userProfile]);
 
   // Track when user is on auth pages
   useEffect(() => {

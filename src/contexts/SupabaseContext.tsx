@@ -340,6 +340,21 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
     } else {
       setUserProfile(data)
+
+      // Auto-mark existing users as having completed onboarding if they have name info
+      if (data && data.onboarding_complete === false && (data.full_name || data.preferred_name)) {
+        // This user existed before onboarding tracking - mark as completed
+        supabase
+          .from('user_profiles')
+          .update({ onboarding_complete: true })
+          .eq('user_id', user.id)
+          .then(() => {
+            console.log('Automatically marked existing user as onboarding complete')
+          })
+          .catch(error => {
+            console.warn('Could not update onboarding status for existing user:', error)
+          })
+      }
     }
   }, [user])
 
