@@ -85,13 +85,13 @@ function AppContent() {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Show full onboarding flow if user chose to continue from modal
+  // Show full onboarding flow (preferred name + UGC questions) immediately after signup
   if (showFullOnboarding) {
     return (
       <Onboarding
         onComplete={() => {
           setShowFullOnboarding(false);
-          showSuccessMessage(`Welcome aboard, ${userProfile?.preferred_name || 'there'}! 🎉`);
+          setShowOnboardingModal(true);
         }}
       />
     );
@@ -109,7 +109,7 @@ function AppContent() {
     if (isNewUser) {
       // Mark as having been on auth page for email confirmation flow
       sessionStorage.setItem('was_on_auth_page', 'true');
-      setShowOnboardingModal(true);
+      setShowFullOnboarding(true);
     }
     navigate('/dashboard');
   };
@@ -284,7 +284,7 @@ function AppContent() {
         onClose={() => setShowOnboardingModal(false)}
         onSkipDemo={() => {
           setShowOnboardingModal(false);
-          showSuccessMessage('Welcome to AIEVE! 🎉');
+          showSuccessMessage(`Welcome aboard, ${userProfile?.preferred_name || 'there'}! 🎉`);
         }}
         onContinue={() => {
           setShowOnboardingModal(false);
@@ -297,11 +297,11 @@ function AppContent() {
         isActive={showShepherdTour}
         onComplete={() => {
           setShowShepherdTour(false);
-          showSuccessMessage('Welcome to AIEVE! Ready to get organized? 🎉');
+          showSuccessMessage(`Welcome to AIEVE, ${userProfile?.preferred_name || 'there'}! Ready to get organized? 🎉`);
         }}
         onSkip={() => {
           setShowShepherdTour(false);
-          showSuccessMessage('Welcome to AIEVE! 🎉');
+          showSuccessMessage(`Welcome to AIEVE, ${userProfile?.preferred_name || 'there'}! 🎉`);
         }}
         setActiveTab={(tab: string) => {
           const pathMap: { [key: string]: string } = {

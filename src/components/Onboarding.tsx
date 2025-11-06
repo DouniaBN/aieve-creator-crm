@@ -44,10 +44,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         user_email: user?.email
       });
 
-      // For now, just update the full_name field that exists in the database
-      // This will be replaced when you run the database migration
+      // Update the preferred_name and creator_type fields from onboarding
       await updateUserProfile({
-        full_name: formData.preferred_name
+        preferred_name: formData.preferred_name,
+        creator_type: formData.creator_type,
+        onboarding_complete: true
       });
 
       console.log('Profile updated successfully');
