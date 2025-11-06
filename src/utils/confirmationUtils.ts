@@ -39,17 +39,26 @@ export const isEmailConfirmationRoute = (): boolean => {
     return true;
   }
 
+  // Check if we previously detected a confirmation in this session
+  const previouslyDetected = sessionStorage.getItem('supabase_confirmation_detected') === 'true';
+  if (previouslyDetected) {
+    return true;
+  }
+
   // Enhanced detection: Handle mobile confirmation links where Supabase strips parameters
-  // When Supabase processes confirmations, it redirects to the root URL
+  // When Supabase processes confirmations, it redirects to the configured URL
   const isMobile = window.innerWidth < 1280;
-  // Check if URL ends with /# OR if we're at root with empty hash (browser normalizes # to empty)
-  const isRootWithHash = window.location.pathname === '/' &&
+  // Check if URL is root OR login with no params (after Supabase redirect)
+  const isRedirectPath = (window.location.pathname === '/' || window.location.pathname === '/login') &&
     (window.location.hash === '#' || window.location.hash === '' || window.location.href.endsWith('/#'));
   const hasNoSearchParams = !search;
 
+  // Check if we just came from an email confirmation link (referrer check)
+  const cameFromEmailLink = document.referrer === '' || document.referrer.includes('supabase') || document.referrer.includes('mail');
 
-  if (isMobile && isRootWithHash && hasNoSearchParams) {
-    // Mobile user visiting root URL - likely from confirmation email
+  if (isMobile && isRedirectPath && hasNoSearchParams && cameFromEmailLink) {
+    // Mobile user visiting redirect URL likely from confirmation email
+    sessionStorage.setItem('supabase_confirmation_detected', 'true');
     return true;
   }
 

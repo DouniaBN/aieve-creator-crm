@@ -1,8 +1,6 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 import logoImage from '../assets/no-bg-logo.png';
-import { isEmailConfirmationRoute, getConfirmationType } from '../utils/confirmationUtils';
-import EmailConfirmationSuccess from './EmailConfirmationSuccess';
 
 interface MobileBlockerProps {
   children: ReactNode;
@@ -10,75 +8,24 @@ interface MobileBlockerProps {
 
 const MobileBlocker: React.FC<MobileBlockerProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const [isConfirmationRoute, setIsConfirmationRoute] = useState(false);
-  const [confirmationType, setConfirmationType] = useState<string | null>(null);
-  const [confirmationCompleted, setConfirmationCompleted] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
       setIsMobile(window.innerWidth < 1280);
     };
 
-    const checkConfirmationRoute = () => {
-      const isConfirming = isEmailConfirmationRoute();
-      setIsConfirmationRoute(isConfirming);
-      if (isConfirming) {
-        setConfirmationType(getConfirmationType());
-      }
-    };
-
     // Check on mount
     checkScreenSize();
-    checkConfirmationRoute();
 
     // Listen for window resize
     window.addEventListener('resize', checkScreenSize);
 
-    // Listen for hash changes (for confirmation tokens)
-    window.addEventListener('hashchange', checkConfirmationRoute);
-
     return () => {
       window.removeEventListener('resize', checkScreenSize);
-      window.removeEventListener('hashchange', checkConfirmationRoute);
     };
   }, []);
 
-  // Handle confirmation completion detection
-  useEffect(() => {
-    if (isConfirmationRoute && isMobile) {
-      // Give Supabase time to process the confirmation
-      const confirmationTimer = setTimeout(() => {
-        setConfirmationCompleted(true);
-      }, 3000); // 3 seconds should be enough for processing
-
-      // Also listen for hash changes (Supabase often clears hash after processing)
-      const checkHashClear = () => {
-        if (!window.location.hash || window.location.hash === '#') {
-          setConfirmationCompleted(true);
-        }
-      };
-
-      // Check periodically if hash was cleared
-      const hashCheckInterval = setInterval(checkHashClear, 500);
-
-      return () => {
-        clearTimeout(confirmationTimer);
-        clearInterval(hashCheckInterval);
-      };
-    }
-  }, [isConfirmationRoute, isMobile]);
-
-  // If mobile + confirmation route: show app first (for processing), then success screen
-  if (isMobile && isConfirmationRoute) {
-    if (confirmationCompleted) {
-      return <EmailConfirmationSuccess type={confirmationType || undefined} />;
-    } else {
-      // Let the app load normally so Supabase can process the confirmation
-      return <>{children}</>;
-    }
-  }
-
-  // If on mobile and NOT a confirmation route, show the desktop-only block
+  // If on mobile, show the desktop-only block
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-100 overflow-y-auto p-4 pt-8">

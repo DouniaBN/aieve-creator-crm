@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { User, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react'
@@ -17,6 +17,29 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetSuccess, setResetSuccess] = useState('')
 
+  // Check if user is already signed in on component mount
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (user && !error) {
+          const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true'
+          if (!hasSeenOnboarding) {
+            // User hasn't completed onboarding
+            onAuthSuccess(true) // Treat as new user for onboarding
+          } else {
+            // User has completed onboarding, go to dashboard
+            onAuthSuccess(false)
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user:', error)
+      }
+    }
+
+    checkUser()
+  }, [onAuthSuccess])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -29,7 +52,16 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
       })
       if (error) throw error
 
-      onAuthSuccess(false)
+      // Check if user needs onboarding
+      const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true'
+
+      if (!hasSeenOnboarding) {
+        // Mark that user was on auth page for onboarding trigger
+        sessionStorage.setItem('was_on_auth_page', 'true')
+        onAuthSuccess(true) // New user - trigger onboarding
+      } else {
+        onAuthSuccess(false) // Existing user - go to dashboard
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
@@ -73,6 +105,7 @@ const Login: React.FC<LoginProps> = ({ onAuthSuccess }) => {
           </div>
           <p className="text-gray-600 mt-2">Welcome back!</p>
         </div>
+
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-6">

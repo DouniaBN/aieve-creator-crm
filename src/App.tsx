@@ -25,20 +25,22 @@ function AppContent() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [showShepherdTour, setShowShepherdTour] = useState(false);
   const [showFullOnboarding, setShowFullOnboarding] = useState(false);
-  const [wasJustSignedUp, setWasJustSignedUp] = useState(false);
+  const [, setWasJustSignedUp] = useState(false);
   const { successMessage, showSuccessMessage } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Handle auth state changes for new users (email confirmation flow)
+
+  // Handle auth state changes for new users
   useEffect(() => {
     // Check if user just became authenticated and was previously on signup/login
     if (user && !loading) {
       const wasOnAuthPage = sessionStorage.getItem('was_on_auth_page') === 'true';
       const hasSeenOnboarding = sessionStorage.getItem('has_seen_onboarding') === 'true';
 
+      // If user was on auth page and hasn't seen onboarding
       if (wasOnAuthPage && !hasSeenOnboarding) {
-        // User just confirmed email or logged in for first time
+        // User just signed up or logged in for first time
         sessionStorage.removeItem('was_on_auth_page');
         sessionStorage.setItem('has_seen_onboarding', 'true');
         setShowOnboardingModal(true);
@@ -60,9 +62,9 @@ function AppContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" style={{ backgroundColor: '#FAFAFA' }}>
         <div className="text-center">
           <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <img 
-              src={logoImage} 
-              alt="AIEVE Logo" 
+            <img
+              src={logoImage}
+              alt="AIEVE Logo"
               className="h-16 w-auto"
             />
           </div>
@@ -71,6 +73,7 @@ function AppContent() {
       </div>
     );
   }
+
 
   // Redirect to login if not authenticated and trying to access protected routes
   if (!user && !['/login', '/signup'].includes(location.pathname)) {

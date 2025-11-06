@@ -16,9 +16,7 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [resendLoading, setResendLoading] = useState(false)
-  const [showResendOption, setShowResendOption] = useState(false)
-  const [resendSuccess, setResendSuccess] = useState('')
+
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,16 +30,15 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
 
       const { data, error } = await supabase.auth.signUp({
         email,
-        password,
+        password
       })
       if (error) throw error
 
-      // If user is immediately confirmed (e.g., in development)
-      if (data.user && data.session) {
+      // Since email verification is disabled, user should be immediately signed in
+      if (data.user) {
         onAuthSuccess(true)
       } else {
-        setError('Check your email for the confirmation link!')
-        setShowResendOption(true)
+        throw new Error('Account creation failed')
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -50,31 +47,6 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
     }
   }
 
-  const handleResendEmail = async () => {
-    if (!email.trim()) {
-      setError('Please enter your email address first')
-      return
-    }
-
-    setResendLoading(true)
-    setResendSuccess('')
-    setError('')
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-      })
-
-      if (error) throw error
-
-      setResendSuccess('Confirmation email sent! Check your inbox.')
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Failed to resend email')
-    } finally {
-      setResendLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#FAFAFA' }}>
@@ -163,36 +135,10 @@ const Signup: React.FC<SignupProps> = ({ onAuthSuccess }) => {
             </div>
           </div>
 
-          {/* Success Message */}
-          {resendSuccess && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
-              <p className="text-sm text-green-600">{resendSuccess}</p>
-            </div>
-          )}
-
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
               <p className="text-sm text-red-600">{error}</p>
-              {showResendOption && (
-                <div className="mt-2 pt-2 border-t border-red-200">
-                  <button
-                    type="button"
-                    onClick={handleResendEmail}
-                    disabled={resendLoading}
-                    className="text-sm text-red-700 hover:text-red-800 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {resendLoading ? (
-                      <span className="flex items-center">
-                        <Loader className="w-3 h-3 animate-spin mr-1" />
-                        Sending...
-                      </span>
-                    ) : (
-                      'Resend confirmation email'
-                    )}
-                  </button>
-                </div>
-              )}
             </div>
           )}
 

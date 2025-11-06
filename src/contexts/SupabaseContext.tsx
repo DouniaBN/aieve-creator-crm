@@ -111,6 +111,19 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
       setUser(session?.user ?? null)
       setLoading(false)
 
+      // Handle email confirmation events
+      if (event === 'SIGNED_IN' && session?.user && !user) {
+        // User just signed in (including email confirmation)
+        // Check if this is from an email confirmation
+        const wasOnAuthPage = sessionStorage.getItem('was_on_auth_page') === 'true';
+        const confirmationDetected = sessionStorage.getItem('supabase_confirmation_detected') === 'true';
+
+        if (wasOnAuthPage || confirmationDetected) {
+          // Mark as new user signup completion
+          sessionStorage.setItem('was_on_auth_page', 'true');
+        }
+      }
+
       // PostHog integration
       // Authentication event handling
     })
