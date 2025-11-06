@@ -96,19 +96,45 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   const notificationsEnabled = userSettings?.notifications_enabled ?? true
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    // Get initial session and verify it's valid
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        // Double-check that the user actually exists and the session is valid
+        const { data: { user: validUser }, error } = await supabase.auth.getUser()
+        if (validUser && !error) {
+          setSession(session)
+          setUser(validUser)
+        } else {
+          console.warn('Invalid session detected, clearing auth state')
+          setSession(null)
+          setUser(null)
+        }
+      } else {
+        setSession(session)
+        setUser(null)
+      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        // For any auth state change with a user, verify the user is valid
+        const { data: { user: validUser }, error } = await supabase.auth.getUser()
+        if (validUser && !error) {
+          setSession(session)
+          setUser(validUser)
+        } else {
+          console.warn('Invalid user in auth state change, clearing auth state')
+          setSession(null)
+          setUser(null)
+        }
+      } else {
+        setSession(session)
+        setUser(null)
+      }
       setLoading(false)
 
       // Handle email confirmation events

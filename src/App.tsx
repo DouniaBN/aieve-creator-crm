@@ -80,6 +80,12 @@ function AppContent() {
     return <Navigate to="/login" replace />;
   }
 
+  // Additional safety check - if we somehow have a loading=false but no user on protected routes
+  if (!loading && !user && !['/login', '/signup'].includes(location.pathname)) {
+    console.warn('Authentication bypass detected, redirecting to login')
+    return <Navigate to="/login" replace />;
+  }
+
   // Redirect to dashboard if authenticated and trying to access auth routes
   if (user && ['/login', '/signup', '/'].includes(location.pathname)) {
     return <Navigate to="/dashboard" replace />;
