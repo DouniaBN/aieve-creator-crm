@@ -230,7 +230,14 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [user])
 
   const fetchUserSettings = useCallback(async () => {
-    if (!user) return
+    if (!user?.id) return
+
+    // Verify user exists in auth.users before creating dependent records
+    const { data: userCheck } = await supabase.auth.getUser()
+    if (!userCheck.user) {
+      console.warn('User not found in auth.users, skipping settings creation')
+      return
+    }
 
     const { data, error } = await supabase
       .from('user_settings')
@@ -249,6 +256,10 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         if (insertError) {
           console.error('Error creating user settings:', insertError)
+          // If foreign key constraint fails, user might not be fully created yet
+          if (insertError.code === '23503') {
+            console.warn('User not yet available in auth.users, will retry on next session')
+          }
         } else {
           setUserSettings(newSettings)
         }
@@ -261,7 +272,14 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [user])
 
   const fetchUserProfile = useCallback(async () => {
-    if (!user) return
+    if (!user?.id) return
+
+    // Verify user exists in auth.users before creating dependent records
+    const { data: userCheck } = await supabase.auth.getUser()
+    if (!userCheck.user) {
+      console.warn('User not found in auth.users, skipping profile creation')
+      return
+    }
 
     const { data, error } = await supabase
       .from('user_profiles')
@@ -284,6 +302,10 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         if (insertError) {
           console.error('Error creating user profile:', insertError)
+          // If foreign key constraint fails, user might not be fully created yet
+          if (insertError.code === '23503') {
+            console.warn('User not yet available in auth.users, will retry on next session')
+          }
         } else {
           setUserProfile(newProfile)
         }
@@ -929,12 +951,11 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (!user) return
 
 
-    // Filter out any undefined values and fields that don't exist in database
+    // Filter out any undefined values
     const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([key, value]) => {
+      Object.entries(updates).filter(([, value]) => {
         const isUndefined = value === undefined;
-        const isExcludedField = ['onboarding_complete', 'creator_type'].includes(key);
-        return !isUndefined && !isExcludedField;
+        return !isUndefined;
       })
     );
 
@@ -1002,19 +1023,27 @@ export const SupabaseProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Fetch data when user changes
   useEffect(() => {
     if (user) {
-      // Fetch all data in parallel when user is available
-      Promise.all([
-        fetchProjects(),
-        fetchInvoices(),
-        fetchBrandDeals(),
-        fetchContentPosts(),
-        fetchTasks(),
-        fetchNotifications(),
-        fetchUserSettings(),
-        fetchUserProfile()
-      ]).catch(error => {
-        console.error('Error fetching user data:', error)
-      })
+      // Add a small delay for new signups to ensure user is fully created in Supabase
+      const wasOnAuthPage = sessionStorage.getItem('was_on_auth_page') === 'true';
+      const delay = wasOnAuthPage ? 1000 : 100; // 1 second for new signups, 100ms for existing users
+
+      const timer = setTimeout(() => {
+        // Fetch all data in parallel when user is available
+        Promise.all([
+          fetchProjects(),
+          fetchInvoices(),
+          fetchBrandDeals(),
+          fetchContentPosts(),
+          fetchTasks(),
+          fetchNotifications(),
+          fetchUserSettings(),
+          fetchUserProfile()
+        ]).catch(error => {
+          console.error('Error fetching user data:', error)
+        })
+      }, delay)
+
+      return () => clearTimeout(timer)
     } else {
       // Clear all data when user is null
       setProjects([])
