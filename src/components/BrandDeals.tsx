@@ -395,13 +395,16 @@ const BrandDeals = () => {
             </select>
           </div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center px-5 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-base mr-4"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          New Deal
-        </button>
+        <div className="flex flex-col items-end space-y-2">
+          <p className="text-sm text-gray-500">Manage your brand deals at each stage</p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center px-5 py-3 bg-[#E83F87] text-white rounded-xl hover:bg-[#D23075] transition-all duration-200 shadow-lg text-base mr-4"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            New Deal
+          </button>
+        </div>
       </div>
 
       {/* Quick Stats Section */}
